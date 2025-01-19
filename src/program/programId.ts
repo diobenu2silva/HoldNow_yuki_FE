@@ -6,4 +6,4 @@ export const PROGRAM_ID_IDL = new PublicKey(
 )
 
 // This constant will not get overwritten on subsequent code generations and it's safe to modify it's value.
-export const PROGRAM_ID: PublicKey = PROGRAM_ID_IDL
+export const HOLDNOW_PROGRAM_ID: PublicKey = PROGRAM_ID_IDL

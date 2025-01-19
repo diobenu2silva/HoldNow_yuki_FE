@@ -1,19 +1,22 @@
-import { ComputeBudgetProgram, Connection, Keypair, PublicKey, Transaction, clusterApiUrl } from '@solana/web3.js';
+import { ComputeBudgetProgram, Connection, Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, SystemProgram, Transaction, clusterApiUrl, sendAndConfirmTransaction } from '@solana/web3.js';
 import { Holdnow } from './holdnow'
 import idl from "./holdnow.json"
 import * as anchor from '@coral-xyz/anchor';
 import { WalletContextState, useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { errorAlert } from '@/components/others/ToastGroup';
 import { Program } from '@coral-xyz/anchor';
-import { SEED_CONFIG } from './seed';
 import { launchDataInfo } from '@/utils/types';
-import { PROGRAM_ID } from './programId';
+import { HOLDNOW_PROGRAM_ID } from './programId';
+import { MintLayout, getAssociatedTokenAddress, getMinimumBalanceForRentExemptMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMintToInstruction, getOrCreateAssociatedTokenAccount } from "@solana/spl-token"
+import { PROGRAM_ID, DataV2, createCreateMetadataAccountV3Instruction } from '@metaplex-foundation/mpl-token-metadata';
+import { BONDING_CURVE, GLOBAL_STATE_SEED, REWARD_STATE_SEED, SOL_VAULT_SEED, VAULT_SEED } from './seed';
+
 export const commitmentLevel = "processed";
 
 export const endpoint =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl("devnet");
 export const connection = new Connection(endpoint, commitmentLevel);
-export const pumpProgramId = new PublicKey(PROGRAM_ID);
+export const pumpProgramId = new PublicKey(HOLDNOW_PROGRAM_ID);
 export const pumpProgramInterface = JSON.parse(JSON.stringify(idl));
 
 
@@ -38,54 +41,151 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
   }
 
   try {
-    console.log("coinData--->", coinData)
-    const [configPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from(SEED_CONFIG)],
+    const mintKp = Keypair.generate();
+    const mint = mintKp.publicKey;
+    const tokenAta = await getAssociatedTokenAddress(mint, wallet.publicKey)
+    const [metadataPDA] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("metadata"),
+        PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+      ], PROGRAM_ID
+    );
+    const amount = new anchor.BN(10 ** 9).mul(new anchor.BN(10 ** coinData.decimals))
+    const tokenMetadata: DataV2 = {
+      name: coinData.name,
+      symbol: coinData.symbol,
+      uri: coinData.uri,
+      sellerFeeBasisPoints: 0,
+      creators: null,
+      collection: null,
+      uses: null
+    };
+    const mint_rent = await getMinimumBalanceForRentExemptMint(connection)
+    const transaction = new Transaction().add(
+      ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: 60_000,
+      }),
+      ComputeBudgetProgram.setComputeUnitLimit({
+        units: 200_000,
+      }),
+      SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: mint,
+        space: MintLayout.span,
+        lamports: mint_rent,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      createInitializeMintInstruction(mint, coinData.decimals, wallet.publicKey, wallet.publicKey),
+      createAssociatedTokenAccountInstruction(wallet.publicKey, tokenAta, wallet.publicKey, mint),
+      createMintToInstruction(mint, tokenAta, wallet.publicKey, BigInt(amount.toString())),
+      // createUpdateMetadataAccountV2Instruction({
+      //     metadata: metadataPDA,
+      //     mint,
+      //     mintAuthority: wallet.publicKey,
+      //     payer: wallet.publicKey,
+      //     updateAuthority: wallet.publicKey,
+      // }, {
+      //     updateMetadataAccountArgsV2: {
+      //         data: tokenMetadata,
+      //         isMutable: true,
+      //         updateAuthority: wallet.publicKey,
+      //         primarySaleHappened: true
+      //     }
+      // }
+      // )
+      createCreateMetadataAccountV3Instruction(
+        {
+          metadata: metadataPDA,
+          mint: mint,
+          mintAuthority: wallet.publicKey,
+          payer: wallet.publicKey,
+          updateAuthority: wallet.publicKey,
+        },
+        {
+          createMetadataAccountArgsV3: {
+            data: tokenMetadata,
+            isMutable: true,
+            collectionDetails: null
+          }
+        }
+      )
+    )
+    const airdropAmount = 0;
+
+    // Create Pool instruction
+    const [rewardRecipient] = await PublicKey.findProgramAddress(
+      [Buffer.from(REWARD_STATE_SEED)],
       program.programId
     );
-    const configAccount = await program.account.config.fetch(configPda);
-
-    const mintKp = Keypair.generate();
-
-    const transaction = new Transaction()
-    const updateCpIx = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1_000_000 });
-    const updateCuIx = ComputeBudgetProgram.setComputeUnitLimit({ units: 1000_000 });
+    const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
+      [Buffer.from(REWARD_STATE_SEED),
+      mint.toBuffer()
+      ],
+      program.programId
+    );
+    const [bondingCurve] = await PublicKey.findProgramAddress(
+      [Buffer.from(BONDING_CURVE),
+      mint.toBuffer()
+      ],
+      program.programId
+    );
+    const [vault] = await PublicKey.findProgramAddress(
+      [Buffer.from(SOL_VAULT_SEED),
+      mint.toBuffer()
+      ],
+      program.programId
+    )
+    const [associatedBondingCurve] = await PublicKey.findProgramAddress(
+      [Buffer.from(VAULT_SEED),
+      mint.toBuffer()
+      ],
+      program.programId
+    )
+    const associatedUserAccount = await getAssociatedTokenAddress(
+      mint,
+      wallet.publicKey
+    )
+    const [global] = await PublicKey.findProgramAddress(
+      [Buffer.from(GLOBAL_STATE_SEED)],
+      program.programId
+    );
+    const globalStateData = await program.account.global.fetch(global);
+    const feeRecipient = globalStateData.feeRecipient;
     const createIx = await program.methods
-      .launch(
-        coinData.decimals,
-        new anchor.BN(coinData.tokenSupply * Math.pow(10, 6)),
-        new anchor.BN(coinData.virtualReserves * Math.pow(10, 9)),
-        coinData.name,
-        coinData.symbol,
-        coinData.uri
+      .create(
+        new anchor.BN(coinData.tokenNumberStages),
+        new anchor.BN(coinData.tokenPoolDestination),
+        new anchor.BN(coinData.tokenSellTaxRange[0]),
+        new anchor.BN(coinData.tokenSellTaxRange[1]),
+        new anchor.BN(coinData.tokenSellTaxDecay),
+        new anchor.BN(coinData.tokenPoolDestination),
+        amount,
+        new anchor.BN(airdropAmount),
       )
       .accounts({
-        creator: wallet.publicKey,
-        token: mintKp.publicKey,
-        teamWallet: configAccount.teamWallet
+        rewardRecipient,
+        associatedRewardRecipient,
+        mint,
+        feeRecipient,
+        bondingCurve,
+        associatedBondingCurve,
+        associatedUserAccount,
+        vault,
+        global,
+        user: wallet.publicKey,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID
       })
       .instruction();
 
-    transaction.add(updateCpIx, updateCuIx, createIx);
+    transaction.add(createIx);
 
-    const swapIx = await program.methods.swap(
-      new anchor.BN(coinData.presale * Math.pow(10, 9)),
-      0,
-      new anchor.BN(0),)
-      .accounts({
-        teamWallet: configAccount.teamWallet,
-        user: wallet.publicKey,
-        tokenMint: mintKp.publicKey,
-      })
-      .instruction()
-    transaction.add(swapIx)
     transaction.feePayer = wallet.publicKey;
     const blockhash = await connection.getLatestBlockhash();
     transaction.recentBlockhash = blockhash.blockhash;
 
     transaction.sign(mintKp);
-    console.log("--------------------------------------");
-    console.log(transaction);
 
     if (wallet.signTransaction) {
       const signedTx = await wallet.signTransaction(transaction);
@@ -131,29 +231,98 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     pumpProgramId,
     provider
   ) as Program<Holdnow>;
-  const [configPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(SEED_CONFIG)],
+  const [global] = PublicKey.findProgramAddressSync(
+    [Buffer.from(GLOBAL_STATE_SEED)],
     program.programId
   );
-
-  const configAccount = await program.account.config.fetch(configPda);
+  const globalAccountData = await program.account.global.fetch(global);
+  const feeRecipient = globalAccountData.feeRecipient;
+  const [rewardRecipient] = await PublicKey.findProgramAddress(
+    [Buffer.from(REWARD_STATE_SEED)],
+    program.programId
+  );
+  const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
+    [Buffer.from(REWARD_STATE_SEED),
+    mint.toBuffer()
+    ],
+    program.programId
+  );
+  const [bondingCurve] = await PublicKey.findProgramAddress(
+    [Buffer.from(BONDING_CURVE),
+    mint.toBuffer()
+    ],
+    program.programId
+  );
+  const [vault] = await PublicKey.findProgramAddress(
+    [Buffer.from(SOL_VAULT_SEED),
+    mint.toBuffer()
+    ],
+    program.programId
+  )
+  const [associatedBondingCurve] = await PublicKey.findProgramAddress(
+    [Buffer.from(VAULT_SEED),
+    mint.toBuffer()
+    ],
+    program.programId
+  )
+  const associatedUserAccount = await getAssociatedTokenAddress(
+    wallet.publicKey,
+    mint,
+  );
+  const info = await connection.getAccountInfo(associatedUserAccount)
   try {
     const transaction = new Transaction()
     const cpIx = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1_000_000 });
     const cuIx = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
-
-    const swapIx = await program.methods.swap(
-      new anchor.BN(parseFloat(amount) * Math.pow(10, 9)),
-      type,
-      new anchor.BN(0),)
-      .accounts({
-        teamWallet: configAccount.teamWallet,
-        user: wallet.publicKey,
-        tokenMint: mint,
-      })
-      .instruction()
-    transaction.add(swapIx)
     transaction.add(cpIx, cuIx)
+    if (!info) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(wallet.publicKey, associatedUserAccount, wallet.publicKey, mint),
+      )
+    }
+    if (type == 0) {
+      const buyIx = await program.methods.buy(
+        new anchor.BN(parseFloat(amount) * Math.pow(10, 9)),
+        new anchor.BN(parseFloat(amount) * Math.pow(10, 9) * (101 / 100)),)
+        .accounts({
+          global,
+          feeRecipient,
+          rewardRecipient,
+          associatedRewardRecipient,
+          mint,
+          vault,
+          bondingCurve,
+          associatedBondingCurve,
+          associatedUser: associatedUserAccount,
+          user: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          clock: SYSVAR_CLOCK_PUBKEY
+        })
+        .instruction()
+      transaction.add(buyIx)
+    } else {
+      const sellIx = await program.methods.buy(
+        new anchor.BN(parseFloat(amount) * Math.pow(10, 9)),
+        new anchor.BN(parseFloat(amount) * Math.pow(10, 9) * (101 / 100)),)
+        .accounts({
+          global,
+          feeRecipient,
+          rewardRecipient,
+          associatedRewardRecipient,
+          mint,
+          vault,
+          bondingCurve,
+          associatedBondingCurve,
+          associatedUser: associatedUserAccount,
+          user: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          clock: SYSVAR_CLOCK_PUBKEY
+        })
+        .instruction()
+      transaction.add(sellIx)
+    }
     transaction.feePayer = wallet.publicKey;
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
@@ -178,7 +347,6 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
       console.log("Successfully initialized.\n Signature: ", signature);
       return res;
     }
-
   } catch (error) {
     console.log("Error in swap transaction", error);
   }
