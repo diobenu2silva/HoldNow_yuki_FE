@@ -18,7 +18,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const { user } = useContext(UserContext);
   const wallet = useWallet();
   const SolList = [
-    { id: "", price: "reset" },
+    { id: 0, price: "reset" },
     { id: "1", price: "1 sol" },
     { id: "5", price: "5 sol" },
     { id: "10", price: "10 sol" },
@@ -46,9 +46,24 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   getBalance();
 
   const handlTrade = async () => {
+    console.log("buy:", isBuy)
+    if(!!!sol) {errorAlert("Please set Amount"); return}
     const mint = new PublicKey(coin.token)
     const userWallet = new PublicKey(user.wallet)
-    const res = await swapTx(mint, wallet, sol, isBuy)
+    if (isBuy == 0) {
+      const totalLiquidity = coin.tokenReserves * coin.lamportReserves
+      console.log("TL--->", totalLiquidity)      
+      const tokenAmount = coin.tokenReserves - totalLiquidity /((coin.lamportReserves) + parseFloat(sol) * Math.pow(10, 9));
+      console.log( totalLiquidity /((coin.lamportReserves) + parseInt(sol) * Math.pow(10, 9)))
+      console.log("TA-->", tokenAmount)
+      const res = await swapTx(mint, wallet, tokenAmount, isBuy, tokenAmount)
+    } else {
+      const totalLiquidity = coin.tokenReserves * coin.lamportReserves
+      console.log("TL--->", totalLiquidity)
+      const minSol = coin.lamportReserves - totalLiquidity /((coin.tokenReserves) + parseFloat(sol) * Math.pow(10, 6));
+      console.log("minSol", totalLiquidity /((coin.tokenReserves) + parseFloat(sol) * Math.pow(10, 6)))
+      const res = await swapTx(mint, wallet, parseInt(sol), isBuy, minSol)
+    }
   }
 
   useEffect(() => {

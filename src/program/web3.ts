@@ -7,9 +7,10 @@ import { errorAlert } from '@/components/others/ToastGroup';
 import { Program } from '@coral-xyz/anchor';
 import { launchDataInfo } from '@/utils/types';
 import { HOLDNOW_PROGRAM_ID } from './programId';
-import { MintLayout, getAssociatedTokenAddress, getMinimumBalanceForRentExemptMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMintToInstruction, getOrCreateAssociatedTokenAccount } from "@solana/spl-token"
+import { MintLayout, getAssociatedTokenAddress, getMinimumBalanceForRentExemptMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMintToInstruction, getOrCreateAssociatedTokenAccount, createSetAuthorityInstruction, AuthorityType } from "@solana/spl-token"
 import { PROGRAM_ID, DataV2, createCreateMetadataAccountV3Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { BONDING_CURVE, GLOBAL_STATE_SEED, REWARD_STATE_SEED, SOL_VAULT_SEED, VAULT_SEED } from './seed';
+import { metadata } from '@/app/layout';
 
 export const commitmentLevel = "processed";
 
@@ -36,10 +37,8 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
   // check the connection
   if (!wallet.publicKey || !connection) {
     errorAlert("Wallet Not Connected");
-    console.log("Warning: Wallet not connected");
     return "WalletError";
   }
-
   try {
     const mintKp = Keypair.generate();
     const mint = mintKp.publicKey;
@@ -51,6 +50,7 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
         mint.toBuffer(),
       ], PROGRAM_ID
     );
+    console.log("metadata--->", metadataPDA)
     const amount = new anchor.BN(10 ** 9).mul(new anchor.BN(10 ** coinData.decimals))
     const tokenMetadata: DataV2 = {
       name: coinData.name,
@@ -76,24 +76,10 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
         lamports: mint_rent,
         programId: TOKEN_PROGRAM_ID,
       }),
-      createInitializeMintInstruction(mint, coinData.decimals, wallet.publicKey, wallet.publicKey),
+      createInitializeMintInstruction(mint, coinData.decimals, wallet.publicKey, null),
       createAssociatedTokenAccountInstruction(wallet.publicKey, tokenAta, wallet.publicKey, mint),
       createMintToInstruction(mint, tokenAta, wallet.publicKey, BigInt(amount.toString())),
-      // createUpdateMetadataAccountV2Instruction({
-      //     metadata: metadataPDA,
-      //     mint,
-      //     mintAuthority: wallet.publicKey,
-      //     payer: wallet.publicKey,
-      //     updateAuthority: wallet.publicKey,
-      // }, {
-      //     updateMetadataAccountArgsV2: {
-      //         data: tokenMetadata,
-      //         isMutable: true,
-      //         updateAuthority: wallet.publicKey,
-      //         primarySaleHappened: true
-      //     }
-      // }
-      // )
+
       createCreateMetadataAccountV3Instruction(
         {
           metadata: metadataPDA,
@@ -198,6 +184,7 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
           skipPreflight: false
         }
       );
+      console.log(await connection.simulateTransaction(transaction))
       const res = await connection.confirmTransaction(
         {
           signature,
@@ -216,9 +203,9 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
 };
 
 // Swap transaction
-export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount: string, type: number): Promise<any> => {
+export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount: number, type: number, slipAmount): Promise<any> => {
   console.log('========trade swap==============');
-
+console.log(slipAmount)
   // check the connection
   if (!wallet.publicKey || !connection) {
     console.log("Warning: Wallet not connected");
@@ -266,8 +253,8 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     program.programId
   )
   const associatedUserAccount = await getAssociatedTokenAddress(
-    wallet.publicKey,
     mint,
+    wallet.publicKey,
   );
   const info = await connection.getAccountInfo(associatedUserAccount)
   try {
@@ -282,8 +269,8 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     }
     if (type == 0) {
       const buyIx = await program.methods.buy(
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9)),
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9) * (101 / 100)),)
+        new anchor.BN(amount * Math.pow(10, 6)),
+        new anchor.BN(amount * Math.pow(10, 6) * (101 / 100)),)
         .accounts({
           global,
           feeRecipient,
@@ -302,9 +289,11 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
         .instruction()
       transaction.add(buyIx)
     } else {
-      const sellIx = await program.methods.buy(
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9)),
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9) * (101 / 100)),)
+      const sellIx = await program.methods.sell(
+        new anchor.BN(amount * Math.pow(10, 6)),
+        // new anchor.BN(slipAmount  * (80 / 100)),
+        new anchor.BN(0)
+      )
         .accounts({
           global,
           feeRecipient,
@@ -351,6 +340,11 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     console.log("Error in swap transaction", error);
   }
 };
+
+//Claim transaction
+export const claimTx = async (wallet: WalletContextState) => {
+
+}
 export const getTokenBalance = async (walletAddress: string, tokenMintAddress: string) => {
   const wallet = new PublicKey(walletAddress);
   const tokenMint = new PublicKey(tokenMintAddress);

@@ -32,9 +32,9 @@ export default function CreateToken() {
   const [bannerImageUrl, setBannerImageUrl] = useState<string>("");
   const [bannerImagePreview, setBannerImagePreview] = useState<string | null>(null);
   const [tokenNumberStages, setTokenNumberStages] = useState<number>(1);
-  const [tokenStageDuration, setTokenStageDuration] = useState<number>(0);
-  const [tokenSellTaxDecay, setTokenSellTaxDecay] = useState<number>(0);
-  const [tokenSellTaxRange, setTokenSellTaxRange] = useState<number[]>([]);
+  const [tokenStageDuration, setTokenStageDuration] = useState<number>(1);
+  const [tokenSellTaxDecay, setTokenSellTaxDecay] = useState<number>(1);
+  const [tokenSellTaxRange, setTokenSellTaxRange] = useState<number[]>([0,100]);
   const [tokenPoolDestination, setTokenPollDestination] = useState<number>(3);
   const wallet = useWallet();
   const router = useRouter();
@@ -92,7 +92,7 @@ export default function CreateToken() {
   const createCoin = async () => {
     console.log("imageUrl--->", profilImageUrl, profileImagePreview)
     if (!validateForm()) {
-      errorAlert("Please fix the errors before submitting.");
+      errorAlert(`${errors}`);
       return;
     }
 
@@ -110,7 +110,7 @@ export default function CreateToken() {
         symbol: newCoin.ticker,
         image: uploadedImageUrl,
         description: newCoin.description,
-        createdOn: "https://test.com",
+        createdOn: new Date(),
         twitter: newCoin.twitter || undefined,   // Only assign if it exists
         website: newCoin.website || undefined,   // Only assign if it exists
         telegram: newCoin.telegram || undefined   // Only assign if it exists
@@ -136,7 +136,7 @@ export default function CreateToken() {
       console.log("coinData--->", coinData)
 
       const res = await createToken(wallet, coinData);
-      if (res === "WalletError" || !res) {
+      if (res !== "WalletError" && !res) {
         errorAlert("Payment failed or was rejected.");
         setIsLoading(false);
         return;
@@ -218,8 +218,8 @@ export default function CreateToken() {
 
             <ImageUpload header="Project Profile Image" setFilePreview={(fileName) => setProfileImagePreview(fileName)} setFileUrl={(fileUrl) => setProfileIamgeUrl(fileUrl)} type="image/*" />
             <SelectInput header="Number fo Stages" data={StagesData} setSelectData={(inputData) => setTokenNumberStages(inputData.id)} style="h-[162px]" firstData="One" />
-            <SelectInput header="Stage Duration" data={StageDurationData} setSelectData={(inputData) => setTokenStageDuration(inputData.id)} style="h-[280px]" firstData="1 Day" />
-            <SellTaxRange header="Stage Duration" setSelectRange={(changeRange) => setTokenSellTaxRange(changeRange)} />
+            <SelectInput header="Sell Tax Range" data={StageDurationData} setSelectData={(inputData) => setTokenStageDuration(inputData.id)} style="h-[280px]" firstData="1 Day" />
+            <SellTaxRange header="Sell Tax Range" setSelectRange={(changeRange) => setTokenSellTaxRange(changeRange)} />
             <SelectInput header="Sell Tax Decay" data={SellTaxDecayData} setSelectData={(inputData) => setTokenSellTaxDecay(inputData.id)} style="h-[200px] overflow-y-scroll z-10" firstData="Unitill halfqy throgh - 10%" />
           </div>
         </div>

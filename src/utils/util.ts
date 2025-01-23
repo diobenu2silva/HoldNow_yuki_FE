@@ -52,11 +52,24 @@ export const confirmWallet = async ({ data }: { data: userInfo }): Promise<any> 
     return { error: 'error setting up the request' };
   }
 };
-
+export const getClaim = async (coinId: string, id: string): Promise<any> => {
+  try {
+    const response = await axios.get(`${BACKEND_URL}/claim/airdrop/${id}/${coinId}`, config);
+    return response.data;
+  } catch (err) {
+    return { error: 'error setting up the request' };
+  }
+};
 export const getCoinsInfo = async (): Promise<coinInfo[]> => {
-  const res = await axios.get(`${BACKEND_URL}/coin`, config);
+  const res = await axios.get(`${BACKEND_URL}/coin/`, config);
   return res.data;
 };
+
+export const getCoinsInfoBySort = async (sort: string, page: number, number: number): Promise<coinInfo[]> => {
+  const res = await axios.get(`${BACKEND_URL}/coin/${sort}/${page}/${number}`, config);
+  return res.data;
+};
+
 export const getCoinsInfoBy = async (id: string): Promise<coinInfo[]> => {
   const res = await axios.get<coinInfo[]>(`${BACKEND_URL}/coin/user/${id}`, config);
   return res.data;
@@ -101,6 +114,7 @@ export const getCoinTrade = async (data: string): Promise<any> => {
 
 export const postReply = async (data: replyInfo) => {
   try {
+    console.log("psotReply")
     const response = await axios.post(`${BACKEND_URL}/feedback/`, data, config);
     return response.data;
   } catch (err) {
@@ -162,3 +176,16 @@ export const getSolPriceInUSD = async () => {
     throw error;
   }
 };
+
+export const claim = async (userData: userInfo) => {
+  const data = {
+    wallet: userData.wallet,
+    id: userData._id,
+  }
+  try {
+    const response = await axios.post(`${BACKEND_URL}/user/claim/`, data, config)
+  } catch (error) {
+    console.error('Error claim:', error);
+    throw error;
+  }
+}

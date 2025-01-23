@@ -1,6 +1,6 @@
 import UserContext from '@/context/UserContext';
 import { coinInfo, replyInfo, tradeInfo, userInfo } from '@/utils/types';
-import { postReply, updateUser, uploadImage } from '@/utils/util';
+import { postReply, updateUser } from '@/utils/util';
 import React, { ChangeEvent, useContext, useMemo, useRef, useState } from 'react';
 import { errorAlert, successAlert } from '../others/ToastGroup';
 import ImgIcon from "@/../public/assets/images/imce-logo.jpg";
@@ -43,8 +43,9 @@ const ReplyModal: React.FC<ModalProps> = ({ data }) => {
         }
       }
     }
-    handleModalToggle();
+    console.log("reply", reply)
     await postReply(reply);
+    handleModalToggle();
   }
 
   const handleModalToggle = () => {
