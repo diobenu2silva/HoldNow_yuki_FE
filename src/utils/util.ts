@@ -1,5 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { ChartTable, coinInfo, holderInfo, msgInfo, replyInfo, userInfo } from './types';
+import { claimTx } from '@/program/web3';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -83,6 +85,20 @@ export const getCoinInfo = async (data: string): Promise<any> => {
   }
 };
 
+export const sendTx = async (signature, token, user) => {
+  try {
+    const data = {
+      signature,
+      token,
+      user
+    }
+    console.log("signature-->", data)
+    const response = await axios.post(`${BACKEND_URL}/cointrade/signature`, data, config);
+  } catch (error) {
+    return { error: 'signature failed' }
+  }
+}
+
 export const getUserInfo = async (data: string): Promise<any> => {
   try {
     const response = await axios.get(`${BACKEND_URL}/user/${data}`, config);
@@ -95,7 +111,6 @@ export const getUserInfo = async (data: string): Promise<any> => {
 export const getMessageByCoin = async (data: string): Promise<msgInfo[]> => {
   try {
     const response = await axios.get(`${BACKEND_URL}/feedback/coin/${data}`, config);
-    console.log('messages:', response.data);
     return response.data;
   } catch (err) {
     return [];
@@ -157,7 +172,7 @@ export const findHolders = async (mint: string) => {
     console.log("holders", data)
     // Adding unique owners to a list of token owners.
     data.result.token_accounts.forEach((account) => {
-      allOwners.push({ slice: account.owner.slice(0, 3) + `...` + account.owner.slice(-4), owner: account.owner, amount: account.amount });
+      allOwners.push({ name: account.owner.slice(0, 3) + `...` + account.owner.slice(-4), owner: account.owner, amount: account.amount });
     });
     page++;
   }
@@ -177,13 +192,17 @@ export const getSolPriceInUSD = async () => {
   }
 };
 
-export const claim = async (userData: userInfo) => {
+export const claim = async (userData: userInfo, claimAmount: number, coin: coinInfo, wallet: WalletContextState) => {
+  const signedTx = await claimTx(claimAmount, coin, wallet)
   const data = {
-    wallet: userData.wallet,
-    id: userData._id,
+    user: userData.wallet,
+    signedTx,
+    coin: coin.token,
+    amount: claimAmount
   }
   try {
     const response = await axios.post(`${BACKEND_URL}/user/claim/`, data, config)
+    return "success"
   } catch (error) {
     console.error('Error claim:', error);
     throw error;

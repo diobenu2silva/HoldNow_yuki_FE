@@ -14,7 +14,7 @@ export const StagesData = [
 
 export const StageDurationData = [
     { id: 1, text: "1 Days" },
-    { id: 1, text: "2 Days" },
+    { id: 2, text: "2 Days" },
     { id: 3, text: "3 Days" },
     { id: 4, text: "4 Days" },
     { id: 5, text: "5 Days" },

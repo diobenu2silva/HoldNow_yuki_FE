@@ -105,16 +105,18 @@ export interface tradeInfo {
 }
 
 export interface holderInfo {
-  slice: string;
+  name: string;
   owner: string;
   amount: number
 }
 
 export interface recordInfo {
   holder: userInfo;
-  holdingStatus: number;
+  lamportAmount: number;
+  price: number;
+  swapDirection: number;
   time: Date;
-  amount: number;
+  tokenAmount: number;
   tx: string;
 }
 export interface CharTable {

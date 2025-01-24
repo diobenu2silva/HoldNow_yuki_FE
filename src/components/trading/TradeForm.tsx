@@ -15,7 +15,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const [isBuy, setIsBuy] = useState<number>(0);
   const [tokenBal, setTokenBal] = useState<number>(0);
   const [tokenName, setTokenName] = useState<string>("Token")
-  const { user } = useContext(UserContext);
+  const { user , setWeb3Tx} = useContext(UserContext);
   const wallet = useWallet();
   const SolList = [
     { id: 0, price: "reset" },
@@ -57,12 +57,14 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       console.log( totalLiquidity /((coin.lamportReserves) + parseInt(sol) * Math.pow(10, 9)))
       console.log("TA-->", tokenAmount)
       const res = await swapTx(mint, wallet, tokenAmount, isBuy, tokenAmount)
+      if(res) setWeb3Tx(res)
     } else {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
       console.log("TL--->", totalLiquidity)
       const minSol = coin.lamportReserves - totalLiquidity /((coin.tokenReserves) + parseFloat(sol) * Math.pow(10, 6));
       console.log("minSol", totalLiquidity /((coin.tokenReserves) + parseFloat(sol) * Math.pow(10, 6)))
       const res = await swapTx(mint, wallet, parseInt(sol), isBuy, minSol)
+      if(res) setWeb3Tx(res)
     }
   }
 

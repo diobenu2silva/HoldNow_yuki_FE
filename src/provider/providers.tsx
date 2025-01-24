@@ -27,6 +27,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   const [solPrice, setSolPrice] = useState<number>(0);
   const [profileEditModal, setProfileEditModal] = useState<boolean>(false);
   const [postReplyModal, setPostReplyModal] = useState<boolean>(false);
+  const [web3Tx, setWeb3Tx] = useState<string>("")
 
   return (
     <SolanaWalletProvider>
@@ -35,6 +36,8 @@ export default function Providers({ children }: { children: ReactNode }) {
           <PageProvider>
             <UserContext.Provider
               value={{
+                web3Tx,
+                setWeb3Tx,
                 solPrice,
                 setSolPrice,
                 newMsg,

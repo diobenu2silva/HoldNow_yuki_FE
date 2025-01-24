@@ -19,7 +19,7 @@ import { ConnectButton } from "../buttons/ConnectButton";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 export default function TradingPage() {
-  const { coinId, setCoinId, login, user } = useContext(UserContext);
+  const { coinId, setCoinId, login, user, web3Tx, setWeb3Tx } = useContext(UserContext);
   const { publicKey } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const pathname = usePathname();
@@ -31,6 +31,8 @@ export default function TradingPage() {
   const [liquidity, setLiquidity] = useState<number>(0);
   const [stageProg, setStageProg] = useState<number>(0)
   const [sellTax, setSellTax] = useState<number>(0);
+  const wallet = useWallet()
+
   const router = useRouter()
 
   const copyToClipBoard = async (copyMe: string) => {
@@ -69,7 +71,7 @@ export default function TradingPage() {
       setProgress(prog)
     }
     fetchData()
-  }, [pathname, publicKey]);
+  }, [pathname, publicKey, web3Tx]);
   useEffect(() => {
     if (stageProg > coin.sellTaxDecay) {
       setSellTax(coin.sellTaxMin)
@@ -78,7 +80,8 @@ export default function TradingPage() {
     }
   }, [stageProg, coin])
   const handleClaim = async () => {
-    await claim(user)
+    const res = await claim(user, claimAmount, coin, wallet)
+    if (res == "success") setWeb3Tx(res)
   }
   return (
     <div className="w-full flex flex-col px-3 mx-auto gap-5 pb-20">
