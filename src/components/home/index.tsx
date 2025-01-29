@@ -30,7 +30,6 @@ const HomePage: FC = () => {
     const fetchData = async () => {
       const coins = await getCoinsInfo();
       const price = await getSolPriceInUSD();
-      console.log("coins--->", coins)
       if (coins !== null) {
         coins.sort((a, b) => a.tokenReserves - b.tokenReserves);
         setData(coins);

@@ -48,6 +48,7 @@ export interface coinInfo {
   description?: string,
   url: string,
   token: string,
+  tokenSupply: number,
   tokenReserves: number,
   lamportReserves: number,
   progressMcap: number,

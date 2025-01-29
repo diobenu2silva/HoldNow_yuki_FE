@@ -31,7 +31,7 @@ export const Trade: React.FC<TradePropsInfo> = ({ key, trade }) => {
         :
         <td className="text-center py-2">{trade.swapDirection == 1 ? "BUY" : "SELL"}</td>
       }
-      <td className="text-center py-2">{Math.round(trade.lamportAmount / Math.pow(10, 6))/100}</td>
+      <td className="text-center py-2">{Math.round(trade.lamportAmount / Math.pow(10, 6))/1000}</td>
       <td className="text-center py-2">{trade.time.toString()}</td>
       <td className="text-center py-2">
         <p onClick={() => handleToRouter(`https://solscan.io/tx/${trade.tx}?cluster=devnet`)} className="text-lg leading-10 hover:cursor-pointer hover:text-white">

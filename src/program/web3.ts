@@ -28,7 +28,6 @@ export const pumpProgramInterface = JSON.parse(JSON.stringify(idl));
 
 // Send Fee to the Fee destination
 export const createToken = async (wallet: WalletContextState, coinData: launchDataInfo) => {
-  console.log("coinData-->",coinData)
   const provider = new anchor.AnchorProvider(connection, wallet, { preflightCommitment: "confirmed" })
   anchor.setProvider(provider);
   const program = new Program(
@@ -37,7 +36,6 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
     provider
   ) as Program<Holdnow>;
 
-  console.log('========Fee Pay==============');
 
   // check the connection
   if (!wallet.publicKey || !connection) {
@@ -55,7 +53,6 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
         mint.toBuffer(),
       ], PROGRAM_ID
     );
-    console.log("metadata--->", metadataPDA)
     const amount = new anchor.BN(10 ** 9).mul(new anchor.BN(10 ** coinData.decimals))
     const tokenMetadata: DataV2 = {
       name: coinData.name,
@@ -181,7 +178,6 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
     if (wallet.signTransaction) {
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
-      console.log('----', await connection.simulateTransaction(signedTx));
       const signature = await connection.sendRawTransaction(
         sTx,
         {
@@ -189,7 +185,6 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
           skipPreflight: false
         }
       );
-      console.log(await connection.simulateTransaction(transaction))
       const res = await connection.confirmTransaction(
         {
           signature,
@@ -198,23 +193,18 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
         },
         "confirmed"
       );
-      console.log("Successfully initialized.\n Signature: ", signature);
       await sendTx(signature, mint, wallet.publicKey);
       return res;
     }
   } catch (error) {
-    console.log("----", error);
     return false;
   }
 };
 
 // Swap transaction
 export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount: number, type: number, slipAmount): Promise<any> => {
-  console.log('========trade swap==============');
-  console.log(slipAmount)
   // check the connection
   if (!wallet.publicKey || !connection) {
-    console.log("Warning: Wallet not connected");
     return;
   }
   const provider = new anchor.AnchorProvider(connection, wallet, { preflightCommitment: "confirmed" })
@@ -324,7 +314,6 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     if (wallet.signTransaction) {
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
-      console.log("----", await connection.simulateTransaction(signedTx));
       const signature = await connection.sendRawTransaction(sTx, {
         preflightCommitment: "confirmed",
         skipPreflight: false,
@@ -339,12 +328,10 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
         },
         "confirmed"
       );
-      console.log("Successfully initialized.\n Signature: ", signature);
       await sendTx(signature, mint, wallet.publicKey);
       return res;
     }
   } catch (error) {
-    console.log("Error in swap transaction", error);
   }
 };
 
@@ -438,7 +425,6 @@ export const getTokenBalance = async (walletAddress: string, tokenMintAddress: s
   });
 
   if (response.value.length == 0) {
-    console.log('No token account found for the specified mint address.');
     return;
   }
 
@@ -447,7 +433,6 @@ export const getTokenBalance = async (walletAddress: string, tokenMintAddress: s
 
   // Convert the balance from integer to decimal format
 
-  console.log(`Token Balance: ${tokenAccountInfo.value.uiAmount}`);
 
   return tokenAccountInfo.value.uiAmount;
 };

@@ -90,7 +90,6 @@ export default function CreateToken() {
   };
 
   const createCoin = async () => {
-    console.log("imageUrl--->", profilImageUrl, profileImagePreview)
     if (!validateForm()) {
       errorAlert(`${errors}`);
       return;
@@ -133,7 +132,6 @@ export default function CreateToken() {
         tokenSellTaxRange,
         tokenPoolDestination,
       }
-      console.log("coinData--->", coinData)
 
       const res = await createToken(wallet, coinData);
       if (res !== "WalletError" && !res) {

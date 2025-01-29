@@ -23,7 +23,6 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (param) {
-        console.log(currentTable)
         if (currentTable === "thread") {
           const data = await getMessageByCoin(param);
           setMessages(data);
@@ -38,7 +37,6 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     }
     fetchData();
   }, [currentTable, param])
-  console.log("trade-->", trades)
   useEffect(() => {
     if (coinId == coin._id) {
       setMessages([...messages, tempNewMsg])

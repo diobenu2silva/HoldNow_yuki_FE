@@ -21,11 +21,13 @@ const ReplyModal: React.FC<ModalProps> = ({ data }) => {
 
   const replyPost = async () => {
     let reply: replyInfo;
+    if(!user) {
+      errorAlert("Please Connect Wallet")
+      return;
+    }
     if (imageUrl) {
       const url = await uploadImage(imageUrl);
       if (url && user._id) {
-        console.log("user._id: ", user._id)
-        console.log("url: ", url)
 
         reply = {
           coinId: data._id,
@@ -43,7 +45,6 @@ const ReplyModal: React.FC<ModalProps> = ({ data }) => {
         }
       }
     }
-    console.log("reply", reply)
     await postReply(reply);
     handleModalToggle();
   }

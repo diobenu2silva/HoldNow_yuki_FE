@@ -35,13 +35,11 @@ const configurationData: DatafeedConfiguration = {
 
 export function getDataFeed({
   pairIndex,
-  customPeriodParams,
   name,
   token
 }: {
   name: string;
   pairIndex: number;
-  customPeriodParams: PeriodParams;
   token: string
 }): IBasicDataFeed {
   let initialLoadComplete = false;

@@ -27,7 +27,6 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
 
     const value = e.target.value;
-    console.log("value--->", value)
     if (!isNaN(parseFloat(value))) {
       setSol(value);
     } else if (value === '') {
@@ -46,23 +45,17 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   getBalance();
 
   const handlTrade = async () => {
-    console.log("buy:", isBuy)
     if(!!!sol) {errorAlert("Please set Amount"); return}
     const mint = new PublicKey(coin.token)
     const userWallet = new PublicKey(user.wallet)
     if (isBuy == 0) {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
-      console.log("TL--->", totalLiquidity)      
       const tokenAmount = coin.tokenReserves - totalLiquidity /((coin.lamportReserves) + parseFloat(sol) * Math.pow(10, 9));
-      console.log( totalLiquidity /((coin.lamportReserves) + parseInt(sol) * Math.pow(10, 9)))
-      console.log("TA-->", tokenAmount)
       const res = await swapTx(mint, wallet, tokenAmount, isBuy, tokenAmount)
       if(res) setWeb3Tx(res)
     } else {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
-      console.log("TL--->", totalLiquidity)
       const minSol = coin.lamportReserves - totalLiquidity /((coin.tokenReserves) + parseFloat(sol) * Math.pow(10, 6));
-      console.log("minSol", totalLiquidity /((coin.tokenReserves) + parseFloat(sol) * Math.pow(10, 6)))
       const res = await swapTx(mint, wallet, parseInt(sol), isBuy, minSol)
       if(res) setWeb3Tx(res)
     }

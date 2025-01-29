@@ -16,7 +16,6 @@ export type TVChartContainerProps = {
     name: string;
     pairIndex: number;
     token: string;
-    customPeriodParams: PeriodParamsInfo;
     classNames?: {
         container: string;
     };
@@ -26,7 +25,6 @@ export const TVChartContainer = ({
     name,
     pairIndex,
     token,
-    customPeriodParams
 }: TVChartContainerProps) => {
     const chartContainerRef =
         useRef<HTMLDivElement>() as React.MutableRefObject<HTMLInputElement>;
@@ -45,7 +43,7 @@ export const TVChartContainer = ({
             const widgetOptions: ChartingLibraryWidgetOptions = {
                 symbol: name,
                 debug: false,
-                datafeed: getDataFeed({ pairIndex, name, token, customPeriodParams }),
+                datafeed: getDataFeed({ pairIndex, name, token}),
                 theme: "dark",
                 locale: "en",
                 container: elem,

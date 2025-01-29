@@ -16,12 +16,10 @@ const config: AxiosRequestConfig = {
 export const test = async () => {
   const res = await fetch(`${BACKEND_URL}`);
   const data = await res.json();
-  console.log(data);
 };
 export const getUser = async ({ id }: { id: string }): Promise<any> => {
   try {
     const response = await axios.get(`${BACKEND_URL}/user/${id}`, config);
-    console.log('response:', response.data);
     return response.data;
   } catch (err) {
     return { error: 'error setting up the request' };
@@ -29,7 +27,6 @@ export const getUser = async ({ id }: { id: string }): Promise<any> => {
 };
 export const updateUser = async (id: string, data: userInfo): Promise<any> => {
   try {
-    console.log(`${BACKEND_URL}/user/update/${id}`);
     const response = await axios.post(`${BACKEND_URL}/user/update/${id}`, data, config);
     return response.data;
   } catch (err) {
@@ -92,7 +89,6 @@ export const sendTx = async (signature, token, user) => {
       token,
       user
     }
-    console.log("signature-->", data)
     const response = await axios.post(`${BACKEND_URL}/cointrade/signature`, data, config);
   } catch (error) {
     return { error: 'signature failed' }
@@ -120,7 +116,6 @@ export const getMessageByCoin = async (data: string): Promise<msgInfo[]> => {
 export const getCoinTrade = async (data: string): Promise<any> => {
   try {
     const response = await axios.get(`${BACKEND_URL}/cointrade/${data}`, config);
-    console.log('trade response::', response);
     return response.data;
   } catch (err) {
     return { error: 'error setting up the request' };
@@ -129,7 +124,6 @@ export const getCoinTrade = async (data: string): Promise<any> => {
 
 export const postReply = async (data: replyInfo) => {
   try {
-    console.log("psotReply")
     const response = await axios.post(`${BACKEND_URL}/feedback/`, data, config);
     return response.data;
   } catch (err) {
@@ -169,7 +163,6 @@ export const findHolders = async (mint: string) => {
     if (!data.result || data.result.token_accounts.length === 0) {
       break;
     }
-    console.log("holders", data)
     // Adding unique owners to a list of token owners.
     data.result.token_accounts.forEach((account) => {
       allOwners.push({ name: account.owner.slice(0, 3) + `...` + account.owner.slice(-4), owner: account.owner, amount: account.amount });

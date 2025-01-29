@@ -24,7 +24,6 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
 
   const getMarketCapData = async (coin: coinInfo) => {
     const prog = coin.progressMcap * solPrice;
-    console.log(prog)
     setMarketCapValue(Math.round(prog/100)/10);
   }
 
