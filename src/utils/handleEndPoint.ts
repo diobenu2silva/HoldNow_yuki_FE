@@ -31,13 +31,11 @@ const handleEndpoint = async (
 
     // Send the request
     const response = await axios(config);
-    console.log("handleEndpoint response:", response.data, endpoint);
     return response.data;
   } catch (error: any) {
     // Handle different types of errors
     if (error.response) {
       // The server responded with a status code
-      console.log("Error response:", error);
       errorAlertCenter(error.response.data?.error || "Request failed");
     } else if (error.request) {
       // The request was made but no response was received

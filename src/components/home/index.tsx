@@ -22,7 +22,7 @@ const HomePage: FC = () => {
   const dropdownRef1 = useRef(null);
   const router = useRouter()
 
-  const handleToRouter = (id: string) => {
+  const  handleToRouter = (id: string) => {
     router.push(id)
   }
 
@@ -30,9 +30,8 @@ const HomePage: FC = () => {
     const fetchData = async () => {
       const coins = await getCoinsInfo();
       const price = await getSolPriceInUSD();
-      console.log("coins--->", coins)
       if (coins !== null) {
-        coins.sort((a, b) => a.reserveOne - b.reserveOne);
+        coins.sort((a, b) => a.tokenReserves - b.tokenReserves);
         setData(coins);
         setIsLoading(true);
         setKing(coins[0]);
@@ -40,7 +39,6 @@ const HomePage: FC = () => {
       }
     };
     fetchData();
-
   }, []);
   const handleSortSelection = (option) => {
     let sortOption: string = '';
@@ -58,20 +56,14 @@ const HomePage: FC = () => {
     }
     if (orderOption == "desc") {
       switch (sortOption) {
-        case "bump order":
-          sortedData.sort((a, b) => a.reserveOne - b.reserveOne);
-          break;
         case "last reply":
-          sortedData.sort((a, b) => a.reserveOne - b.reserveOne);
-          break;
-        case "reply count":
-          sortedData.sort((a, b) => a.reserveOne - b.reserveOne);
+          sortedData.sort((a, b) => a.tokenReserves - b.tokenReserves);
           break;
         case "market cap":
-          sortedData.sort((a, b) => a.reserveOne - b.reserveOne);
+          sortedData.sort((a, b) => a.progressMcap - b.progressMcap);
           break;
         case "creation time":
-          sortedData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          sortedData.sort((a, b) => new Date(a.atLaunched).getTime() - new Date(b.atLaunched).getTime());
           break;
         default:
           sortedData = data;
@@ -79,20 +71,14 @@ const HomePage: FC = () => {
       }
     } else {
       switch (sortOption) {
-        case "bump order":
-          sortedData.sort((a, b) => b.reserveOne - a.reserveOne);
-          break;
         case "last reply":
-          sortedData.sort((a, b) => b.reserveOne - a.reserveOne);
-          break;
-        case "reply count":
-          sortedData.sort((a, b) => b.reserveOne - a.reserveOne);
+          sortedData.sort((a, b) => b.tokenReserves - a.tokenReserves);
           break;
         case "market cap":
-          sortedData.sort((a, b) => b.reserveOne - a.reserveOne);
+          sortedData.sort((a, b) => b.progressMcap - a.progressMcap);
           break;
         case "creation time":
-          sortedData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          sortedData.sort((a, b) => new Date(b.atLaunched).getTime() - new Date(a.atLaunched).getTime());
           break;
         default:
           sortedData = data;

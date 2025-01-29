@@ -35,7 +35,8 @@ const UserContext = createContext({
     setProfileEditModal: (value: boolean) => { },
     postReplyModal: false,
     setPostReplyModal: (value: boolean) => { },
-
+    web3Tx: "",
+    setWeb3Tx: (value: string) => { },
 })
 
 export default UserContext;

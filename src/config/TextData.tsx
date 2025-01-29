@@ -14,7 +14,7 @@ export const StagesData = [
 
 export const StageDurationData = [
     { id: 1, text: "1 Days" },
-    { id: 1, text: "2 Days" },
+    { id: 2, text: "2 Days" },
     { id: 3, text: "3 Days" },
     { id: 4, text: "4 Days" },
     { id: 5, text: "5 Days" },
@@ -23,16 +23,16 @@ export const StageDurationData = [
 ]
 
 export const SellTaxDecayData = [
-    { id: 1, text: "Unitill halfqy throgh - 10%" },
-    { id: 2, text: "Unitill halfqy throgh - 20%" },
-    { id: 3, text: "Unitill halfqy throgh - 30%" },
-    { id: 4, text: "Unitill halfqy throgh - 40%" },
-    { id: 5, text: "Unitill halfqy throgh - 50%" },
-    { id: 6, text: "Unitill halfqy throgh - 60%" },
-    { id: 7, text: "Unitill halfqy throgh - 70%" },
-    { id: 8, text: "Unitill halfqy throgh - 80%" },
-    { id: 9, text: "Unitill halfqy throgh - 90%" },
-    { id: 10, text: "Unitill halfqy throgh - 100%" },
+    { id: 10, text: "Unitill halfqy throgh - 10%" },
+    { id: 20, text: "Unitill halfqy throgh - 20%" },
+    { id: 30, text: "Unitill halfqy throgh - 30%" },
+    { id: 40, text: "Unitill halfqy throgh - 40%" },
+    { id: 50, text: "Unitill halfqy throgh - 50%" },
+    { id: 60, text: "Unitill halfqy throgh - 60%" },
+    { id: 70, text: "Unitill halfqy throgh - 70%" },
+    { id: 80, text: "Unitill halfqy throgh - 80%" },
+    { id: 90, text: "Unitill halfqy throgh - 90%" },
+    { id: 100, text: "Unitill halfqy throgh - 100%" },
 ]
 
 export const FinalTokenPoolData = [

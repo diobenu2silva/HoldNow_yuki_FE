@@ -4,7 +4,6 @@ import { ConnectButton } from "../buttons/ConnectButton";
 import { useRouter } from "next/navigation";
 import { FaWolfPackBattalion } from "react-icons/fa";
 import { PROGRAM_ID_IDL } from "@/program/programId";
-import { AgentsLandListener } from "@/program/logListeners/AgentsLandListener";
 import { connection } from "@/program/web3";
 import { coinInfo, SwapInfo } from "@/utils/types";
 import Link from "next/link";
@@ -19,33 +18,6 @@ const Header: FC = () => {
 
   const [latestCreatedToken, setLatestCreatedToken] = useState<coinInfo>(undefined);
   const [latestSwapInfo, setLatestSwapInfo] = useState<SwapInfo>(undefined);
-
-  useEffect(() => {
-    const listener = new AgentsLandListener(connection);
-    listener.setProgramLogsCallback('Launch', (basicTokenInfo: any) => {
-      const newCoinInfo = {
-        creator: basicTokenInfo.creator,
-        name: basicTokenInfo.metadata.name,
-        url: basicTokenInfo.metadata.json.image ?? basicTokenInfo.metadata.uri,
-        ticker: basicTokenInfo.metadata.symbol,
-        reserveOne: 0,
-        reserveTwo: 0,
-        token: basicTokenInfo.mintAddress,
-        commit: '',
-      };
-      console.log("new coin info: ", newCoinInfo)
-      setLatestCreatedToken(newCoinInfo);
-    });
-    listener.setProgramLogsCallback('Swap', (swapInfo: SwapInfo) => {
-      setLatestSwapInfo(swapInfo)
-    })
-
-    const subId = listener.subscribeProgramLogs(PROGRAM_ID_IDL.toBase58());
-
-    return () => {
-      connection.removeOnLogsListener(subId);
-    }
-  }, []);
 
   return (
     <div className="w-full h-[100px] flex flex-col justify-center items-center">

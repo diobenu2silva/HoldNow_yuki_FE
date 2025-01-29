@@ -33,7 +33,7 @@ export interface metadataInfo {
   symbol: string,
   image: string,
   description: string,
-  createdOn: string,
+  createdOn: Date,
   twitter?: string,
   website?: string,
   telegram?: string,
@@ -45,19 +45,30 @@ export interface coinInfo {
   name: string,
   creator: string | userInfo,
   ticker: string,
-  url: string,
-  reserveOne: number,
-  reserveTwo: number,
-  token: string,
-  tokenSupply?: number,
-  marketcap?: number,
-  presale?: number,
-  replies?: number,
   description?: string,
-  twitter?: string,
+  url: string,
+  token: string,
+  tokenSupply: number,
+  tokenReserves: number,
+  lamportReserves: number,
+  progressMcap: number,
+  atLaunched: Date,
+
   website?: string,
   telegram?: string,
-  date?: Date,
+  twitter?: string,
+  frontBanner?: string,
+  
+  stagesNumber: number,
+  stageDuration:number,
+  sellTaxMax: number,
+  sellTaxMin: number,
+  sellTaxDecay: number,
+  tokenPoolDestination: number,
+  bondingCurve: boolean,
+  currentStage: number,
+  atStageStarted: Date,
+  airdropStage: boolean
 }
 export interface createCoinInfo {
   name: string,
@@ -65,8 +76,6 @@ export interface createCoinInfo {
   url: string,
   description: string,
   presale: number,
-  tokenSupply: number,
-  virtualReserves: number,
   twitter?: string,
   website?: string,
   telegram?: string,
@@ -97,16 +106,18 @@ export interface tradeInfo {
 }
 
 export interface holderInfo {
-  slice: string;
+  name: string;
   owner: string;
   amount: number
 }
 
 export interface recordInfo {
   holder: userInfo;
-  holdingStatus: number;
+  lamportAmount: number;
+  price: number;
+  swapDirection: number;
   time: Date;
-  amount: number;
+  tokenAmount: number;
   tx: string;
 }
 export interface CharTable {

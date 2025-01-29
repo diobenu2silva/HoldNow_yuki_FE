@@ -5,11 +5,17 @@ import * as anchor from '@coral-xyz/anchor';
 import { WalletContextState, useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { errorAlert } from '@/components/others/ToastGroup';
 import { Program } from '@coral-xyz/anchor';
-import { launchDataInfo } from '@/utils/types';
+import { coinInfo, launchDataInfo } from '@/utils/types';
 import { HOLDNOW_PROGRAM_ID } from './programId';
-import { MintLayout, getAssociatedTokenAddress, getMinimumBalanceForRentExemptMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMintToInstruction, getOrCreateAssociatedTokenAccount } from "@solana/spl-token"
+import { MintLayout, getAssociatedTokenAddress, getMinimumBalanceForRentExemptMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMintToInstruction, getOrCreateAssociatedTokenAccount, createSetAuthorityInstruction, AuthorityType } from "@solana/spl-token"
 import { PROGRAM_ID, DataV2, createCreateMetadataAccountV3Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { BONDING_CURVE, GLOBAL_STATE_SEED, REWARD_STATE_SEED, SOL_VAULT_SEED, VAULT_SEED } from './seed';
+import { metadata } from '@/app/layout';
+import { useContext } from 'react';
+import UserContext from '@/context/UserContext';
+import { BN } from 'bn.js';
+import { getTransactionConfirmations } from 'viem/actions';
+import { sendTx } from '@/utils/util';
 
 export const commitmentLevel = "processed";
 
@@ -22,7 +28,6 @@ export const pumpProgramInterface = JSON.parse(JSON.stringify(idl));
 
 // Send Fee to the Fee destination
 export const createToken = async (wallet: WalletContextState, coinData: launchDataInfo) => {
-
   const provider = new anchor.AnchorProvider(connection, wallet, { preflightCommitment: "confirmed" })
   anchor.setProvider(provider);
   const program = new Program(
@@ -31,15 +36,12 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
     provider
   ) as Program<Holdnow>;
 
-  console.log('========Fee Pay==============');
 
   // check the connection
   if (!wallet.publicKey || !connection) {
     errorAlert("Wallet Not Connected");
-    console.log("Warning: Wallet not connected");
     return "WalletError";
   }
-
   try {
     const mintKp = Keypair.generate();
     const mint = mintKp.publicKey;
@@ -76,24 +78,10 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
         lamports: mint_rent,
         programId: TOKEN_PROGRAM_ID,
       }),
-      createInitializeMintInstruction(mint, coinData.decimals, wallet.publicKey, wallet.publicKey),
+      createInitializeMintInstruction(mint, coinData.decimals, wallet.publicKey, null),
       createAssociatedTokenAccountInstruction(wallet.publicKey, tokenAta, wallet.publicKey, mint),
       createMintToInstruction(mint, tokenAta, wallet.publicKey, BigInt(amount.toString())),
-      // createUpdateMetadataAccountV2Instruction({
-      //     metadata: metadataPDA,
-      //     mint,
-      //     mintAuthority: wallet.publicKey,
-      //     payer: wallet.publicKey,
-      //     updateAuthority: wallet.publicKey,
-      // }, {
-      //     updateMetadataAccountArgsV2: {
-      //         data: tokenMetadata,
-      //         isMutable: true,
-      //         updateAuthority: wallet.publicKey,
-      //         primarySaleHappened: true
-      //     }
-      // }
-      // )
+
       createCreateMetadataAccountV3Instruction(
         {
           metadata: metadataPDA,
@@ -155,7 +143,7 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
     const createIx = await program.methods
       .create(
         new anchor.BN(coinData.tokenNumberStages),
-        new anchor.BN(coinData.tokenPoolDestination),
+        new anchor.BN(coinData.tokenStageDuration),
         new anchor.BN(coinData.tokenSellTaxRange[0]),
         new anchor.BN(coinData.tokenSellTaxRange[1]),
         new anchor.BN(coinData.tokenSellTaxDecay),
@@ -190,7 +178,6 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
     if (wallet.signTransaction) {
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
-      console.log('----', await connection.simulateTransaction(signedTx));
       const signature = await connection.sendRawTransaction(
         sTx,
         {
@@ -206,22 +193,18 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
         },
         "confirmed"
       );
-      console.log("Successfully initialized.\n Signature: ", signature);
+      await sendTx(signature, mint, wallet.publicKey);
       return res;
     }
   } catch (error) {
-    console.log("----", error);
     return false;
   }
 };
 
 // Swap transaction
-export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount: string, type: number): Promise<any> => {
-  console.log('========trade swap==============');
-
+export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount: number, type: number, slipAmount): Promise<any> => {
   // check the connection
   if (!wallet.publicKey || !connection) {
-    console.log("Warning: Wallet not connected");
     return;
   }
   const provider = new anchor.AnchorProvider(connection, wallet, { preflightCommitment: "confirmed" })
@@ -266,8 +249,8 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     program.programId
   )
   const associatedUserAccount = await getAssociatedTokenAddress(
-    wallet.publicKey,
     mint,
+    wallet.publicKey,
   );
   const info = await connection.getAccountInfo(associatedUserAccount)
   try {
@@ -282,8 +265,8 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     }
     if (type == 0) {
       const buyIx = await program.methods.buy(
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9)),
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9) * (101 / 100)),)
+        new anchor.BN(amount * Math.pow(10, 6)),
+        new anchor.BN(amount * Math.pow(10, 6) * (101 / 100)),)
         .accounts({
           global,
           feeRecipient,
@@ -302,9 +285,11 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
         .instruction()
       transaction.add(buyIx)
     } else {
-      const sellIx = await program.methods.buy(
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9)),
-        new anchor.BN(parseFloat(amount) * Math.pow(10, 9) * (101 / 100)),)
+      const sellIx = await program.methods.sell(
+        new anchor.BN(amount * Math.pow(10, 6)),
+        // new anchor.BN(slipAmount  * (80 / 100)),
+        new anchor.BN(0)
+      )
         .accounts({
           global,
           feeRecipient,
@@ -329,7 +314,6 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     if (wallet.signTransaction) {
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
-      console.log("----", await connection.simulateTransaction(signedTx));
       const signature = await connection.sendRawTransaction(sTx, {
         preflightCommitment: "confirmed",
         skipPreflight: false,
@@ -344,13 +328,93 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
         },
         "confirmed"
       );
-      console.log("Successfully initialized.\n Signature: ", signature);
+      await sendTx(signature, mint, wallet.publicKey);
       return res;
     }
   } catch (error) {
-    console.log("Error in swap transaction", error);
   }
 };
+
+//Claim transaction
+export const claimTx = async (claimAmount: number, coin: coinInfo, wallet: WalletContextState) => {
+  const provider = new anchor.AnchorProvider(connection, wallet, { preflightCommitment: "confirmed" })
+  anchor.setProvider(provider);
+  const program = new Program(
+    pumpProgramInterface,
+    pumpProgramId,
+    provider
+  ) as Program<Holdnow>;
+  const mint = new PublicKey(coin.token);
+  const [global] = await PublicKey.findProgramAddress(
+    [Buffer.from(GLOBAL_STATE_SEED)],
+    program.programId
+  );
+  const [rewardRecipient] = await PublicKey.findProgramAddress(
+    [Buffer.from(REWARD_STATE_SEED)],
+    program.programId
+  );
+  const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
+    [Buffer.from(REWARD_STATE_SEED),
+    mint.toBuffer()
+    ],
+    program.programId
+  );
+  const [vault] = await PublicKey.findProgramAddress(
+    [Buffer.from(SOL_VAULT_SEED),
+    mint.toBuffer()
+    ],
+    program.programId
+  )
+  const [bondingCurve] = await PublicKey.findProgramAddress(
+    [Buffer.from(BONDING_CURVE),
+    mint.toBuffer()
+    ],
+    program.programId
+  );
+  const [associatedBondingCurve] = await PublicKey.findProgramAddress(
+    [Buffer.from(VAULT_SEED),
+    mint.toBuffer()
+    ],
+    program.programId
+  )
+  const associatedUserAccount = await getAssociatedTokenAddress(
+    mint,
+    wallet.publicKey,
+  );
+  const info = await connection.getAccountInfo(associatedUserAccount)
+  const transaction = new Transaction()
+  const cpIx = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1_000_000 });
+  const cuIx = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
+  transaction.add(cpIx, cuIx)
+  if (!info) {
+    transaction.add(
+      createAssociatedTokenAccountInstruction(wallet.publicKey, associatedUserAccount, wallet.publicKey, mint),
+    )
+  }
+  const claimIx = await program.methods.claim(new BN(claimAmount * Math.pow(10, 9)), false)
+    .accounts({
+      mint,
+      rewardRecipient,
+      global,
+      associatedRewardRecipient,
+      vault,
+      bondingCurve,
+      associatedBondingCurve,
+      associatedUser: associatedUserAccount,
+      user: wallet.publicKey,
+
+    })
+    .instruction()
+  transaction.add(claimIx)
+  transaction.feePayer = wallet.publicKey;
+  transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+  if (wallet.signTransaction) {
+    const signedTx = await wallet.signTransaction(transaction);
+    const sTx = signedTx.serialize();
+    return sTx;
+  }
+
+}
 export const getTokenBalance = async (walletAddress: string, tokenMintAddress: string) => {
   const wallet = new PublicKey(walletAddress);
   const tokenMint = new PublicKey(tokenMintAddress);
@@ -361,7 +425,6 @@ export const getTokenBalance = async (walletAddress: string, tokenMintAddress: s
   });
 
   if (response.value.length == 0) {
-    console.log('No token account found for the specified mint address.');
     return;
   }
 
@@ -370,7 +433,6 @@ export const getTokenBalance = async (walletAddress: string, tokenMintAddress: s
 
   // Convert the balance from integer to decimal format
 
-  console.log(`Token Balance: ${tokenAccountInfo.value.uiAmount}`);
 
   return tokenAccountInfo.value.uiAmount;
 };

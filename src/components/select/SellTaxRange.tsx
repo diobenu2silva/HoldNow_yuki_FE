@@ -9,7 +9,7 @@ interface SellTaxRangeProps {
 }
 
 const SellTaxRange: React.FC<SellTaxRangeProps> = ({ header, setSelectRange }) => {
-  const [values, setValues] = React.useState<number[]>([20, 80]); // Two values for min and max
+  const [values, setValues] = React.useState<number[]>([0, 100]); // Two values for min and max
 
   const handleChangeRange = (e: number[]) => {
     setValues(e)

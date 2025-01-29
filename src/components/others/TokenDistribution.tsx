@@ -13,9 +13,7 @@ const TokenDistribution: FC<ModalProps> = ({ data }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (data) {
-        console.log(data, "===========");
         const holderData = await findHolders(data.token);
-        console.log("holders", holderData, data)
         setHolders(holderData ? holderData : []);
       }
     }

@@ -20,7 +20,7 @@ export async function getChartTable({
 }): Promise<ChartTable> {
     try {
         const res = await fetch(
-            `${BACKEND_URL}/chart/${pairIndex}/${from}/${to}/${range}/${token}/${countBack}`,
+            `${BACKEND_URL}/chart/${range}/${token}/${countBack}`,
         ).then((data) => data.json());
 
         if (!res) {

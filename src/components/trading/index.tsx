@@ -5,7 +5,7 @@ import { TradeForm } from "@/components/trading/TradeForm";
 import { TradingChart } from "@/components/TVChart/TradingChart";
 import UserContext from "@/context/UserContext";
 import { coinInfo } from "@/utils/types";
-import { getCoinInfo, getCoinTrade, getCoinsInfoBy, getSolPriceInUSD } from "@/utils/util";
+import { claim, getClaim, getCoinInfo, getCoinTrade, getCoinsInfoBy, getSolPriceInUSD } from "@/utils/util";
 import { usePathname, useRouter } from "next/navigation";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
@@ -19,16 +19,21 @@ import { ConnectButton } from "../buttons/ConnectButton";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 export default function TradingPage() {
-  const { coinId, setCoinId, login } = useContext(UserContext);
+  const { coinId, setCoinId, login, user, web3Tx, setWeb3Tx } = useContext(UserContext);
   const { publicKey } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const pathname = usePathname();
   const [param, setParam] = useState<string>('');
-  const [progress, setProgress] = useState<number>(60);
+  const [progress, setProgress] = useState<number>(0);
   const [coin, setCoin] = useState<coinInfo>({} as coinInfo);
   const [copySuccess, setCopySuccess] = useState<string>(null);
-  const router = useRouter()
+  const [claimAmount, setClaimAmount] = useState<number>(0);
+  const [liquidity, setLiquidity] = useState<number>(0);
+  const [stageProg, setStageProg] = useState<number>(0)
+  const [sellTax, setSellTax] = useState<number>(0);
+  const wallet = useWallet()
 
+  const router = useRouter()
 
   const copyToClipBoard = async (copyMe: string) => {
     try {
@@ -42,7 +47,6 @@ export default function TradingPage() {
   };
 
   useEffect(() => {
-    console.log("progress--->", progress)
     const fetchData = async () => {
       // Split the pathname and extract the last segment
       const segments = pathname.split("/");
@@ -50,16 +54,35 @@ export default function TradingPage() {
       setParam(parameter);
       setCoinId(parameter);
       const data = await getCoinInfo(parameter);
+      if (data && claimAmount == 0) {
+        const claimData = await getClaim(parameter, data.creator._id);
+        if (claimData) setClaimAmount(claimData.claimAmount);
+      }
+      const millisecondsInADay = 24 * 60 * 60 * 1000;
+      const nowDate = new Date();
+      const atStageStartedDate = new Date(data.atStageStarted)
+      const period = nowDate.getTime() - atStageStartedDate.getTime();
+      setStageProg(Math.round(period * 1000 / (millisecondsInADay * data.stageDuration)) / 10)
       const solPrice = await getSolPriceInUSD();
-      // const prog = data.reserveTwo * 1000000 * solPrice / (data.reserveOne * data.marketcap);
+      const prog = Math.round(data.progressMcap * solPrice / 10) / 100;
       // setProgress(prog > 1 ? 100 : Math.round(prog * 100000) / 1000);
-      console.log(data)
+      setLiquidity(Math.round(data.lamportReserves / 1000000000 * solPrice * 2 / 10) / 100)
       setCoin(data);
-      setProgress(data.progressMcap)
+      setProgress(prog)
     }
     fetchData()
-  }, [pathname]);
-
+  }, [pathname, publicKey, web3Tx]);
+  useEffect(() => {
+    if (stageProg > coin.sellTaxDecay) {
+      setSellTax(coin.sellTaxMin)
+    } else {
+      setSellTax(Math.round(coin.sellTaxMax - (coin.sellTaxMax - coin.sellTaxMin) * stageProg / coin.sellTaxDecay))
+    }
+  }, [stageProg, coin])
+  const handleClaim = async () => {
+    const res = await claim(user, claimAmount, coin, wallet)
+    if (res == "success") setWeb3Tx(res)
+  }
   return (
     <div className="w-full flex flex-col px-3 mx-auto gap-5 pb-20">
       <div className="text-center">
@@ -100,8 +123,8 @@ export default function TradingPage() {
                 <p className="text-sm px-5">
                   You are eligible to claim:
                 </p>
-                <p className="text-2xl font-extrabold">$ 250</p>
-                <p className="text-xl font-semibold">10500 HODL</p>
+                {/* <p className="text-2xl font-extrabold">$ 250</p> */}
+                <p className="text-xl font-semibold">{`${claimAmount} ${coin.name}`}</p>
               </div>
               :
               <p className="text-sm px-5">
@@ -110,7 +133,11 @@ export default function TradingPage() {
             }
             <div className="flex flex-col">
               {(login && publicKey) ?
-                <div className="w-1/2 border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto">
+                <div
+                  onClick={coin.airdropStage ? () => handleClaim() : undefined} // Only call handleClaim if airdropStage is true
+                  className={`w-1/2 border-[1px] border-[#64ffda] cursor-pointer rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto
+                    ${coin.airdropStage ? 'hover:bg-[#64ffda]/30' : 'bg-gray-300 cursor-not-allowed'}`} // Change background and cursor on disable
+                >
                   Claim
                 </div>
                 :
@@ -129,27 +156,27 @@ export default function TradingPage() {
             /
             <p className="">SOL</p>
           </div>
-          <SocialList />
+          <SocialList coin={coin} />
           <div className="w-full flex flex-col gap-4 text-white">
             <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
-              <DataCard text="MKP CAP" data={progress} />
-              <DataCard text="Liquidity" data="$ 10k" />
+              <DataCard text="MKP CAP" data={`${progress} k`} />
+              <DataCard text="Liquidity" data={`${liquidity} k`} />
             </div>
             <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
-              <DataCard text="Stage" data="1 of 4" />
-              <DataCard text="Sell Tax" data="40%" />
+              <DataCard text="Stage" data={`${coin.currentStage} of ${coin.stagesNumber}`} />
+              <DataCard text="Sell Tax" data={`${sellTax} %`} />
               <DataCard text="Redistribution" data="$ 15.2K" />
             </div>
           </div>
           <div className="flex flex-col gap-3">
             <div className="w-full flex flex-col gap-2 px-3 py-2 ">
               <p className="text-white text-base lg:text-xl">
-                Stage 1 Completion : {progress.toString()}% of X Days
+                {`Stage ${coin.currentStage}  Completion : ${stageProg}% of ${coin.stageDuration} Days`}
               </p>
               <div className="bg-white rounded-full h-2 relative">
                 <div
                   className="bg-custom-gradient rounded-full h-2"
-                  style={{ width: `${progress}%` }}
+                  style={{ width: `${stageProg}%` }}
                 ></div>
               </div>
             </div>

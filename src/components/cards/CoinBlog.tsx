@@ -23,8 +23,8 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
   }
 
   const getMarketCapData = async (coin: coinInfo) => {
-    const prog = coin.reserveTwo * 1000000 * solPrice / (coin.reserveOne * coin.marketcap);
-    setMarketCapValue(prog > 1 ? 100 : Math.round(prog * 100000) / 1000);
+    const prog = coin.progressMcap * solPrice;
+    setMarketCapValue(Math.round(prog/100)/10);
   }
 
   useEffect(() => {
@@ -61,9 +61,36 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
             <></>
           )}
           <div className="w-full flex flex-row gap-1 items-center text-white text-xl">
-            <FaXTwitter />
-            <TbWorld />
-            <FaTelegramPlane />
+            {coin.twitter && (
+              <a
+                href={coin.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+              >
+                <FaXTwitter />
+              </a>
+            )}
+            {coin.website && (
+              <a
+                href={coin.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+              >
+                <TbWorld />
+              </a>
+            )}
+            {coin.telegram && (
+              <a
+                href={coin.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+              >
+                <FaTelegramPlane />
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -72,13 +99,12 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
           <div className="flex flex-row gap-1 items-center">
             Market Cap
             <div className="text-gradient font-bold">
-              {(coin.reserveTwo / coin.reserveOne * 1000 * solPrice).toFixed(2)}
-              {/* {marketCapValue !== 100 && "K"} */}
+              {(coin.progressMcap * solPrice/1000).toFixed(2)} K
             </div>
             {`(${marketCapValue}%)`}
           </div>
           <div className="text-gradient font-bold">
-            53K
+            100 K
           </div>
         </div>
         <div className="w-full h-2 rounded-full bg-white relative flex">

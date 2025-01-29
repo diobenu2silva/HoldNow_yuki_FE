@@ -35,13 +35,10 @@ const FilterListButton: FC = () => {
     if (orderOption == "desc") {
       switch (sortOption) {
         case "last reply":
-          sortedData.sort((a, b) => a.reserveOne - b.reserveOne);
           break;
         case "market cap":
-          sortedData.sort((a, b) => a.reserveOne - b.reserveOne);
           break;
         case "creation time":
-          sortedData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
           break;
         default:
           sortedData = data;
@@ -50,13 +47,10 @@ const FilterListButton: FC = () => {
     } else {
       switch (sortOption) {
         case "last reply":
-          sortedData.sort((a, b) => b.reserveOne - a.reserveOne);
           break;
         case "market cap":
-          sortedData.sort((a, b) => b.reserveOne - a.reserveOne);
           break;
         case "creation time":
-          sortedData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
           break;
         default:
           sortedData = data;

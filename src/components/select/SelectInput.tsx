@@ -29,10 +29,13 @@ const SelectInput: React.FC<SelectInputProps> = ({ header, setSelectData, data, 
   }, [menuDropdown]);
 
   const handleNumberStageChange = (e: any) => {
-    setSelectData(e.text);
+    setSelectData(e);
     setTextData(e.text);
-    setStageStateModal(false)
   }
+
+  useEffect(() => {
+    setStageStateModal(false)
+  }, [textData])
 
   useEffect(() => {
     setTextData(firstData)

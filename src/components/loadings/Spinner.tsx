@@ -2,8 +2,8 @@ import { Circles } from "react-loader-spinner"
 
 export const Spinner = () => {
   return (
-    <div className="h-screen w-screen fixed">
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-20 backdrop-blur-lg z-50">
+    <div className="h-screen w-screen fixed z-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-20 backdrop-blur-lg z-52">
         <div className="flex flex-col items-center">
           <Circles
             height="80"

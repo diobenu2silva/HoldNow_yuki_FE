@@ -1,6 +1,6 @@
 import UserContext from '@/context/UserContext';
 import { userInfo } from '@/utils/types';
-import { updateUser, uploadImage } from '@/utils/util';
+import { updateUser } from '@/utils/util';
 import React, { ChangeEvent, useContext, useRef, useState } from 'react';
 import { errorAlert, successAlert } from '../others/ToastGroup';
 import UserImg from '@/../public/assets/images/user-avatar.png';
