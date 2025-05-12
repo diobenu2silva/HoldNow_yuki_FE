@@ -62,7 +62,7 @@ export default function TradingPage() {
       const nowDate = new Date();
       const atStageStartedDate = new Date(data.atStageStarted)
       const period = nowDate.getTime() - atStageStartedDate.getTime();
-      setStageProg(Math.round(period * 1000 / (millisecondsInADay * data.stageDuration)) / 10)
+      setStageProg(Math.round(period * 10000 / (millisecondsInADay * data.stageDuration)) / 100)
       const solPrice = await getSolPriceInUSD();
       const prog = Math.round(data.progressMcap * solPrice / 10) / 100;
       // setProgress(prog > 1 ? 100 : Math.round(prog * 100000) / 1000);
@@ -76,7 +76,8 @@ export default function TradingPage() {
     if (stageProg > coin.sellTaxDecay) {
       setSellTax(coin.sellTaxMin)
     } else {
-      setSellTax(Math.round(coin.sellTaxMax - (coin.sellTaxMax - coin.sellTaxMin) * stageProg / coin.sellTaxDecay))
+      console.log((coin.sellTaxMax - coin.sellTaxMin) * stageProg)
+      setSellTax(Math.round((coin.sellTaxMax - (coin.sellTaxMax - coin.sellTaxMin) * stageProg / coin.sellTaxDecay) * 10) / 10)
     }
   }, [stageProg, coin])
   const handleClaim = async () => {
@@ -171,7 +172,9 @@ export default function TradingPage() {
           <div className="flex flex-col gap-3">
             <div className="w-full flex flex-col gap-2 px-3 py-2 ">
               <p className="text-white text-base lg:text-xl">
-                {`Stage ${coin.currentStage}  Completion : ${stageProg}% of ${coin.stageDuration} Days`}
+                {coin.airdropStage ? (`Airdrop ${coin.currentStage}  Completion : ${stageProg}% of ${coin.stageDuration} Days`)
+                  :
+                  (`Stage ${coin.currentStage}  Completion : ${stageProg}% of ${coin.stageDuration} Days`)}
               </p>
               <div className="bg-white rounded-full h-2 relative">
                 <div

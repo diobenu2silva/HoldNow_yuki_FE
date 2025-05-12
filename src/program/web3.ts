@@ -1,8 +1,8 @@
-import { ComputeBudgetProgram, Connection, Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, SystemProgram, Transaction, clusterApiUrl, sendAndConfirmTransaction } from '@solana/web3.js';
+import { ComputeBudgetProgram, Connection, Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 import { Holdnow } from './holdnow'
 import idl from "./holdnow.json"
 import * as anchor from '@coral-xyz/anchor';
-import { WalletContextState, useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { WalletContextState, } from '@solana/wallet-adapter-react';
 import { errorAlert } from '@/components/others/ToastGroup';
 import { Program } from '@coral-xyz/anchor';
 import { coinInfo, launchDataInfo } from '@/utils/types';
@@ -10,12 +10,9 @@ import { HOLDNOW_PROGRAM_ID } from './programId';
 import { MintLayout, getAssociatedTokenAddress, getMinimumBalanceForRentExemptMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMintToInstruction, getOrCreateAssociatedTokenAccount, createSetAuthorityInstruction, AuthorityType } from "@solana/spl-token"
 import { PROGRAM_ID, DataV2, createCreateMetadataAccountV3Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { BONDING_CURVE, GLOBAL_STATE_SEED, REWARD_STATE_SEED, SOL_VAULT_SEED, VAULT_SEED } from './seed';
-import { metadata } from '@/app/layout';
-import { useContext } from 'react';
-import UserContext from '@/context/UserContext';
 import { BN } from 'bn.js';
-import { getTransactionConfirmations } from 'viem/actions';
-import { sendTx } from '@/utils/util';
+import { sendTx, sleep } from '@/utils/util';
+import { simulateTransaction } from '@coral-xyz/anchor/dist/cjs/utils/rpc';
 
 export const commitmentLevel = "processed";
 
@@ -35,7 +32,6 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
     pumpProgramId,
     provider
   ) as Program<Holdnow>;
-
 
   // check the connection
   if (!wallet.publicKey || !connection) {
@@ -193,6 +189,7 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
         },
         "confirmed"
       );
+      await sleep(500);
       await sendTx(signature, mint, wallet.publicKey);
       return res;
     }
@@ -310,7 +307,6 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
     }
     transaction.feePayer = wallet.publicKey;
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
     if (wallet.signTransaction) {
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
@@ -319,7 +315,7 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
         skipPreflight: false,
       });
       const blockhash = await connection.getLatestBlockhash();
-
+      console.log(await connection.simulateTransaction(signedTx));
       const res = await connection.confirmTransaction(
         {
           signature,
@@ -332,6 +328,7 @@ export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount
       return res;
     }
   } catch (error) {
+    throw error;
   }
 };
 
@@ -418,7 +415,7 @@ export const claimTx = async (claimAmount: number, coin: coinInfo, wallet: Walle
 export const getTokenBalance = async (walletAddress: string, tokenMintAddress: string) => {
   const wallet = new PublicKey(walletAddress);
   const tokenMint = new PublicKey(tokenMintAddress);
-
+ ``
   // Fetch the token account details
   const response = await connection.getTokenAccountsByOwner(wallet, {
     mint: tokenMint
@@ -432,7 +429,6 @@ export const getTokenBalance = async (walletAddress: string, tokenMintAddress: s
   const tokenAccountInfo = await connection.getTokenAccountBalance(response.value[0].pubkey);
 
   // Convert the balance from integer to decimal format
-
 
   return tokenAccountInfo.value.uiAmount;
 };

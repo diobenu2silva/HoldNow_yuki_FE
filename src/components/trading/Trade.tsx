@@ -9,7 +9,7 @@ interface TradePropsInfo {
 export const Trade: React.FC<TradePropsInfo> = ({ key, trade }) => {
   const router = useRouter()
   const handleToRouter = (id: string) => {
-    router.push(id)
+    window.open(id, '_blank')
   }
 
   return (

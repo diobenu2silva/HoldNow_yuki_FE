@@ -180,7 +180,6 @@ export const getSolPriceInUSD = async () => {
     const solPriceInUSD = response.data.solana.usd;
     return solPriceInUSD;
   } catch (error) {
-    console.error('Error fetching SOL price:', error);
     throw error;
   }
 };
@@ -197,7 +196,10 @@ export const claim = async (userData: userInfo, claimAmount: number, coin: coinI
     const response = await axios.post(`${BACKEND_URL}/user/claim/`, data, config)
     return "success"
   } catch (error) {
-    console.error('Error claim:', error);
     throw error;
   }
+}
+
+export function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

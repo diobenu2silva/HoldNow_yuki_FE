@@ -1,7 +1,6 @@
 "use client"
 import { FC, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PiLightning } from "react-icons/pi";
 import UserContext from "@/context/UserContext";
 import { coinInfo } from "@/utils/types";
 import { getCoinsInfo, getSolPriceInUSD } from "@/utils/util";
@@ -40,54 +39,7 @@ const HomePage: FC = () => {
     };
     fetchData();
   }, []);
-  const handleSortSelection = (option) => {
-    let sortOption: string = '';
-    let orderOption: string = "";
-    let sortedData = [...data]; // Create a new array to prevent direct state mutation
-    if (option == "desc" || option == "asc") {
-      setOrder(option);
-      sortOption = dataSort;
-      orderOption = option;
-    }
-    else {
-      setDataSort(option)
-      sortOption = option
-      orderOption = order;
-    }
-    if (orderOption == "desc") {
-      switch (sortOption) {
-        case "last reply":
-          sortedData.sort((a, b) => a.tokenReserves - b.tokenReserves);
-          break;
-        case "market cap":
-          sortedData.sort((a, b) => a.progressMcap - b.progressMcap);
-          break;
-        case "creation time":
-          sortedData.sort((a, b) => new Date(a.atLaunched).getTime() - new Date(b.atLaunched).getTime());
-          break;
-        default:
-          sortedData = data;
-          break;
-      }
-    } else {
-      switch (sortOption) {
-        case "last reply":
-          sortedData.sort((a, b) => b.tokenReserves - a.tokenReserves);
-          break;
-        case "market cap":
-          sortedData.sort((a, b) => b.progressMcap - a.progressMcap);
-          break;
-        case "creation time":
-          sortedData.sort((a, b) => new Date(b.atLaunched).getTime() - new Date(a.atLaunched).getTime());
-          break;
-        default:
-          sortedData = data;
-          break;
-      }
-    }
-    setData(sortedData);
-    setIsSort(0); // Close the dropdown after selection
-  };
+ 
 
   useEffect(() => {
     const handleClickOutside = (event) => {

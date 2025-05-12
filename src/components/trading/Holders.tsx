@@ -9,7 +9,7 @@ interface HolderPropsInfo {
 export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
   const router = useRouter()
   const handleToRouter = (id: string) => {
-    router.push(id)
+    window.open(id, '_blank')
   }
 
   return (
@@ -21,7 +21,7 @@ export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
       </td>
       <td className="text-center py-2">{Math.ceil(holder.amount / Math.pow(10, 6))}</td>
       <td className="text-center py-2">
-        <p onClick={() => handleToRouter(`https://solscan.io/tx/${holder.owner}?cluster=devnet`)} className="text-lg leading-10 hover:cursor-pointer hover:text-white">
+        <p onClick={() => handleToRouter(`https://solscan.io/accounts/${holder.owner}?cluster=devnet`)} className="text-lg leading-10 hover:cursor-pointer hover:text-white">
           <BsArrow90DegRight />
         </p>
       </td>
