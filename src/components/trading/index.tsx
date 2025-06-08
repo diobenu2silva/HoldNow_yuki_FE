@@ -18,6 +18,7 @@ import { successAlert } from "../others/ToastGroup";
 import { ConnectButton } from "../buttons/ConnectButton";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { getTokenBalance } from "@/program/web3";
+import { showCountdownToast } from "@/utils/showCountdownToast";
 
 
 const getBalance = async (wallet : string, token: string) => {
@@ -65,16 +66,15 @@ export default function TradingPage() {
       setParam(parameter);
       setCoinId(parameter);
       const data = await getCoinInfo(parameter);
-      if(!publicKey) return;
-      if (data && claimAmount == 0) {
+      
+      if (data) {
         const claimData = await getClaim(parameter, data.creator._id);
         if (claimData) {
-            getBalance(publicKey.toBase58(), data.token).then((balance) => {
-              console.log("leo: balance========> ", balance, " \n pubkey: ", publicKey.toBase58());
+            const balance = publicKey ? await getBalance(publicKey.toBase58(), data.token) : 0 ;
             const amt = 
               (parseInt(claimData.claimAmount) * balance) / parseInt(data.tokenSupply);
             setClaimAmount(amt);
-          });
+          
         };
       }
       const millisecondsInADay = 24 * 60 * 60 * 1000;
@@ -83,13 +83,25 @@ export default function TradingPage() {
       const period = nowDate.getTime() - atStageStartedDate.getTime();
       const progress = Math.round(period * 10000 / (millisecondsInADay * data.stageDuration)) / 100;
       const stageProg = progress > 100 ? 100 : progress;
-      setStageProg(stageProg);
       const solPrice = await getSolPriceInUSD();
       const prog = Math.round(data.progressMcap * solPrice / 10) / 100;
-      // setProgress(prog > 1 ? 100 : Math.round(prog * 100000) / 1000);
+    
       setLiquidity(Math.round(data.lamportReserves / 1000000000 * solPrice * 2 / 10) / 100)
       setCoin(data);
-      setProgress(prog)
+      setProgress(prog);
+      setStageProg(stageProg);
+      
+      if (data.airdropStage) {
+        const startTime = new Date(data.atStageStarted); // ensure it's a Date
+        const futureTime = new Date(startTime.getTime() + millisecondsInADay); // +1 day (in ms)
+
+        console.log("Yuki: stagestart==>", data.atStageStarted, futureTime);
+        showCountdownToast(
+          futureTime,
+          `Stage ${data.currentStage - 1} has completed. Next stage will begin in`,
+          'New Stage has begun!'
+        );
+      }
     }
     fetchData()
   }, [pathname, publicKey, web3Tx, claimAmount]);

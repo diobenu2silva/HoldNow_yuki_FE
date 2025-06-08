@@ -118,7 +118,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
             <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
               {SolList.map((item: any, index: any) => {
                 return (
-                  <div className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer" onClick={() => setSol(item.id)}>{item.price}</div>
+                  <div key={item.id} className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer" onClick={() => setSol(item.id)}>{item.price}</div>
                 )
               })}
             </div>

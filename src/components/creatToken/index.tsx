@@ -216,7 +216,7 @@ export default function CreateToken() {
 
             <ImageUpload header="Project Profile Image" setFilePreview={(fileName) => setProfileImagePreview(fileName)} setFileUrl={(fileUrl) => setProfileIamgeUrl(fileUrl)} type="image/*" />
             <SelectInput header="Number fo Stages" data={StagesData} setSelectData={(inputData) => setTokenNumberStages(inputData.id)} style="h-[162px]" firstData="One" />
-            <SelectInput header="Sell Tax Range" data={StageDurationData} setSelectData={(inputData) => setTokenStageDuration(inputData.id)} style="h-[280px]" firstData="1 Day" />
+            <SelectInput header="Stage Duration" data={StageDurationData} setSelectData={(inputData) => setTokenStageDuration(inputData.id)} style="h-[280px]" firstData="1 Day" />
             <SellTaxRange header="Sell Tax Range" setSelectRange={(changeRange) => setTokenSellTaxRange(changeRange)} />
             <SelectInput header="Sell Tax Decay" data={SellTaxDecayData} setSelectData={(inputData) => setTokenSellTaxDecay(inputData.id)} style="h-[200px] overflow-y-scroll z-10" firstData="Unitill halfqy throgh - 10%" />
           </div>

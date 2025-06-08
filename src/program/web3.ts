@@ -17,7 +17,7 @@ import { simulateTransaction } from '@coral-xyz/anchor/dist/cjs/utils/rpc';
 export const commitmentLevel = "processed";
 
 export const endpoint =
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl("devnet");
+  process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://devnet.helius-rpc.com/?api-key=3b5315ac-170e-4e0e-a60e-4ff5b444fbcf';
 export const connection = new Connection(endpoint, commitmentLevel);
 export const pumpProgramId = new PublicKey(HOLDNOW_PROGRAM_ID);
 export const pumpProgramInterface = JSON.parse(JSON.stringify(idl));
