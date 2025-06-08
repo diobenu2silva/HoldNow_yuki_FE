@@ -7,7 +7,7 @@ export const ProfileMenuList = [
 
 export const StagesData = [
     { id: 1, text: "One" },
-    { id: 2, text: "Tow" },
+    { id: 2, text: "Two" },
     { id: 3, text: "Three" },
     { id: 4, text: "Four" },
 ]

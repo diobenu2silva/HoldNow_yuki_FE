@@ -415,14 +415,14 @@ export const claimTx = async (claimAmount: number, coin: coinInfo, wallet: Walle
 export const getTokenBalance = async (walletAddress: string, tokenMintAddress: string) => {
   const wallet = new PublicKey(walletAddress);
   const tokenMint = new PublicKey(tokenMintAddress);
- ``
+ 
   // Fetch the token account details
   const response = await connection.getTokenAccountsByOwner(wallet, {
     mint: tokenMint
   });
 
   if (response.value.length == 0) {
-    return;
+    return 0;
   }
 
   // Get the balance

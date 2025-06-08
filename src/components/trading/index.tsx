@@ -17,6 +17,17 @@ import { FaCopy } from "react-icons/fa6";
 import { successAlert } from "../others/ToastGroup";
 import { ConnectButton } from "../buttons/ConnectButton";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { getTokenBalance } from "@/program/web3";
+
+
+const getBalance = async (wallet : string, token: string) => {
+  try {
+    const balance = await getTokenBalance(wallet, token);
+    return balance;
+  } catch (error) {
+    return 0;
+  }
+}
 
 export default function TradingPage() {
   const { coinId, setCoinId, login, user, web3Tx, setWeb3Tx } = useContext(UserContext);
@@ -54,15 +65,25 @@ export default function TradingPage() {
       setParam(parameter);
       setCoinId(parameter);
       const data = await getCoinInfo(parameter);
+      if(!publicKey) return;
       if (data && claimAmount == 0) {
         const claimData = await getClaim(parameter, data.creator._id);
-        if (claimData) setClaimAmount(claimData.claimAmount);
+        if (claimData) {
+            getBalance(publicKey.toBase58(), data.token).then((balance) => {
+              console.log("leo: balance========> ", balance, " \n pubkey: ", publicKey.toBase58());
+            const amt = 
+              (parseInt(claimData.claimAmount) * balance) / parseInt(data.tokenSupply);
+            setClaimAmount(amt);
+          });
+        };
       }
       const millisecondsInADay = 24 * 60 * 60 * 1000;
       const nowDate = new Date();
       const atStageStartedDate = new Date(data.atStageStarted)
       const period = nowDate.getTime() - atStageStartedDate.getTime();
-      setStageProg(Math.round(period * 10000 / (millisecondsInADay * data.stageDuration)) / 100)
+      const progress = Math.round(period * 10000 / (millisecondsInADay * data.stageDuration)) / 100;
+      const stageProg = progress > 100 ? 100 : progress;
+      setStageProg(stageProg);
       const solPrice = await getSolPriceInUSD();
       const prog = Math.round(data.progressMcap * solPrice / 10) / 100;
       // setProgress(prog > 1 ? 100 : Math.round(prog * 100000) / 1000);
@@ -71,7 +92,7 @@ export default function TradingPage() {
       setProgress(prog)
     }
     fetchData()
-  }, [pathname, publicKey, web3Tx]);
+  }, [pathname, publicKey, web3Tx, claimAmount]);
   useEffect(() => {
     if (stageProg > coin.sellTaxDecay) {
       setSellTax(coin.sellTaxMin)
@@ -125,7 +146,7 @@ export default function TradingPage() {
                   You are eligible to claim:
                 </p>
                 {/* <p className="text-2xl font-extrabold">$ 250</p> */}
-                <p className="text-xl font-semibold">{`${claimAmount} ${coin.name}`}</p>
+                <p className="text-xl font-semibold">{`${Number(claimAmount).toFixed(2)} ${coin.name}`}</p>
               </div>
               :
               <p className="text-sm px-5">
@@ -139,7 +160,7 @@ export default function TradingPage() {
                   className={`w-1/2 border-[1px] border-[#64ffda] cursor-pointer rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto
                     ${coin.airdropStage ? 'hover:bg-[#64ffda]/30' : 'bg-gray-300 cursor-not-allowed'}`} // Change background and cursor on disable
                 >
-                  Claim
+                  Claim {coin.airdropStage?.toString()}
                 </div>
                 :
                 <div className="w-1/2 border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto" onClick={() => setVisible(true)} >

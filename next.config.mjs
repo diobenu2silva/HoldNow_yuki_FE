@@ -1,11 +1,12 @@
+// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-
+  images: {
+    domains: ['violet-fierce-impala-900.mypinata.cloud'],
+  },
 };
 
 export default nextConfig;

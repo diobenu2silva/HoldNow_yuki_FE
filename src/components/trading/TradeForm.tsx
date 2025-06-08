@@ -1,3 +1,5 @@
+"use client";
+
 import UserContext from "@/context/UserContext";
 import { getTokenBalance, swapTx } from "@/program/web3";
 import { coinInfo } from "@/utils/types";
@@ -11,10 +13,11 @@ interface TradingFormProps {
 }
 
 export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
-  const [sol, setSol] = useState<string>('');
-  const [isBuy, setIsBuy] = useState<number>(0);
+  const [amount, setSol] = useState<string>('');
+  const [isSell, setIsBuy] = useState<number>(0);
   const [tokenBal, setTokenBal] = useState<number>(0);
   const [tokenName, setTokenName] = useState<string>("Token")
+  const [canTrade, setCanTrade] = useState<boolean>(false);
   const { user, setWeb3Tx } = useContext(UserContext);
   const wallet = useWallet();
   const SolList = [
@@ -45,13 +48,13 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   getBalance();
 
   const handlTrade = async () => {
-    if (!!!sol) { errorAlert("Please set Amount"); return }
+    if (!!!amount) { errorAlert("Please set Amount"); return }
     const mint = new PublicKey(coin.token)
     const userWallet = new PublicKey(user.wallet)
-    if (isBuy == 0) {
+    if (isSell == 0) {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
-      const tokenAmount = coin.tokenReserves - totalLiquidity / ((coin.lamportReserves) + parseFloat(sol) * Math.pow(10, 9));
-      const res = await swapTx(mint, wallet, tokenAmount, isBuy, tokenAmount)
+      const tokenAmount = coin.tokenReserves - totalLiquidity / ((coin.lamportReserves) + parseFloat(amount) * Math.pow(10, 9));
+      const res = await swapTx(mint, wallet, tokenAmount, isSell, tokenAmount)
       if (res) {
         // setWeb3Tx(res)
         window.location.reload();
@@ -59,8 +62,8 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
 
     } else {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
-      const minSol = coin.lamportReserves - totalLiquidity / ((coin.tokenReserves) + parseFloat(sol) * Math.pow(10, 6));
-      const res = await swapTx(mint, wallet, parseInt(sol), isBuy, minSol)
+      const minSol = coin.lamportReserves - totalLiquidity / ((coin.tokenReserves) + parseFloat(amount) * Math.pow(10, 6));
+      const res = await swapTx(mint, wallet, parseFloat(amount), isSell, minSol)
       // if(res) setWeb3Tx(res)
       if (res) window.location.reload();
     }
@@ -71,12 +74,20 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       setTokenName(coin.name)
   }, [coin])
 
+  useEffect(() => {
+    if (coin.airdropStage === false) {
+      setCanTrade(true);
+    } else {
+      setCanTrade(false);
+    }
+  }, [coin.airdropStage]);
+
   return (
     <div className="p-3 rounded-lg bg-transparent border-[1px] border-[#64ffda] text-white font-semibold">
       <div className="flex flex-row justify-center px-3 py-2">
-        < button className={`rounded-l-lg py-3 w-full ${isBuy === 0 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`
+        < button className={`rounded-l-lg py-3 w-full ${isSell === 0 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`
         } onClick={() => setIsBuy(0)}> Buy</button >
-        <button className={`rounded-r-lg py-3 w-full ${isBuy === 1 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`} onClick={() => setIsBuy(1)}>
+        <button className={`rounded-r-lg py-3 w-full ${isSell === 1 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`} onClick={() => setIsBuy(1)}>
           Sell
         </button>
       </div >
@@ -91,7 +102,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
           <input
             type="number"
             id="setTrade"
-            value={sol}
+            value={amount}
             onChange={handleInputChange}
             pattern="\d*"
             className="w-full outline-none text-black p-2.5 capitalize rounded-l-lg"
@@ -99,11 +110,11 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
             required
           />
           <div className="flex flex-col text-center p-2.5 border-l-[1px] border-l-[#64ffda] bg-custom-gradient rounded-r-md">
-            {isBuy === 0 ? 'SOL' : 'Token'}
+            {isSell === 0 ? 'SOL' : 'Token'}
           </div>
         </div>
         {
-          isBuy === 0 ? (
+          isSell === 0 ? (
             <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
               {SolList.map((item: any, index: any) => {
                 return (
