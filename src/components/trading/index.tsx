@@ -91,17 +91,19 @@ export default function TradingPage() {
       setProgress(prog);
       setStageProg(stageProg);
       
-      if (data.airdropStage) {
-        const startTime = new Date(data.atStageStarted); // ensure it's a Date
-        const futureTime = new Date(startTime.getTime() + millisecondsInADay); // +1 day (in ms)
-
-        console.log("Yuki: stagestart==>", data.atStageStarted, futureTime);
+      useEffect(() => {
+        if (!coin.airdropStage || !coin.atStageStarted || !coin.currentStage) return;
+      
+        const millisecondsInADay = 24 * 60 * 60 * 1000;
+        const startTime = new Date(coin.atStageStarted);
+        const futureTime = new Date(startTime.getTime() + millisecondsInADay);
+      
         showCountdownToast(
           futureTime,
-          `Stage ${data.currentStage - 1} has completed. Next stage will begin in`,
+          `Stage ${coin.currentStage - 1} has completed. Next stage will begin in`,
           'New Stage has begun!'
         );
-      }
+      }, [coin.airdropStage]);
     }
     fetchData()
   }, [pathname, publicKey, web3Tx, claimAmount]);
