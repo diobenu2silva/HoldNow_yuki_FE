@@ -33,7 +33,7 @@ export default function CreateToken() {
   const [bannerImagePreview, setBannerImagePreview] = useState<string | null>(null);
   const [tokenNumberStages, setTokenNumberStages] = useState<number>(1);
   const [tokenStageDuration, setTokenStageDuration] = useState<number>(1);
-  const [tokenSellTaxDecay, setTokenSellTaxDecay] = useState<number>(1);
+  const [tokenSellTaxDecay, setTokenSellTaxDecay] = useState<number>(10);
   const [tokenSellTaxRange, setTokenSellTaxRange] = useState<number[]>([0,100]);
   const [tokenPoolDestination, setTokenPollDestination] = useState<number>(3);
   const wallet = useWallet();

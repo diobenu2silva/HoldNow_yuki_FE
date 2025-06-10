@@ -412,13 +412,13 @@ export type Holdnow = {
           "isSigner": false
         },
         {
-          "name": "backendWallet",
-          "isMut": false,
+          "name": "user",
+          "isMut": true,
           "isSigner": true
         },
         {
-          "name": "user",
-          "isMut": true,
+          "name": "backendWallet",
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -1124,6 +1124,11 @@ export type Holdnow = {
       "code": 6022,
       "name": "InvalidAirdropAmount",
       "msg": "Invalid airdrop allocation specified."
+    },
+    {
+      "code": 6023,
+      "name": "InvalidClaimAmount",
+      "msg": "Invalid Claim Amount."
     }
   ]
 };
@@ -1542,13 +1547,13 @@ export const IDL: Holdnow = {
           "isSigner": false
         },
         {
-          "name": "backendWallet",
-          "isMut": false,
+          "name": "user",
+          "isMut": true,
           "isSigner": true
         },
         {
-          "name": "user",
-          "isMut": true,
+          "name": "backendWallet",
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -2254,6 +2259,11 @@ export const IDL: Holdnow = {
       "code": 6022,
       "name": "InvalidAirdropAmount",
       "msg": "Invalid airdrop allocation specified."
+    },
+    {
+      "code": 6023,
+      "name": "InvalidClaimAmount",
+      "msg": "Invalid Claim Amount."
     }
   ]
 };

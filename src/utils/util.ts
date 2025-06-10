@@ -180,23 +180,26 @@ export const getSolPriceInUSD = async () => {
     const solPriceInUSD = response.data.solana.usd;
     return solPriceInUSD;
   } catch (error) {
-    throw error;
+    console.log("Yuki: getSolPriceInUSD:", error);
   }
 };
 
 export const claim = async (userData: userInfo, claimAmount: number, coin: coinInfo, wallet: WalletContextState) => {
-  const signedTx = await claimTx(claimAmount, coin, wallet)
+  const signedTx = await claimTx(claimAmount, coin, wallet);
   const data = {
+    signedTxBase64: Buffer.from(signedTx).toString('base64'),
+    token: coin.token,
     user: userData.wallet,
-    signedTx,
-    coin: coin.token,
-    amount: claimAmount
   }
   try {
     const response = await axios.post(`${BACKEND_URL}/user/claim/`, data, config)
+    if (response.data.error) {
+      console.log("Yuki: claim axios error: ", response.data.error);
+      return response.data.error;
+    }
     return "success"
   } catch (error) {
-    throw error;
+    console.log("Yuki: claim error: ", error.response?.data || error.message);
   }
 }
 

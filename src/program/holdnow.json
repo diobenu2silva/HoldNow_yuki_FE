@@ -412,13 +412,13 @@
           "isSigner": false
         },
         {
-          "name": "backendWallet",
-          "isMut": false,
+          "name": "user",
+          "isMut": true,
           "isSigner": true
         },
         {
-          "name": "user",
-          "isMut": true,
+          "name": "backendWallet",
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -1124,6 +1124,14 @@
       "code": 6022,
       "name": "InvalidAirdropAmount",
       "msg": "Invalid airdrop allocation specified."
+    },
+    {
+      "code": 6023,
+      "name": "InvalidClaimAmount",
+      "msg": "Invalid Claim Amount."
     }
-  ]
+  ],
+  "metadata": {
+    "address": "Hmt2JQ7vQQPTC1PH8ZXumRac7CmJpYWepoqWE8jFYHtZ"
+  }
 }

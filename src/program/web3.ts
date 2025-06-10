@@ -13,6 +13,9 @@ import { BONDING_CURVE, GLOBAL_STATE_SEED, REWARD_STATE_SEED, SOL_VAULT_SEED, VA
 import { BN } from 'bn.js';
 import { sendTx, sleep } from '@/utils/util';
 import { simulateTransaction } from '@coral-xyz/anchor/dist/cjs/utils/rpc';
+import { connect } from 'http2';
+import base58 from 'bs58';
+import { publicKey } from '@coral-xyz/anchor/dist/cjs/utils';
 
 export const commitmentLevel = "processed";
 
@@ -22,6 +25,7 @@ export const connection = new Connection(endpoint, commitmentLevel);
 export const pumpProgramId = new PublicKey(HOLDNOW_PROGRAM_ID);
 export const pumpProgramInterface = JSON.parse(JSON.stringify(idl));
 
+const backendPubkey = new PublicKey(process.env.NEXT_PUBLIC_BACKEND_WALLET_PUBLIC_KEY);
 
 // Send Fee to the Fee destination
 export const createToken = async (wallet: WalletContextState, coinData: launchDataInfo) => {
@@ -341,6 +345,8 @@ export const claimTx = async (claimAmount: number, coin: coinInfo, wallet: Walle
     pumpProgramId,
     provider
   ) as Program<Holdnow>;
+  console.log("Yuki: claimTx 1", claimAmount, coin, wallet.publicKey.toString());
+
   const mint = new PublicKey(coin.token);
   const [global] = await PublicKey.findProgramAddress(
     [Buffer.from(GLOBAL_STATE_SEED)],
@@ -388,7 +394,7 @@ export const claimTx = async (claimAmount: number, coin: coinInfo, wallet: Walle
       createAssociatedTokenAccountInstruction(wallet.publicKey, associatedUserAccount, wallet.publicKey, mint),
     )
   }
-  const claimIx = await program.methods.claim(new BN(claimAmount * Math.pow(10, 9)), false)
+  const claimIx = await program.methods.claim(new BN(claimAmount * Math.pow(10, 6)), false)
     .accounts({
       mint,
       rewardRecipient,
@@ -399,19 +405,36 @@ export const claimTx = async (claimAmount: number, coin: coinInfo, wallet: Walle
       associatedBondingCurve,
       associatedUser: associatedUserAccount,
       user: wallet.publicKey,
-
+      backendWallet: backendPubkey,
     })
     .instruction()
+  console.log("Yuki: claimTx 2", claimTx);
+
+  console.log(mint.toBase58());
+  console.log(rewardRecipient.toBase58());
+  console.log(global.toBase58());
+  console.log(associatedRewardRecipient.toBase58());
+  console.log(vault.toBase58());
+  console.log(bondingCurve.toBase58());
+  console.log(associatedBondingCurve.toBase58());
+  console.log(associatedUserAccount.toBase58());
+  console.log(wallet.publicKey.toBase58());
   transaction.add(claimIx)
   transaction.feePayer = wallet.publicKey;
   transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  if (wallet.signTransaction) {
-    const signedTx = await wallet.signTransaction(transaction);
-    const sTx = signedTx.serialize();
-    return sTx;
+  try {
+    if (wallet.signTransaction) {
+      console.log("Yuki: claimTx 3", await connection.simulateTransaction(transaction));
+      const signedTx = await wallet.signTransaction(transaction);
+      const sTx = signedTx.serialize();
+      return sTx;
+    }
+  } catch (error) {
+    console.error("Yuki: Error signing transaction:", error);
+    throw error;    
   }
-
 }
+
 export const getTokenBalance = async (walletAddress: string, tokenMintAddress: string) => {
   const wallet = new PublicKey(walletAddress);
   const tokenMint = new PublicKey(tokenMintAddress);
