@@ -16,9 +16,11 @@ import { FaCopy } from "react-icons/fa6";
 import { successAlert } from "../others/ToastGroup";
 import { ConnectButton } from "../buttons/ConnectButton";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { getTokenBalance } from "@/program/web3";
+import { getClaimAmount, getTokenBalance } from "@/program/web3";
 import { showCountdownToast } from "@/utils/showCountdownToast";
 import { useQuery } from "react-query";
+import { useClaim } from "@/context/ClaimContext";
+import { PublicKey } from "@solana/web3.js";
 
 const getBalance = async (wallet: string, token: string) => {
   try {
@@ -42,15 +44,18 @@ export default function TradingPage() {
   const [progress, setProgress] = useState<number>(0);
   const [coin, setCoin] = useState<coinInfo>({} as coinInfo);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
-  const [claimAmount, setClaimAmount] = useState<number>(0);
   const [liquidity, setLiquidity] = useState<number>(0);
   const [stageProg, setStageProg] = useState<number>(0);
   const [sellTax, setSellTax] = useState<number>(0);
+  const { claimAmount, setClaimAmount } = useClaim();
   const router = useRouter();
 
   const segments = pathname.split("/");
   const parameter = segments[segments.length - 1];
 
+  setClaimAmount(0); // Reset claim amount on page load
+  console.log("Yuki: TradingPage: parameter:", parameter);
+  
   useEffect(() => {
     setParam(parameter);
     setCoinId(parameter);
@@ -66,14 +71,6 @@ export default function TradingPage() {
       if (!data) return;
 
       setCoin(data);
-      if (isUserInfo(data.creator) && publicKey) {
-        const claimData = await getClaim(parameter, data.creator._id);
-        if (claimData) {
-          const balance = await getBalance(publicKey.toBase58(), data.token);
-          const amt = (parseInt(claimData.claimAmount) * balance) / parseInt(data.tokenSupply.toString());
-          setClaimAmount(amt);
-        }
-      }
 
       const millisecondsInADay = 120 * 1000;
       const nowDate = new Date();
@@ -132,8 +129,15 @@ export default function TradingPage() {
   };
   const wallet = useWallet();
   const handleClaim = async () => {
-    const res = await claim(user, claimAmount, coin, wallet);
+    const res = await claim(user, coin, wallet);
     if (res === "success") setWeb3Tx(res);
+
+    setTimeout(async () => {
+      const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
+      setClaimAmount(newAmount);
+      console.log("Yuki: setClaimAmount/index: ", newAmount);
+    }, 1000);
+    
   };
 
   return (

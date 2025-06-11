@@ -1,12 +1,15 @@
 "use client";
 
 import UserContext from "@/context/UserContext";
-import { getTokenBalance, swapTx } from "@/program/web3";
+import { getClaimAmount, getTokenBalance, swapTx } from "@/program/web3";
 import { coinInfo } from "@/utils/types";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { ChangeEvent, useContext, useEffect, useState } from "react";
 import { errorAlert } from "../others/ToastGroup";
+import { useClaim } from "@/context/ClaimContext";
+import { claim } from "@/utils/util";
+
 interface TradingFormProps {
   coin: coinInfo;
   progress: Number;
@@ -19,6 +22,8 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const [tokenName, setTokenName] = useState<string>("Token")
   const [canTrade, setCanTrade] = useState<boolean>(false);
   const { user, setWeb3Tx } = useContext(UserContext);
+  const { claimAmount, setClaimAmount } = useClaim();
+
   const wallet = useWallet();
   const SolList = [
     { id: 0, price: "reset" },
@@ -41,6 +46,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
     try {
       const balance = await getTokenBalance(user.wallet, coin.token);
       setTokenBal(balance ? balance : 0);
+
     } catch (error) {
       setTokenBal(0);
     }
@@ -54,19 +60,29 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
     if (isSell == 0) {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
       const tokenAmount = coin.tokenReserves - totalLiquidity / ((coin.lamportReserves) + parseFloat(amount) * Math.pow(10, 9));
-      const res = await swapTx(mint, wallet, tokenAmount, isSell, tokenAmount)
+      const res = await swapTx(mint, wallet, tokenAmount, isSell, tokenAmount);
       if (res) {
-        // setWeb3Tx(res)
-        window.location.reload();
+        setTimeout(async () => {
+          const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
+          setClaimAmount(newAmount);
+        }, 1000);
+        // window.location.reload();
       }
 
     } else {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
       const minSol = coin.lamportReserves - totalLiquidity / ((coin.tokenReserves) + parseFloat(amount) * Math.pow(10, 6));
       const res = await swapTx(mint, wallet, parseFloat(amount), isSell, minSol)
-      // if(res) setWeb3Tx(res)
-      if (res) window.location.reload();
+      if (res) 
+        {
+          setTimeout(async () => {
+            const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
+            setClaimAmount(newAmount);
+          }, 1000);
+          // window.location.reload();
+        }
     }
+       
   }
 
   useEffect(() => {

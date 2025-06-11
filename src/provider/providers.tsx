@@ -11,6 +11,7 @@ import "dotenv/config.js";
 import LoginContext from "@/context/CoinContex";
 import { useWallet } from "@solana/wallet-adapter-react";
 import SocketProvider from "@/contexts/SocketContext";
+import { ClaimProvider } from "@/context/ClaimContext";
 
 export const queryClient = new QueryClient();
 
@@ -63,7 +64,9 @@ export default function Providers({ children }: { children: ReactNode }) {
               }}
             >
               <SocketProvider>
-                {children}
+                <ClaimProvider>
+                  {children}
+                </ClaimProvider>
               </SocketProvider>
               <ToastContainer pauseOnFocusLoss={false} theme="colored" />
             </UserContext.Provider>

@@ -236,6 +236,11 @@ export type Holdnow = {
           "isSigner": false
         },
         {
+          "name": "claimAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -312,6 +317,11 @@ export type Holdnow = {
         },
         {
           "name": "associatedUser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "claimAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -412,6 +422,11 @@ export type Holdnow = {
           "isSigner": false
         },
         {
+          "name": "claimAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -433,10 +448,6 @@ export type Holdnow = {
         }
       ],
       "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        },
         {
           "name": "isAirdrop",
           "type": "bool"
@@ -666,6 +677,18 @@ export type Holdnow = {
           {
             "name": "atStartStage",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "claimData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimAmount",
+            "type": "u64"
           }
         ]
       }
@@ -1129,6 +1152,11 @@ export type Holdnow = {
       "code": 6023,
       "name": "InvalidClaimAmount",
       "msg": "Invalid Claim Amount."
+    },
+    {
+      "code": 6024,
+      "name": "InvalidNoClaimAmount",
+      "msg": "No Claimable Amount"
     }
   ]
 };
@@ -1371,6 +1399,11 @@ export const IDL: Holdnow = {
           "isSigner": false
         },
         {
+          "name": "claimAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -1447,6 +1480,11 @@ export const IDL: Holdnow = {
         },
         {
           "name": "associatedUser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "claimAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -1547,6 +1585,11 @@ export const IDL: Holdnow = {
           "isSigner": false
         },
         {
+          "name": "claimAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -1568,10 +1611,6 @@ export const IDL: Holdnow = {
         }
       ],
       "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        },
         {
           "name": "isAirdrop",
           "type": "bool"
@@ -1801,6 +1840,18 @@ export const IDL: Holdnow = {
           {
             "name": "atStartStage",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "claimData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimAmount",
+            "type": "u64"
           }
         ]
       }
@@ -2264,6 +2315,11 @@ export const IDL: Holdnow = {
       "code": 6023,
       "name": "InvalidClaimAmount",
       "msg": "Invalid Claim Amount."
+    },
+    {
+      "code": 6024,
+      "name": "InvalidNoClaimAmount",
+      "msg": "No Claimable Amount"
     }
   ]
 };

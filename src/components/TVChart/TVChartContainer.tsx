@@ -10,6 +10,7 @@ import ReactLoading from "react-loading";
 import { twMerge } from "tailwind-merge";
 import { flare } from "viem/chains";
 import UserContext from "@/context/UserContext";
+import { useClaim } from "@/context/ClaimContext";
 
 
 export type TVChartContainerProps = {
@@ -26,12 +27,16 @@ export const TVChartContainer = ({
     pairIndex,
     token,
 }: TVChartContainerProps) => {
+    const { claimAmount, setClaimAmount } = useClaim();
+
     const chartContainerRef =
         useRef<HTMLDivElement>() as React.MutableRefObject<HTMLInputElement>;
     const tvWidgetRef = useRef<IChartingLibraryWidget | null>(null);
     const {isLoading, setIsLoading} = useContext(UserContext);
 
     useEffect(() => {
+
+        console.log("yuki TVchar display")
         if (!chartContainerRef.current) {
             return () => { };
         }
@@ -78,7 +83,7 @@ export const TVChartContainer = ({
             };
 
         }
-    }, [name, pairIndex]);
+    }, [name, pairIndex, claimAmount]);
 
     return (
         <div className="relative mb-[1px] h-[500px] w-full ">

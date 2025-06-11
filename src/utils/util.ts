@@ -184,8 +184,8 @@ export const getSolPriceInUSD = async () => {
   }
 };
 
-export const claim = async (userData: userInfo, claimAmount: number, coin: coinInfo, wallet: WalletContextState) => {
-  const signedTx = await claimTx(claimAmount, coin, wallet);
+export const claim = async (userData: userInfo, coin: coinInfo, wallet: WalletContextState) => {
+  const signedTx = await claimTx(coin, wallet);
   const data = {
     signedTxBase64: Buffer.from(signedTx).toString('base64'),
     token: coin.token,
