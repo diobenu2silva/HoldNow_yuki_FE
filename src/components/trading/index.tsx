@@ -21,6 +21,7 @@ import { showCountdownToast } from "@/utils/showCountdownToast";
 import { useQuery } from "react-query";
 import { useClaim } from "@/context/ClaimContext";
 import { PublicKey } from "@solana/web3.js";
+import { useCountdownToast } from "@/utils/useCountdownToast";
 
 const getBalance = async (wallet: string, token: string) => {
   try {
@@ -69,7 +70,8 @@ export default function TradingPage() {
 
       setCoin(data);
 
-      const millisecondsInADay = 120 * 1000;
+      const millisecondsInADay = 600 * 1000;
+      // const millisecondsInADay = 24 * 60 * 60 * 1000;
       const nowDate = new Date();
       const atStageStartedDate = new Date(data.atStageStarted);
       const period = nowDate.getTime() - atStageStartedDate.getTime();
@@ -87,31 +89,27 @@ export default function TradingPage() {
     return () => clearInterval(interval);
   }, [publicKey, web3Tx, parameter]);
 
-  console.log("yuki: airdropstage1:", coin.airdropStage);
+  useCountdownToast(coin);
+  // useEffect(() => {
+  //   if (!coin.airdropStage || !coin.atStageStarted || !coin.currentStage) return;
+
+  //   // const millisecondsInADay = 24 * 60 * 60 * 1000;
+  //   const millisecondsInADay = 120 * 1000;
+  //   const startTime = new Date(coin.atStageStarted);
+  //   const futureTime = new Date(startTime.getTime() + millisecondsInADay);
+
+  //   showCountdownToast(
+  //     futureTime,
+  //     `Stage ${coin.currentStage - 1} has completed. Next stage will begin in`,
+  //     "New Stage has begun!"
+  //   );
+  // }, [coin.airdropStage]);
+
   useEffect(() => {
-    console.log("yuki: airdropstage:", coin.airdropStage);
-    if (!coin.airdropStage || !coin.atStageStarted || !coin.currentStage) return;
-
-    // const millisecondsInADay = 24 * 60 * 60 * 1000;
-    const millisecondsInADay = 120 * 1000;
-    const startTime = new Date(coin.atStageStarted);
-    const futureTime = new Date(startTime.getTime() + millisecondsInADay);
-
-    showCountdownToast(
-      futureTime,
-      `Stage ${coin.currentStage - 1} has completed. Next stage will begin in`,
-      "New Stage has begun!"
-    );
-  }, [coin.airdropStage]);
-
-  useEffect(() => {
-    console.log("yuki: stageProg: ", stageProg, "coin:", coin);
     if (stageProg > coin.sellTaxDecay) {
       setSellTax(coin.sellTaxMin);
-      console.log("yuki: sellTax1:", sellTax);
     } else {
       setSellTax(Math.round(coin.sellTaxMax - (coin.sellTaxMax - coin.sellTaxMin) / coin.sellTaxDecay * stageProg ));
-      console.log("yuki: sellTax2:", sellTax);
     }
   }, [stageProg, coin]);
 
@@ -132,7 +130,6 @@ export default function TradingPage() {
     setTimeout(async () => {
       const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
       setClaimAmount(newAmount);
-      console.log("Yuki: setClaimAmount/index: ", newAmount);
     }, 1000);
     
   };

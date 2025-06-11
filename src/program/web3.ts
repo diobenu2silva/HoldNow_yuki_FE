@@ -226,10 +226,7 @@ export const getClaimAmount = async (mint: PublicKey, wallet: WalletContextState
     return 0;
   }
   const claimAmount = claimData.claimAmount.toNumber() / Math.pow(10, 6);
-
-  console.log("Yuki: getClaimAmount/web3:", claimAmount);
   return claimAmount;
-  
 }
 
 // Swap transaction
@@ -383,7 +380,6 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState) => {
     pumpProgramId,
     provider
   ) as Program<Holdnow>;
-  console.log("Yuki: claimTx 1", coin, wallet.publicKey.toString());
 
   const mint = new PublicKey(coin.token);
   const [global] = await PublicKey.findProgramAddress(
@@ -451,24 +447,12 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState) => {
       backendWallet: backendPubkey,
     })
     .instruction()
-  console.log("Yuki: claimTx 2", claimTx);
 
-  console.log(mint.toBase58());
-  console.log(rewardRecipient.toBase58());
-  console.log(global.toBase58());
-  console.log(associatedRewardRecipient.toBase58());
-  console.log(vault.toBase58());
-  console.log(bondingCurve.toBase58());
-  console.log(associatedBondingCurve.toBase58());
-  console.log(associatedUserAccount.toBase58());
-  console.log(wallet.publicKey.toBase58());
-  console.log(backendPubkey.toBase58());
   transaction.add(claimIx)
   transaction.feePayer = wallet.publicKey;
   transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   try {
     if (wallet.signTransaction) {
-      console.log("Yuki: claimTx 3", await connection.simulateTransaction(transaction));
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize({
         requireAllSignatures: false, // ✅ allow partial sigs
@@ -477,8 +461,7 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState) => {
       return sTx;
     }
   } catch (error) {
-    console.error("Yuki: Error signing transaction:", error);
-    throw error;    
+    console.error("Error signing transaction:", error);
   }
 }
 

@@ -35,7 +35,7 @@ export const showCountdownToast = (
       closeOnClick: false,
       closeButton: false,
       draggable: false,
-      icon: false,                // 👈 Hide toast icon
+      icon: false,
       style: commonStyle,
     });
   }
@@ -45,19 +45,27 @@ export const showCountdownToast = (
     const diff = finalTime.getTime() - now.getTime();
 
     if (diff <= 0) {
-      toast.update(activeToastId as string | number, {
-        render: finalMsg,
-        type: "success",
-        autoClose: 3000,
-        closeButton: true,
-        icon: false,
-        style: commonStyle,
-      });
+      toast.dismiss(activeToastId as string | number);
       clearInterval(countdownInterval!);
       countdownInterval = null;
       activeToastId = null;
       return;
     }
+    
+    // if (diff <= 0) {
+    //   toast.update(activeToastId as string | number, {
+    //     render: finalMsg,
+    //     type: "success",
+    //     autoClose: 3000,
+    //     closeButton: true,
+    //     icon: false,
+    //     style: commonStyle,
+    //   });
+    //   clearInterval(countdownInterval!);
+    //   countdownInterval = null;
+    //   activeToastId = null;
+    //   return;
+    // }
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff / (1000 * 60)) % 60);

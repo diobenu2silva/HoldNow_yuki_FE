@@ -15,20 +15,15 @@ const ClaimContext = createContext<ClaimContextType | undefined>(undefined);
 export const ClaimProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [claimAmount, setClaimAmount] = useState<number>(0);
   const pathname = usePathname();
-
   const wallet = useWallet();
 
+  setClaimAmount(0);
   const _getClaimAmount = async () => {
     const segments = pathname.split("/");
     const parameter = segments[segments.length - 1];
-    console.log("parameter ", parameter)
     const coin = await getCoinInfo(parameter);
-    console.log(">> coin: ", coin)
-    console.log("wallet.connected ", wallet.connected)
     if (coin && wallet.connected) {
-
         const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
-        console.log("initial new amount ", newAmount)
         setClaimAmount(newAmount)
     }
   }

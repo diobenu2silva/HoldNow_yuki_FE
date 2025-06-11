@@ -35,8 +35,6 @@ export const TVChartContainer = ({
     const {isLoading, setIsLoading} = useContext(UserContext);
 
     useEffect(() => {
-
-        console.log("yuki TVchar display")
         if (!chartContainerRef.current) {
             return () => { };
         }
