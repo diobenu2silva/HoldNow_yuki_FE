@@ -52,10 +52,7 @@ export default function TradingPage() {
 
   const segments = pathname.split("/");
   const parameter = segments[segments.length - 1];
-
-  setClaimAmount(0); // Reset claim amount on page load
-  console.log("Yuki: TradingPage: parameter:", parameter);
-  
+    
   useEffect(() => {
     setParam(parameter);
     setCoinId(parameter);
