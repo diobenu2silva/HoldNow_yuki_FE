@@ -185,6 +185,10 @@ export const getSolPriceInUSD = async () => {
 
 export const claim = async (userData: userInfo, coin: coinInfo, wallet: WalletContextState) => {
   const signedTx = await claimTx(coin, wallet);
+  if (!signedTx) {
+    console.log("Claim transaction failed");
+    return;
+  }
   const data = {
     signedTxBase64: Buffer.from(signedTx).toString('base64'),
     token: coin.token,

@@ -149,10 +149,8 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
           )}
 
         {
-          progress === 100 ? (
-            <div className="border-[1px] border-[#64ffda] cursor-not-allowed w-full text-center rounded-lg hover:bg-slate-500 py-2">
-              Place Trade
-            </div>
+          coin.airdropStage ? (
+            <></>
           ) : (
             <div className="border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 w-full text-center rounded-lg py-2" onClick={handlTrade}>
               Place Trade

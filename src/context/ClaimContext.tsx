@@ -21,10 +21,11 @@ export const ClaimProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const segments = pathname.split("/");
     const parameter = segments[segments.length - 1];
     const coin = await getCoinInfo(parameter);
-    if (coin && wallet.connected) {
+    if (coin && wallet.connected && coin.token) {
         const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
         setClaimAmount(newAmount)
     }
+  
   }
 
   useEffect(() => {

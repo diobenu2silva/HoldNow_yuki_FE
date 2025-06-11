@@ -202,32 +202,51 @@ export const createToken = async (wallet: WalletContextState, coinData: launchDa
   }
 };
 
-export const getClaimAmount = async (mint: PublicKey, wallet: WalletContextState): Promise<number> => {
-  // check the connection
-  if (!wallet.publicKey || !connection) {
+export const getClaimAmount = async (
+  mint: PublicKey,
+  wallet: WalletContextState
+): Promise<number> => {
+  if (!wallet.publicKey || !connection) return 0;
+
+  try {
+    const provider = new anchor.AnchorProvider(connection, wallet, {
+      preflightCommitment: "confirmed",
+    });
+
+    const program = new Program(
+      pumpProgramInterface,
+      pumpProgramId,
+      provider
+    ) as Program<Holdnow>;
+
+    const [claim] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from(CLAIM_DATA_SEED),
+        mint.toBuffer(),
+        wallet.publicKey.toBuffer(),
+      ],
+      program.programId
+    );
+
+    const claimData = await program.account.claimData.fetch(claim);
+
+    if (
+      !claimData ||
+      !claimData.claimAmount ||
+      typeof claimData.claimAmount.toNumber !== "function"
+    ) {
+      console.warn("Invalid claim data structure:", claimData);
+      return 0;
+    }
+
+    const claimAmount = claimData.claimAmount.toNumber() / 1e6;
+    return claimAmount;
+  } catch (err) {
+    console.error("Error fetching claim amount:", err);
     return 0;
   }
+};
 
-  const provider = new anchor.AnchorProvider(connection, wallet, { preflightCommitment: "confirmed" });
-
-  const program = new Program(
-    pumpProgramInterface,
-    pumpProgramId,
-    provider
-  ) as Program<Holdnow>;
-  
-  const [claim] = await PublicKey.findProgramAddress(
-    [Buffer.from(CLAIM_DATA_SEED), mint.toBuffer(), wallet.publicKey.toBuffer()],
-    program.programId
-  );
-  
-  const claimData = await program.account.claimData.fetch(claim);
-  if (!claimData) {
-    return 0;
-  }
-  const claimAmount = claimData.claimAmount.toNumber() / Math.pow(10, 6);
-  return claimAmount;
-}
 
 // Swap transaction
 export const swapTx = async (mint: PublicKey, wallet: WalletContextState, amount: number, type: number, slipAmount: number): Promise<any> => {
