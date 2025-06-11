@@ -89,7 +89,7 @@ export const ConnectButton: FC = () => {
             <div className="flex items-center justify-center gap-2 text-[16px] lg:text-md">
               {(user.avatar !== undefined) && <img
                 src={user.avatar}
-                alt="Token IMG"
+                alt=""
                 className="rounded-full"
                 width={35}
                 height={35}

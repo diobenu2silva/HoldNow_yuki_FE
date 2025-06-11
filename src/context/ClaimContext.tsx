@@ -17,7 +17,6 @@ export const ClaimProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const pathname = usePathname();
   const wallet = useWallet();
 
-  setClaimAmount(0);
   const _getClaimAmount = async () => {
     const segments = pathname.split("/");
     const parameter = segments[segments.length - 1];
