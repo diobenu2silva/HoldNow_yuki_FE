@@ -42,7 +42,7 @@ import {
   VAULT_SEED,
 } from "./seed";
 import { BN } from "bn.js";
-import { sendTx, sleep } from "@/utils/util";
+import { getClaimData, sendTx, sleep } from "@/utils/util";
 import { simulateTransaction } from "@coral-xyz/anchor/dist/cjs/utils/rpc";
 import { connect } from "http2";
 import base58 from "bs58";
@@ -244,50 +244,50 @@ export const createToken = async (
   }
 };
 
-export const getClaimAmount = async (
-  mint: PublicKey,
-  wallet: WalletContextState
-): Promise<number> => {
-  if (!wallet.publicKey || !connection) return 0;
+// export const getClaimAmount = async (
+//   mint: PublicKey,
+//   wallet: WalletContextState
+// ): Promise<number> => {
+//   if (!wallet.publicKey || !connection) return 0;
 
-  try {
-    const provider = new anchor.AnchorProvider(connection, wallet, {
-      preflightCommitment: "confirmed",
-    });
+//   try {
+//     const provider = new anchor.AnchorProvider(connection, wallet, {
+//       preflightCommitment: "confirmed",
+//     });
 
-    const program = new Program(
-      pumpProgramInterface,
-      pumpProgramId,
-      provider
-    ) as Program<Holdnow>;
+//     const program = new Program(
+//       pumpProgramInterface,
+//       pumpProgramId,
+//       provider
+//     ) as Program<Holdnow>;
 
-    const [claim] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from(CLAIM_DATA_SEED),
-        mint.toBuffer(),
-        wallet.publicKey.toBuffer(),
-      ],
-      program.programId
-    );
+//     const [claim] = await PublicKey.findProgramAddress(
+//       [
+//         Buffer.from(CLAIM_DATA_SEED),
+//         mint.toBuffer(),
+//         wallet.publicKey.toBuffer(),
+//       ],
+//       program.programId
+//     );
 
-    const claimData = await program.account.claimData.fetch(claim);
+//     const claimData = await program.account.claimData.fetch(claim);
 
-    if (
-      !claimData ||
-      !claimData.claimAmount ||
-      typeof claimData.claimAmount.toNumber !== "function"
-    ) {
-      console.warn("Invalid claim data structure:", claimData);
-      return 0;
-    }
+//     if (
+//       !claimData ||
+//       !claimData.claimAmount ||
+//       typeof claimData.claimAmount.toNumber !== "function"
+//     ) {
+//       console.warn("Invalid claim data structure:", claimData);
+//       return 0;
+//     }
 
-    const claimAmount = claimData.claimAmount.toNumber() / 1e6;
-    return claimAmount;
-  } catch (err) {
-    console.error("Error fetching claim amount:", err);
-    return 0;
-  }
-};
+//     const claimAmount = claimData.claimAmount.toNumber() / 1e6;
+//     return claimAmount;
+//   } catch (err) {
+//     console.error("Error fetching claim amount:", err);
+//     return 0;
+//   }
+// };
 
 // Swap transaction
 export const swapTx = async (
@@ -341,15 +341,7 @@ export const swapTx = async (
     wallet.publicKey
   );
   const info = await connection.getAccountInfo(associatedUserAccount);
-  const [claimData] = await PublicKey.findProgramAddress(
-    [
-      Buffer.from(CLAIM_DATA_SEED),
-      mint.toBuffer(),
-      wallet.publicKey.toBuffer(),
-    ],
-    program.programId
-  );
-
+  
   try {
     const transaction = new Transaction();
     const cpIx = ComputeBudgetProgram.setComputeUnitPrice({
@@ -383,7 +375,6 @@ export const swapTx = async (
           bondingCurve,
           associatedBondingCurve,
           associatedUser: associatedUserAccount,
-          claimAccount: claimData,
           user: wallet.publicKey,
           systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -408,7 +399,6 @@ export const swapTx = async (
           bondingCurve,
           associatedBondingCurve,
           associatedUser: associatedUserAccount,
-          claimAccount: claimData,
           user: wallet.publicKey,
           systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -448,7 +438,7 @@ export const swapTx = async (
 };
 
 //Claim transaction
-export const claimTx = async (coin: coinInfo, wallet: WalletContextState) => {
+export const claimTx = async (coin: coinInfo, wallet: WalletContextState, amount: number) => {
   const provider = new anchor.AnchorProvider(connection, wallet, {
     preflightCommitment: "confirmed",
   });
@@ -484,14 +474,6 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState) => {
     [Buffer.from(VAULT_SEED), mint.toBuffer()],
     program.programId
   );
-  const [claimData] = await PublicKey.findProgramAddress(
-    [
-      Buffer.from(CLAIM_DATA_SEED),
-      mint.toBuffer(),
-      wallet.publicKey.toBuffer(),
-    ],
-    program.programId
-  );
   const associatedUserAccount = await getAssociatedTokenAddress(
     mint,
     wallet.publicKey
@@ -513,8 +495,10 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState) => {
       )
     );
   }
+  
+  const bnAmount = new BN((amount * 1e6).toFixed(0)); // Convert to lamports (1 token = 1e6 lamports)
   const claimIx = await program.methods
-    .claim(false)
+    .claim(bnAmount, false)
     .accounts({
       mint,
       rewardRecipient,
@@ -524,7 +508,6 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState) => {
       bondingCurve,
       associatedBondingCurve,
       associatedUser: associatedUserAccount,
-      claimAccount: claimData,
       user: wallet.publicKey,
       backendWallet: backendPubkey,
     })

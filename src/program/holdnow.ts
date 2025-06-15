@@ -236,11 +236,6 @@ export type Holdnow = {
           "isSigner": false
         },
         {
-          "name": "claimAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -317,11 +312,6 @@ export type Holdnow = {
         },
         {
           "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "claimAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -422,11 +412,6 @@ export type Holdnow = {
           "isSigner": false
         },
         {
-          "name": "claimAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -448,6 +433,10 @@ export type Holdnow = {
         }
       ],
       "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
         {
           "name": "isAirdrop",
           "type": "bool"
@@ -682,18 +671,6 @@ export type Holdnow = {
       }
     },
     {
-      "name": "claimData",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "claimAmount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
       "name": "global",
       "type": {
         "kind": "struct",
@@ -751,6 +728,46 @@ export type Holdnow = {
     }
   ],
   "events": [
+    {
+      "name": "ClaimStageEvent",
+      "fields": [
+        {
+          "name": "mint",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "rewardAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "currentStage",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveToken",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveLamport",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
     {
       "name": "CompleteEvent",
       "fields": [
@@ -816,6 +833,11 @@ export type Holdnow = {
         },
         {
           "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
           "type": "publicKey",
           "index": false
         },
@@ -891,6 +913,16 @@ export type Holdnow = {
         },
         {
           "name": "currentStage",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveToken",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveLamport",
           "type": "u64",
           "index": false
         }
@@ -981,6 +1013,16 @@ export type Holdnow = {
         },
         {
           "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "rewardCapAddr",
           "type": "publicKey",
           "index": false
         },
@@ -1399,11 +1441,6 @@ export const IDL: Holdnow = {
           "isSigner": false
         },
         {
-          "name": "claimAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -1480,11 +1517,6 @@ export const IDL: Holdnow = {
         },
         {
           "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "claimAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -1585,11 +1617,6 @@ export const IDL: Holdnow = {
           "isSigner": false
         },
         {
-          "name": "claimAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -1611,6 +1638,10 @@ export const IDL: Holdnow = {
         }
       ],
       "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
         {
           "name": "isAirdrop",
           "type": "bool"
@@ -1845,18 +1876,6 @@ export const IDL: Holdnow = {
       }
     },
     {
-      "name": "claimData",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "claimAmount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
       "name": "global",
       "type": {
         "kind": "struct",
@@ -1914,6 +1933,46 @@ export const IDL: Holdnow = {
     }
   ],
   "events": [
+    {
+      "name": "ClaimStageEvent",
+      "fields": [
+        {
+          "name": "mint",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "rewardAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "currentStage",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveToken",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveLamport",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
     {
       "name": "CompleteEvent",
       "fields": [
@@ -1979,6 +2038,11 @@ export const IDL: Holdnow = {
         },
         {
           "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
           "type": "publicKey",
           "index": false
         },
@@ -2054,6 +2118,16 @@ export const IDL: Holdnow = {
         },
         {
           "name": "currentStage",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveToken",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveLamport",
           "type": "u64",
           "index": false
         }
@@ -2144,6 +2218,16 @@ export const IDL: Holdnow = {
         },
         {
           "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "rewardCapAddr",
           "type": "publicKey",
           "index": false
         },

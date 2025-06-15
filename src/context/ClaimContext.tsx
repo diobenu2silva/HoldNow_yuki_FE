@@ -1,19 +1,21 @@
-import { getClaimAmount } from '@/program/web3';
-import { getCoinInfo } from '@/utils/util';
+import { coinInfo } from '@/utils/types';
+import { getClaimData, getCoinInfo } from '@/utils/util';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
+import axios from 'axios';
 import { usePathname } from 'next/navigation';
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { run } from 'node:test';
+import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
 
 type ClaimContextType = {
-  claimAmount: number;
-  setClaimAmount: React.Dispatch<React.SetStateAction<number>>;
+  claimAmount: [number, number, number, coinInfo];
+  setClaimAmount: React.Dispatch<React.SetStateAction<[number, number, number, coinInfo]>>;
 };
 
 const ClaimContext = createContext<ClaimContextType | undefined>(undefined);
 
-export const ClaimProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [claimAmount, setClaimAmount] = useState<number>(0);
+export const ClaimProvider: React.FC<{ children: React.ReactNode; intervalMs?: number }> = ({ children, intervalMs = 5000, }) => {
+  const [claimAmount, setClaimAmount] = useState<[number, number, number, coinInfo]>([0, 0, 0, {} as coinInfo]);
   const pathname = usePathname();
   const wallet = useWallet();
 
@@ -21,20 +23,30 @@ export const ClaimProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const segments = pathname.split("/");
     const parameter = segments[segments.length - 1];
     const coin = await getCoinInfo(parameter);
-    if (coin && wallet.connected && coin.token) {
-        const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
-        setClaimAmount(newAmount)
+    try {
+      const response = await getClaimData(coin.token, wallet.publicKey.toBase58());
+      console.log("__yuki__ claim data response:", response, "type is ", typeof response.claimInUSD);
+      setClaimAmount([response.claimInUSD ?? 0, response.claimHodl ?? 0, response.solPrice ?? 0, coin ?? {} as coinInfo]);
+    } catch (error) {
+      console.error("__yuki__ Error fetching claim data:", error);
+      setClaimAmount([0, 0, 0, coin]);
     }
-  
   }
 
   useEffect(() => {
-    if (wallet.connected) {
-        _getClaimAmount()
-    } else {
-        setClaimAmount(0)
-    }
-  }, [wallet])
+    let intervalId: NodeJS.Timeout;
+    console.log("__yuki__ useeffect");
+    const run = async () => {
+        await _getClaimAmount()
+      };
+      
+    run();
+
+    intervalId = setInterval(run, intervalMs)
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [wallet.connected, pathname, intervalMs]);
 
   return (
     <ClaimContext.Provider value={{ claimAmount, setClaimAmount }}>

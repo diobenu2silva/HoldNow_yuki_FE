@@ -9,7 +9,8 @@ export async function getChartTable({
     to,
     range,
     token,
-    countBack
+    countBack,
+    claimAmount
 }: {
     pairIndex: number;
     from: number;
@@ -17,6 +18,7 @@ export async function getChartTable({
     range: number;
     token: string;
     countBack: number;
+    claimAmount?: any; 
 }): Promise<ChartTable> {
     try {
         const res = await fetch(

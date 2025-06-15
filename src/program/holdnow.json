@@ -236,11 +236,6 @@
           "isSigner": false
         },
         {
-          "name": "claimAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -317,11 +312,6 @@
         },
         {
           "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "claimAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -422,11 +412,6 @@
           "isSigner": false
         },
         {
-          "name": "claimAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "user",
           "isMut": true,
           "isSigner": true
@@ -448,6 +433,10 @@
         }
       ],
       "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
         {
           "name": "isAirdrop",
           "type": "bool"
@@ -682,18 +671,6 @@
       }
     },
     {
-      "name": "ClaimData",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "claimAmount",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
       "name": "Global",
       "type": {
         "kind": "struct",
@@ -751,6 +728,46 @@
     }
   ],
   "events": [
+    {
+      "name": "ClaimStageEvent",
+      "fields": [
+        {
+          "name": "mint",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "rewardAmount",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "currentStage",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveToken",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveLamport",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
     {
       "name": "CompleteEvent",
       "fields": [
@@ -816,6 +833,11 @@
         },
         {
           "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
           "type": "publicKey",
           "index": false
         },
@@ -891,6 +913,16 @@
         },
         {
           "name": "currentStage",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveToken",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "reserveLamport",
           "type": "u64",
           "index": false
         }
@@ -981,6 +1013,16 @@
         },
         {
           "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "bondingCurve",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "rewardCapAddr",
           "type": "publicKey",
           "index": false
         },
@@ -1158,5 +1200,8 @@
       "name": "InvalidNoClaimAmount",
       "msg": "No Claimable Amount"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "Hmt2JQ7vQQPTC1PH8ZXumRac7CmJpYWepoqWE8jFYHtZ"
+  }
 }

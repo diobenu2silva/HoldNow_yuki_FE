@@ -1,7 +1,7 @@
 "use client";
 
 import UserContext from "@/context/UserContext";
-import { getClaimAmount, getTokenBalance, swapTx } from "@/program/web3";
+import { getTokenBalance, swapTx } from "@/program/web3";
 import { coinInfo } from "@/utils/types";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -22,7 +22,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const [tokenName, setTokenName] = useState<string>("Token")
   const [canTrade, setCanTrade] = useState<boolean>(false);
   const { user, setWeb3Tx } = useContext(UserContext);
-  const { claimAmount, setClaimAmount } = useClaim();
+  // const { claimAmount, setClaimAmount } = useClaim();
 
   const wallet = useWallet();
   const SolList = [
@@ -61,28 +61,22 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
       const tokenAmount = coin.tokenReserves - totalLiquidity / ((coin.lamportReserves) + parseFloat(amount) * Math.pow(10, 9));
       const res = await swapTx(mint, wallet, tokenAmount, isSell, tokenAmount);
-      if (res) {
-        setTimeout(async () => {
-          const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
-          setClaimAmount(newAmount);
-        }, 1000);
-        // window.location.reload();
-      }
-
+      // if (res) {
+      //   setTimeout(async () => {
+      //     window.location.reload();
+      //   }, 500);
+      // }
     } else {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves
       const minSol = coin.lamportReserves - totalLiquidity / ((coin.tokenReserves) + parseFloat(amount) * Math.pow(10, 6));
       const res = await swapTx(mint, wallet, parseFloat(amount), isSell, minSol)
-      if (res) 
-        {
-          setTimeout(async () => {
-            const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
-            setClaimAmount(newAmount);
-          }, 1000);
-          // window.location.reload();
-        }
+      // if (res) {
+      //   setTimeout(async () => {
+      //     window.location.reload();
+      //   }, 500);
+      // }
     }
-       
+     
   }
 
   useEffect(() => {

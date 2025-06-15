@@ -22,12 +22,13 @@ import { FaCopy } from "react-icons/fa6";
 import { successAlert } from "../others/ToastGroup";
 import { ConnectButton } from "../buttons/ConnectButton";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { getClaimAmount, getTokenBalance } from "@/program/web3";
+import { getTokenBalance } from "@/program/web3";
 import { showCountdownToast } from "@/utils/showCountdownToast";
 import { useQuery } from "react-query";
 import { useClaim } from "@/context/ClaimContext";
 import { PublicKey } from "@solana/web3.js";
 import { useCountdownToast } from "@/utils/useCountdownToast";
+import { token } from "@coral-xyz/anchor/dist/cjs/utils";
 
 const getBalance = async (wallet: string, token: string) => {
   try {
@@ -55,9 +56,7 @@ export default function TradingPage() {
   const [liquidity, setLiquidity] = useState<number>(0);
   const [stageProg, setStageProg] = useState<number>(0);
   const [sellTax, setSellTax] = useState<number>(0);
-  const { claimAmount, setClaimAmount } = useClaim();
-  const [claimable, setClaimable] = useState<number>(0);
-  const [tokenHodl, setTokenHodl] = useState<number>(0);
+  const { claimAmount } = useClaim();
   const router = useRouter();
 
   const segments = pathname.split("/");
@@ -68,64 +67,32 @@ export default function TradingPage() {
     setCoinId(parameter);
   }, [parameter]);
 
-  // const { data, refetch } = useQuery<coinInfo | undefined>(["coinInfo", parameter], () => getCoinInfo(parameter), {
-  //   refetchInterval: 30000, // Refetch every 30s
-  // });
+  const [claimInUSD, claimHodl, solPrice, coinData] = claimAmount;
+  console.log("__yuki__ claimInUSD:", claimInUSD, " claimHodl:", claimHodl, "solPrice:", solPrice, "coinData:", coinData);
+  const fetchData = async () => {
 
-  const refreshRate = 10000;
+    setCoin(coinData);
+
+    const millisecondsInADay = 120 * 1000;
+    // const millisecondsInADay = 24 * 60 * 60 * 1000;
+    const nowDate = new Date();
+    const atStageStartedDate = new Date(coinData.atStageStarted);
+    const period = nowDate.getTime() - atStageStartedDate.getTime();
+    const stageProgress =
+      Math.round(
+        (period * 10000) / (millisecondsInADay * coinData.stageDuration)
+      ) / 100;
+    setStageProg(stageProgress > 100 ? 100 : stageProgress);
+
+    setProgress(Math.round((coinData.progressMcap * solPrice) / 10) / 100);
+    setLiquidity(
+      Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+    );
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await getCoinInfo(parameter);
-      if (!data) return;
-
-      setCoin(data);
-
-      const {
-        tokenBal,
-        hodlSum,
-        rewardCap,
-        isBlocked,
-        tokenReserves,
-        lamportReserves,
-        solPrice,
-      } = await getClaimData(coin.token, publicKey);
-
-      if (isBlocked) {
-        setClaimable(0);
-        setTokenHodl(tokenBal);
-      } else {
-        const claimInUSD =
-          rewardCap *
-          (tokenBal / hodlSum) *
-          (lamportReserves / tokenReserves) *
-          solPrice;
-        setClaimable(claimInUSD);
-        setTokenHodl(tokenBal);
-      }
-
-      const millisecondsInADay = 600 * 1000;
-      // const millisecondsInADay = 24 * 60 * 60 * 1000;
-      const nowDate = new Date();
-      const atStageStartedDate = new Date(data.atStageStarted);
-      const period = nowDate.getTime() - atStageStartedDate.getTime();
-      const stageProgress =
-        Math.round(
-          (period * 10000) / (millisecondsInADay * data.stageDuration)
-        ) / 100;
-      setStageProg(stageProgress > 100 ? 100 : stageProgress);
-
-      setProgress(Math.round((data.progressMcap * solPrice) / 10) / 100);
-      setLiquidity(
-        Math.round(((data.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
-      );
-    };
-
     fetchData();
-
-    const interval = setInterval(fetchData, refreshRate);
-    return () => clearInterval(interval);
-  }, [publicKey, web3Tx, parameter]);
+  }, [publicKey, web3Tx, , claimInUSD, claimHodl, solPrice, coinData]);
 
   useCountdownToast(coin);
 
@@ -154,13 +121,9 @@ export default function TradingPage() {
   };
   const wallet = useWallet();
   const handleClaim = async () => {
-    const res = await claim(user, coin, wallet);
+    const res = await claim(user, coin, wallet, Number(claimHodl));
     if (res === "success") setWeb3Tx(res);
-
-    setTimeout(async () => {
-      const newAmount = await getClaimAmount(new PublicKey(coin.token), wallet);
-      setClaimAmount(newAmount);
-    }, 1000);
+    console.log("__yuki__ claim res : ", res);
   };
 
   return (
@@ -202,19 +165,17 @@ export default function TradingPage() {
 
           <div className="w-full flex flex-col text-center text-white gap-4 py-4 border-[1px] border-[#64ffda] rounded-lg px-3">
             <p className="font-semibold text-xl">
-              Stage{" "}
-              {coin.airdropStage ? coin.currentStage - 1 : coin.currentStage}{" "}
-              Reward Claim
+              Stage {Math.min(coin.currentStage, coin.stagesNumber)} Reward Claim
             </p>
             {login && publicKey ? (
               <div className="w-full justify-center items-center flex flex-col gap-2">
                 <p className="text-sm px-5">You are eligible to claim:</p>
                 <p className="text-xl font-semibold">{`${Number(
-                  claimable
-                ).toFixed(2)} ${coin.name}`}</p>
+                  claimInUSD
+                ).toPrecision(9)} USD`}</p>
                 <p className="text-xl font-semibold">{`${Number(
-                  tokenHodl
-                ).toFixed(2)} HODL`}</p>
+                  claimHodl
+                ).toPrecision(6)} HODL`}</p>
               </div>
             ) : (
               <p className="text-sm px-5">
@@ -267,7 +228,7 @@ export default function TradingPage() {
             <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
               <DataCard
                 text="Stage"
-                data={`${coin.currentStage} of ${coin.stagesNumber}`}
+                data={`${Math.min(coin.currentStage, coin.stagesNumber)} of ${coin.stagesNumber}`}
               />
               <DataCard text="Sell Tax" data={`${sellTax} %`} />
               <DataCard text="Redistribution" data="$ 15.2K" />

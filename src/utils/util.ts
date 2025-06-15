@@ -10,6 +10,7 @@ import {
 import { claimTx } from "@/program/web3";
 import { WalletContextState } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
+import { useClaim } from "@/context/ClaimContext";
 
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -37,18 +38,18 @@ export const getUser = async ({ id }: { id: string }): Promise<any> => {
 
 export const getClaimData = async (
   mint: string,
-  wallet: PublicKey
+  wallet: string
 ): Promise<any> => {
   try {
     const response = await axios.get(
-      `${BACKEND_URL}/claimData/${mint}/${wallet.toBase58()}`,
+      `${BACKEND_URL}/claimData/${mint}/${wallet}`,
       config
     );
-    const { tokenBal, hodlSum, rewardCap, isBlocked } = response.data;
-    return { tokenBal, hodlSum, rewardCap, isBlocked };
+
+    return response.data;;
   } catch (err) {
     console.log("__yuki__ error getting the claim data : ", err);
-    return { tokenBal: 0, hodlSum: 0, rewardCap: 0, isBlocked: true };
+    return { tokenBal: 0, hodlSum: 0, rewardCap: 0, isBlocked: true, tokenReserves: 0, lamportReserves: 0, solPrice: 0 }
   }
 };
 
@@ -132,6 +133,7 @@ export const getCoinsInfoBy = async (id: string): Promise<coinInfo[]> => {
 export const getCoinInfo = async (data: string): Promise<any> => {
   try {
     const response = await axios.get(`${BACKEND_URL}/coin/${data}`, config);
+    console.log("__yuki__ getCoinInfo response: ", response.data);
     return response.data;
   } catch (err) {
     return { error: "error setting up the request" };
@@ -261,9 +263,10 @@ export const getSolPriceInUSD = async () => {
 export const claim = async (
   userData: userInfo,
   coin: coinInfo,
-  wallet: WalletContextState
+  wallet: WalletContextState,
+  amount: number,
 ) => {
-  const signedTx = await claimTx(coin, wallet);
+  const signedTx = await claimTx(coin, wallet, amount);
   if (!signedTx) {
     console.log("Claim transaction failed");
     return;

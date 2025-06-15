@@ -27,7 +27,7 @@ export const TVChartContainer = ({
     pairIndex,
     token,
 }: TVChartContainerProps) => {
-    const { claimAmount, setClaimAmount } = useClaim();
+    const { claimAmount } = useClaim();
 
     const chartContainerRef =
         useRef<HTMLDivElement>() as React.MutableRefObject<HTMLInputElement>;
@@ -81,7 +81,7 @@ export const TVChartContainer = ({
             };
 
         }
-    }, [name, pairIndex, claimAmount]);
+    }, [name, pairIndex, claimAmount[1]]);
 
     return (
         <div className="relative mb-[1px] h-[500px] w-full ">
