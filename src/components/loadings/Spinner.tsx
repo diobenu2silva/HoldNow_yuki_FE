@@ -1,4 +1,4 @@
-import { Circles } from "react-loader-spinner"
+import { Circles } from 'react-loader-spinner';
 
 export const Spinner = () => {
   return (
@@ -17,6 +17,5 @@ export const Spinner = () => {
         </div>
       </div>
     </div>
-  )
-
-}
+  );
+};

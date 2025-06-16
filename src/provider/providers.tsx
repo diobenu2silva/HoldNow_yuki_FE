@@ -1,17 +1,17 @@
-"use client";
-import React, { ReactNode, useState } from "react";
-import { PageProvider } from "@/contexts/PageContext";
-import { SolanaWalletProvider } from "@/contexts/SolanaWalletProvider";
-import { QueryClientProvider, QueryClient } from "react-query";
-import { ToastContainer } from "react-toastify";
-import { ModalProvider } from "@/contexts/ModalProvider";
-import UserContext from "@/context/UserContext";
-import { msgInfo, userInfo } from "@/utils/types";
-import "dotenv/config.js";
-import LoginContext from "@/context/CoinContex";
-import { useWallet } from "@solana/wallet-adapter-react";
-import SocketProvider from "@/contexts/SocketContext";
-import { ClaimProvider } from "@/context/ClaimContext";
+'use client';
+import React, { ReactNode, useState } from 'react';
+import { PageProvider } from '@/contexts/PageContext';
+import { SolanaWalletProvider } from '@/contexts/SolanaWalletProvider';
+import { QueryClientProvider, QueryClient } from 'react-query';
+import { ToastContainer } from 'react-toastify';
+import { ModalProvider } from '@/contexts/ModalProvider';
+import UserContext from '@/context/UserContext';
+import { msgInfo, userInfo } from '@/utils/types';
+import 'dotenv/config.js';
+import LoginContext from '@/context/CoinContex';
+import { useWallet } from '@solana/wallet-adapter-react';
+import SocketProvider from '@/contexts/SocketContext';
+import { ClaimProvider } from '@/context/ClaimContext';
 
 export const queryClient = new QueryClient();
 
@@ -28,7 +28,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   const [solPrice, setSolPrice] = useState<number>(0);
   const [profileEditModal, setProfileEditModal] = useState<boolean>(false);
   const [postReplyModal, setPostReplyModal] = useState<boolean>(false);
-  const [web3Tx, setWeb3Tx] = useState<string>("")
+  const [web3Tx, setWeb3Tx] = useState<string>('');
 
   return (
     <SolanaWalletProvider>
@@ -60,13 +60,11 @@ export default function Providers({ children }: { children: ReactNode }) {
                 profileEditModal,
                 setProfileEditModal,
                 postReplyModal,
-                setPostReplyModal
+                setPostReplyModal,
               }}
             >
               <SocketProvider>
-                <ClaimProvider>
-                  {children}
-                </ClaimProvider>
+                <ClaimProvider>{children}</ClaimProvider>
               </SocketProvider>
               <ToastContainer pauseOnFocusLoss={false} theme="colored" />
             </UserContext.Provider>

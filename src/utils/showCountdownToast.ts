@@ -1,4 +1,4 @@
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
 
 // Global toast and interval trackers
 let activeToastId: string | number | null = null;
@@ -16,21 +16,21 @@ export const showCountdownToast = (
   }
 
   const commonStyle = {
-    display: "inline-block",
-    whiteSpace: "nowrap",
-    maxWidth: "none",
-    width: "auto",
-    marginLeft: "-120px",
-    marginTop: "40px",
-    fontSize: "1.1rem",
-    borderRadius: "12px",
-    padding: "10px 20px",
+    display: 'inline-block',
+    whiteSpace: 'nowrap',
+    maxWidth: 'none',
+    width: 'auto',
+    marginLeft: '-120px',
+    marginTop: '40px',
+    fontSize: '1.1rem',
+    borderRadius: '12px',
+    padding: '10px 20px',
   };
 
   // Show new toast or reuse existing one
   if (!activeToastId) {
-    activeToastId = toast.info("Preparing countdown...", {
-      position: "top-center",
+    activeToastId = toast.info('Preparing countdown...', {
+      position: 'top-center',
       autoClose: false,
       closeOnClick: false,
       closeButton: false,
@@ -51,7 +51,7 @@ export const showCountdownToast = (
       activeToastId = null;
       return;
     }
-    
+
     // if (diff <= 0) {
     //   toast.update(activeToastId as string | number, {
     //     render: finalMsg,

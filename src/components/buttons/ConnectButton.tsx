@@ -1,23 +1,27 @@
-"use client";
-import { FC, useContext, useEffect, useMemo, useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { successAlert, errorAlert, infoAlert } from "@/components/others/ToastGroup";
-import base58 from "bs58";
-import UserContext from "@/context/UserContext";
-import { confirmWallet, walletConnect } from "@/utils/util";
-import { userInfo } from "@/utils/types";
-import { useRouter } from "next/navigation";
-import { RiExchangeDollarLine } from "react-icons/ri";
-import { VscDebugDisconnect } from "react-icons/vsc";
-import { TbMoodEdit } from "react-icons/tb";
+'use client';
+import { FC, useContext, useEffect, useMemo, useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import {
+  successAlert,
+  errorAlert,
+  infoAlert,
+} from '@/components/others/ToastGroup';
+import base58 from 'bs58';
+import UserContext from '@/context/UserContext';
+import { confirmWallet, walletConnect } from '@/utils/util';
+import { userInfo } from '@/utils/types';
+import { useRouter } from 'next/navigation';
+import { RiExchangeDollarLine } from 'react-icons/ri';
+import { VscDebugDisconnect } from 'react-icons/vsc';
+import { TbMoodEdit } from 'react-icons/tb';
 
 export const ConnectButton: FC = () => {
   const { user, setUser, login, setLogin, isLoading, setIsLoading } =
     useContext(UserContext);
   const { publicKey, disconnect, connect, signMessage } = useWallet();
   const { visible, setVisible } = useWalletModal();
-  const router = useRouter()
+  const router = useRouter();
 
   const tempUser = useMemo(() => user, [user]);
   useEffect(() => {
@@ -63,14 +67,14 @@ export const ConnectButton: FC = () => {
         setLogin(true);
         setIsLoading(false);
       }
-      successAlert("Message signed.");
+      successAlert('Message signed.');
     } catch (error) {
-      errorAlert("Sign-in failed.");
+      errorAlert('Sign-in failed.');
     }
   };
 
   const logOut = async () => {
-    if (typeof disconnect === "function") {
+    if (typeof disconnect === 'function') {
       await disconnect();
     }
     // Initialize `user` state to default value
@@ -79,26 +83,31 @@ export const ConnectButton: FC = () => {
     localStorage.clear();
   };
   const handleToProfile = (id: string) => {
-    router.push(id)
-  }
+    router.push(id);
+  };
   return (
     <div>
       <button className=" rflex flex-row gap-1 items-center justify-end text-white p-2 rounded-full border-[1px] border-[#64ffda] bg-none group relative ">
         {login && publicKey ? (
           <>
             <div className="flex items-center justify-center gap-2 text-[16px] lg:text-md">
-              {(user.avatar !== undefined) && <img
-                src={user.avatar}
-                alt=""
-                className="rounded-full"
-                width={35}
-                height={35}
-              />}
+              {user.avatar !== undefined && (
+                <img
+                  src={user.avatar}
+                  alt=""
+                  className="rounded-full"
+                  width={35}
+                  height={35}
+                />
+              )}
               <div className="">
                 {publicKey.toBase58().slice(0, 4)}....
                 {publicKey.toBase58().slice(-4)}
               </div>
-              <TbMoodEdit onClick={() => handleToProfile(`/profile/${tempUser._id}`)} className="text-2xl" />
+              <TbMoodEdit
+                onClick={() => handleToProfile(`/profile/${tempUser._id}`)}
+                className="text-2xl"
+              />
             </div>
             <div className="w-full absolute right-0 top-[42px] hidden bg-[#0D1524] rounded-lg group-hover:block">
               <ul className="border-[0.75px] border-[#64ffda] rounded-lg bg-none object-cover overflow-hidden">

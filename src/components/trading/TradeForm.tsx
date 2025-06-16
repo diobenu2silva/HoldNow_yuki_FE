@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import UserContext from "@/context/UserContext";
-import { getTokenBalance, swapTx } from "@/program/web3";
-import { coinInfo } from "@/utils/types";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
-import { ChangeEvent, useContext, useEffect, useState } from "react";
-import { errorAlert } from "../others/ToastGroup";
-import { useClaim } from "@/context/ClaimContext";
-import { claim } from "@/utils/util";
+import UserContext from '@/context/UserContext';
+import { getTokenBalance, swapTx } from '@/program/web3';
+import { coinInfo } from '@/utils/types';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { ChangeEvent, useContext, useEffect, useState } from 'react';
+import { errorAlert } from '../others/ToastGroup';
+import { useClaim } from '@/context/ClaimContext';
+import { claim } from '@/utils/util';
 
 interface TradingFormProps {
   coin: coinInfo;
@@ -19,21 +19,20 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const [amount, setSol] = useState<string>('');
   const [isSell, setIsBuy] = useState<number>(0);
   const [tokenBal, setTokenBal] = useState<number>(0);
-  const [tokenName, setTokenName] = useState<string>("Token")
+  const [tokenName, setTokenName] = useState<string>('Token');
   const [canTrade, setCanTrade] = useState<boolean>(false);
   const { user, setWeb3Tx } = useContext(UserContext);
   // const { claimAmount, setClaimAmount } = useClaim();
 
   const wallet = useWallet();
   const SolList = [
-    { id: 0, price: "reset" },
-    { id: "1", price: "1 sol" },
-    { id: "5", price: "5 sol" },
-    { id: "10", price: "10 sol" },
-  ]
+    { id: 0, price: 'reset' },
+    { id: '1', price: '1 sol' },
+    { id: '5', price: '5 sol' },
+    { id: '10', price: '10 sol' },
+  ];
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-
     const value = e.target.value;
     if (!isNaN(parseFloat(value))) {
       setSol(value);
@@ -46,20 +45,25 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
     try {
       const balance = await getTokenBalance(user.wallet, coin.token);
       setTokenBal(balance ? balance : 0);
-
     } catch (error) {
       setTokenBal(0);
     }
-  }
+  };
   getBalance();
 
   const handlTrade = async () => {
-    if (!!!amount) { errorAlert("Please set Amount"); return }
-    const mint = new PublicKey(coin.token)
-    const userWallet = new PublicKey(user.wallet)
+    if (!!!amount) {
+      errorAlert('Please set Amount');
+      return;
+    }
+    const mint = new PublicKey(coin.token);
+    const userWallet = new PublicKey(user.wallet);
     if (isSell == 0) {
-      const totalLiquidity = coin.tokenReserves * coin.lamportReserves
-      const tokenAmount = coin.tokenReserves - totalLiquidity / ((coin.lamportReserves) + parseFloat(amount) * Math.pow(10, 9));
+      const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
+      const tokenAmount =
+        coin.tokenReserves -
+        totalLiquidity /
+          (coin.lamportReserves + parseFloat(amount) * Math.pow(10, 9));
       const res = await swapTx(mint, wallet, tokenAmount, isSell, tokenAmount);
       // if (res) {
       //   setTimeout(async () => {
@@ -67,22 +71,30 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       //   }, 500);
       // }
     } else {
-      const totalLiquidity = coin.tokenReserves * coin.lamportReserves
-      const minSol = coin.lamportReserves - totalLiquidity / ((coin.tokenReserves) + parseFloat(amount) * Math.pow(10, 6));
-      const res = await swapTx(mint, wallet, parseFloat(amount), isSell, minSol)
+      const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
+      const minSol =
+        coin.lamportReserves -
+        totalLiquidity /
+          (coin.tokenReserves + parseFloat(amount) * Math.pow(10, 6));
+      const res = await swapTx(
+        mint,
+        wallet,
+        parseFloat(amount),
+        isSell,
+        minSol
+      );
       // if (res) {
       //   setTimeout(async () => {
       //     window.location.reload();
       //   }, 500);
       // }
     }
-     
-  }
+  };
 
   useEffect(() => {
-    if (coin.name !== "" && coin.name !== undefined && coin.name !== null)
-      setTokenName(coin.name)
-  }, [coin])
+    if (coin.name !== '' && coin.name !== undefined && coin.name !== null)
+      setTokenName(coin.name);
+  }, [coin]);
 
   useEffect(() => {
     if (coin.airdropStage === false) {
@@ -95,15 +107,23 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   return (
     <div className="p-3 rounded-lg bg-transparent border-[1px] border-[#64ffda] text-white font-semibold">
       <div className="flex flex-row justify-center px-3 py-2">
-        < button className={`rounded-l-lg py-3 w-full ${isSell === 0 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`
-        } onClick={() => setIsBuy(0)}> Buy</button >
-        <button className={`rounded-r-lg py-3 w-full ${isSell === 1 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`} onClick={() => setIsBuy(1)}>
+        <button
+          className={`rounded-l-lg py-3 w-full ${isSell === 0 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`}
+          onClick={() => setIsBuy(0)}
+        >
+          {' '}
+          Buy
+        </button>
+        <button
+          className={`rounded-r-lg py-3 w-full ${isSell === 1 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`}
+          onClick={() => setIsBuy(1)}
+        >
           Sell
         </button>
-      </div >
+      </div>
       <div className="xs:px-4 flex flex-col relative">
         <div
-          onClick={() => console.log("set max")}
+          onClick={() => console.log('set max')}
           className="rounded bg-transparent text-center w-[200px] p-2 block mb-2 text-ml font-medium text-white dark:text-white mx-auto border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer"
         >
           Set max slippage
@@ -123,34 +143,70 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
             {isSell === 0 ? 'SOL' : 'Token'}
           </div>
         </div>
-        {
-          isSell === 0 ? (
-            <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
-              {SolList.map((item: any, index: any) => {
-                return (
-                  <div key={item.id} className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer" onClick={() => setSol(item.id)}>{item.price}</div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
-              <button className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer" onClick={() => setSol('')}>reset</button>
-              <button disabled={tokenBal && tokenBal !== 0 ? false : true} className={`${tokenBal && tokenBal !== 0 ? "cursor-pointer hover:bg-[#64ffda]/30" : "cursor-not-allowed"} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] `} onClick={() => setSol((tokenBal / 10).toString())}>10%</button>
-              <button disabled={tokenBal && tokenBal !== 0 ? false : true} className={`${tokenBal && tokenBal !== 0 ? "cursor-pointer hover:bg-[#64ffda]/30" : "cursor-not-allowed"} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`} onClick={() => setSol((tokenBal / 4).toString())}>25%</button>
-              <button disabled={tokenBal && tokenBal !== 0 ? false : true} className={`${tokenBal && tokenBal !== 0 ? "cursor-pointer hover:bg-[#64ffda]/30" : "cursor-not-allowed"}max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`} onClick={() => setSol((tokenBal / 2).toString())}>50%</button>
-              <button disabled={tokenBal && tokenBal !== 0 ? false : true} className={`${tokenBal && tokenBal !== 0 ? "cursor-pointer hover:bg-[#64ffda]/30" : "cursor-not-allowed"}max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`} onClick={() => setSol((tokenBal).toString())}>100%</button>
-            </div>
-          )}
+        {isSell === 0 ? (
+          <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
+            {SolList.map((item: any, index: any) => {
+              return (
+                <div
+                  key={item.id}
+                  className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer"
+                  onClick={() => setSol(item.id)}
+                >
+                  {item.price}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
+            <button
+              className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer"
+              onClick={() => setSol('')}
+            >
+              reset
+            </button>
+            <button
+              disabled={tokenBal && tokenBal !== 0 ? false : true}
+              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] `}
+              onClick={() => setSol((tokenBal / 10).toString())}
+            >
+              10%
+            </button>
+            <button
+              disabled={tokenBal && tokenBal !== 0 ? false : true}
+              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
+              onClick={() => setSol((tokenBal / 4).toString())}
+            >
+              25%
+            </button>
+            <button
+              disabled={tokenBal && tokenBal !== 0 ? false : true}
+              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'}max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
+              onClick={() => setSol((tokenBal / 2).toString())}
+            >
+              50%
+            </button>
+            <button
+              disabled={tokenBal && tokenBal !== 0 ? false : true}
+              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'}max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
+              onClick={() => setSol(tokenBal.toString())}
+            >
+              100%
+            </button>
+          </div>
+        )}
 
-        {
-          coin.airdropStage ? (
-            <></>
-          ) : (
-            <div className="border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 w-full text-center rounded-lg py-2" onClick={handlTrade}>
-              Place Trade
-            </div>
-          )}
+        {coin.airdropStage ? (
+          <></>
+        ) : (
+          <div
+            className="border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 w-full text-center rounded-lg py-2"
+            onClick={handlTrade}
+          >
+            Place Trade
+          </div>
+        )}
       </div>
-    </div >
+    </div>
   );
 };

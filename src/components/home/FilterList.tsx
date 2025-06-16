@@ -1,15 +1,15 @@
-"use client";
-import { FC, useContext, useState } from "react";
-import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import UserContext from "@/context/UserContext";
-import TimeTranding from "../buttons/TimeTranding";
-import { CiFilter } from "react-icons/ci";
-import switchOn from "@/../public/assets/images/switch-on.png";
-import switchOff from "@/../public/assets/images/switch-off.png";
-import { BiSearchAlt } from "react-icons/bi";
-import { coinInfo } from "@/utils/types";
-import FilterListButton from "../others/FilterListButton";
+'use client';
+import { FC, useContext, useState } from 'react';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
+import UserContext from '@/context/UserContext';
+import TimeTranding from '../buttons/TimeTranding';
+import { CiFilter } from 'react-icons/ci';
+import switchOn from '@/../public/assets/images/switch-on.png';
+import switchOff from '@/../public/assets/images/switch-off.png';
+import { BiSearchAlt } from 'react-icons/bi';
+import { coinInfo } from '@/utils/types';
+import FilterListButton from '../others/FilterListButton';
 
 const FilterList: FC = () => {
   // const {
@@ -19,14 +19,12 @@ const FilterList: FC = () => {
   //   setNsfwFilterState,
   // } = useContext(UserContext);
 
-  const [filterState, setFilterState] = useState<boolean>(false)
-  const [nsfwFilterState, setNsfwFilterState] = useState<boolean>(false)
+  const [filterState, setFilterState] = useState<boolean>(false);
+  const [nsfwFilterState, setNsfwFilterState] = useState<boolean>(false);
 
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState('');
 
-
-
-  const searchToken = () => { };
+  const searchToken = () => {};
 
   return (
     <div className="w-full gap-4 h-full flex flex-col text-white px-2">
@@ -38,15 +36,17 @@ const FilterList: FC = () => {
         <div className="hidden sm2:flex flex-row items-center">
           <div
             onClick={() => setFilterState(false)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${filterState ? "border-b-[#143F72]" : "border-b-[#2C8DFE]"
-              }`}
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
+              filterState ? 'border-b-[#143F72]' : 'border-b-[#2C8DFE]'
+            }`}
           >
             Following
           </div>
           <div
             onClick={() => setFilterState(true)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${filterState ? "border-b-[#2C8DFE]" : "border-b-[#143F72]"
-              }`}
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
+              filterState ? 'border-b-[#2C8DFE]' : 'border-b-[#143F72]'
+            }`}
           >
             Terminal
           </div>
@@ -54,12 +54,14 @@ const FilterList: FC = () => {
         <div className="w-full flex flex-col xs:flex-row gap-2">
           <div className="min-w-[169px] flex flex-row items-center gap-2 px-3 py-1 border-[1px] border-[#143F72] rounded-lg mx-auto">
             Include NSFW
-            {<Image
-              src={nsfwFilterState ? switchOn : switchOff}
-              alt=""
-              onClick={() => setNsfwFilterState(!nsfwFilterState)}
-              className="cursor-pointer"
-            />}
+            {
+              <Image
+                src={nsfwFilterState ? switchOn : switchOff}
+                alt=""
+                onClick={() => setNsfwFilterState(!nsfwFilterState)}
+                className="cursor-pointer"
+              />
+            }
           </div>
           <div className="w-full max-w-[720px] flex flex-row items-center gap-1 pl-5 border-[1px] border-[#143F72] rounded-lg text-white">
             <BiSearchAlt className="text-4xl" />
@@ -81,15 +83,17 @@ const FilterList: FC = () => {
         <div className="sm2:hidden flex flex-row items-center mx-auto">
           <div
             onClick={() => setFilterState(false)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${filterState ? "border-b-[#143F72]" : "border-b-[#2C8DFE]"
-              }`}
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
+              filterState ? 'border-b-[#143F72]' : 'border-b-[#2C8DFE]'
+            }`}
           >
             Following
           </div>
           <div
             onClick={() => setFilterState(true)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${filterState ? "border-b-[#2C8DFE]" : "border-b-[#143F72]"
-              }`}
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
+              filterState ? 'border-b-[#2C8DFE]' : 'border-b-[#143F72]'
+            }`}
           >
             Terminal
           </div>

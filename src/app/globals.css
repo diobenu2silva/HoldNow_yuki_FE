@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer components {
   .container {
     @apply w-full mx-auto max-w-[1440px];
@@ -13,12 +12,12 @@
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
-  background: #0D1524;
+  background: #0d1524;
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #0D1524;
+  background: #0d1524;
   border-radius: 5px;
 }
 
@@ -57,7 +56,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(180deg, #090B1A, #0D1524) #090B1A;
+  background: linear-gradient(180deg, #090b1a, #0d1524) #090b1a;
 }
 
 @layer utilities {
@@ -74,13 +73,13 @@ input::-webkit-inner-spin-button {
   /* <-- Apparently some margin are still there even though it's hidden */
 }
 
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
   /* Firefox */
 }
 
 .text-gradient {
-  background: -webkit-linear-gradient(135deg, #2BBAF7, #0047CA);
+  background: -webkit-linear-gradient(135deg, #2bbaf7, #0047ca);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

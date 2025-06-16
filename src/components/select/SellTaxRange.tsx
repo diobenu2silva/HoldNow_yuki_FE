@@ -1,26 +1,27 @@
-"use client"
-import * as React from "react";
-import { Range } from "react-range";
-import { BiSolidUpArrow } from "react-icons/bi";
+'use client';
+import * as React from 'react';
+import { Range } from 'react-range';
+import { BiSolidUpArrow } from 'react-icons/bi';
 
 interface SellTaxRangeProps {
   header: string;
   setSelectRange: (tokenNumber: number[]) => void;
 }
 
-const SellTaxRange: React.FC<SellTaxRangeProps> = ({ header, setSelectRange }) => {
+const SellTaxRange: React.FC<SellTaxRangeProps> = ({
+  header,
+  setSelectRange,
+}) => {
   const [values, setValues] = React.useState<number[]>([0, 100]); // Two values for min and max
 
   const handleChangeRange = (e: number[]) => {
-    setValues(e)
-    setSelectRange(e)
-  }
+    setValues(e);
+    setSelectRange(e);
+  };
 
   return (
     <div className="w-full flex flex-col gap-6">
-      <label className="text-lg font-semibold text-white">
-        {header}
-      </label>
+      <label className="text-lg font-semibold text-white">{header}</label>
       <Range
         step={1}
         min={0}
@@ -31,16 +32,13 @@ const SellTaxRange: React.FC<SellTaxRangeProps> = ({ header, setSelectRange }) =
           const [min, max] = values;
 
           return (
-            <div
-              {...props}
-              className="relative h-1 w-full bg-white rounded"
-            >
+            <div {...props} className="relative h-1 w-full bg-white rounded">
               <div
                 style={{
-                  position: "absolute",
+                  position: 'absolute',
                   left: `${min}%`,
                   right: `${100 - max}%`,
-                  backgroundColor: "#64ffda",
+                  backgroundColor: '#64ffda',
                 }}
                 className="h-1 rounded"
               />
@@ -56,10 +54,7 @@ const SellTaxRange: React.FC<SellTaxRangeProps> = ({ header, setSelectRange }) =
             <div className="text-sm">
               {index === 0 ? `${values[0]}%` : `${values[1]}%`}
             </div>
-            <BiSolidUpArrow
-              className="text-2xl"
-              style={{ color: "#64ffda" }}
-            />
+            <BiSolidUpArrow className="text-2xl" style={{ color: '#64ffda' }} />
           </div>
         )}
       />

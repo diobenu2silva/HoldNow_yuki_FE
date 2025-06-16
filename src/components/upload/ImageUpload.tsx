@@ -1,5 +1,5 @@
-"use client"
-import React, { ChangeEvent, useRef, useState } from "react";
+'use client';
+import React, { ChangeEvent, useRef, useState } from 'react';
 
 interface ImageUploadProps {
   header: string;
@@ -8,27 +8,35 @@ interface ImageUploadProps {
   setFileUrl: (fileUrl: string) => void;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ header, setFilePreview, setFileUrl, type }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+  header,
+  setFilePreview,
+  setFileUrl,
+  type,
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string>("No file selected");
+  const [selectedFileName, setSelectedFileName] =
+    useState<string>('No file selected');
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFileName(file.name);
       setFilePreview(URL.createObjectURL(file)); // Pass the file name or URL to the parent
-      setFileUrl(URL.createObjectURL(file))
+      setFileUrl(URL.createObjectURL(file));
     } else {
-      setSelectedFileName("No file selected");
+      setSelectedFileName('No file selected');
       setFilePreview(null);
-      setFileUrl(null)
+      setFileUrl(null);
     }
   };
 
   return (
     <div className="w-full flex flex-col justify-between gap-6">
       <div className="w-full justify-between flex flex-col items-start gap-2">
-        <label className="block text-lg font-semibold text-white">{header}</label>
+        <label className="block text-lg font-semibold text-white">
+          {header}
+        </label>
         <input
           type="file"
           accept={type}

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import type {
   Bar,
@@ -7,13 +7,16 @@ import type {
   DatafeedConfiguration,
   ResolutionString,
   PeriodParams,
-} from "@/libraries/charting_library";
+} from '@/libraries/charting_library';
 
-import { subscribeOnStream, unsubscribeFromStream } from "@/components/TVChart/streaming";
-import { getChartTable } from "@/utils/getChartTable";
-import { custom } from "viem";
-import { getBalance } from "viem/actions";
-import { Mark } from "@/libraries/charting_library/datafeed-api";
+import {
+  subscribeOnStream,
+  unsubscribeFromStream,
+} from '@/components/TVChart/streaming';
+import { getChartTable } from '@/utils/getChartTable';
+import { custom } from 'viem';
+import { getBalance } from 'viem/actions';
+import { Mark } from '@/libraries/charting_library/datafeed-api';
 
 const lastBarsCache = new Map<string, Bar>();
 const minPrice: Number = 0;
@@ -22,25 +25,24 @@ const maxPrice: Number = 0;
 const configurationData: DatafeedConfiguration = {
   // Represents the resolutions for bars supported by your datafeed
   supported_resolutions: [
-    "1",
-    "5",
-    "15",
-    "45",
-    "60",
-    "240",
-    "1440",
+    '1',
+    '5',
+    '15',
+    '45',
+    '60',
+    '240',
+    '1440',
   ] as ResolutionString[],
-
 };
 
 export function getDataFeed({
   pairIndex,
   name,
-  token
+  token,
 }: {
   name: string;
   pairIndex: number;
-  token: string
+  token: string;
 }): IBasicDataFeed {
   let initialLoadComplete = false;
   return {
@@ -48,35 +50,33 @@ export function getDataFeed({
       setTimeout(() => callback(configurationData));
     },
 
-    searchSymbols: () => {
-    },
+    searchSymbols: () => {},
 
     resolveSymbol: async (
       symbolName,
       onSymbolResolvedCallback,
       _onResolveErrorCallback,
-      _extension,
+      _extension
     ) => {
-
       // Symbol information object
       const symbolInfo: LibrarySymbolInfo = {
         ticker: name,
         name: name,
         description: name,
-        type: "crypto",
-        session: "24x7",
-        timezone: "Etc/UTC",
+        type: 'crypto',
+        session: '24x7',
+        timezone: 'Etc/UTC',
         minmov: 1,
         pricescale: 1000000000,
-        exchange: "",
+        exchange: '',
         has_intraday: true,
         visible_plots_set: 'ohlc',
         has_weekly_and_monthly: true,
         supported_resolutions: configurationData.supported_resolutions,
         volume_precision: 2,
-        data_status: "streaming",
-        format: "price",
-        listed_exchange: "",
+        data_status: 'streaming',
+        format: 'price',
+        listed_exchange: '',
       };
 
       setTimeout(() => onSymbolResolvedCallback(symbolInfo));
@@ -90,7 +90,7 @@ export function getDataFeed({
       onErrorCallback
     ) => {
       // Use customPeriodParams if needed
-      const { from, to, firstDataRequest, countBack } = periodParams
+      const { from, to, firstDataRequest, countBack } = periodParams;
       try {
         const chartTable = await getChartTable({
           token,
@@ -98,7 +98,7 @@ export function getDataFeed({
           from,
           to,
           range: +resolution,
-          countBack
+          countBack,
         });
 
         if (!chartTable || !chartTable.table) {
@@ -106,7 +106,7 @@ export function getDataFeed({
           return;
         }
 
-        let bars = chartTable.table.map(bar => ({
+        let bars = chartTable.table.map((bar) => ({
           ...bar,
           time: bar.time * 1000, // Convert from seconds to milliseconds
         }));
@@ -131,7 +131,7 @@ export function getDataFeed({
       resolution,
       onRealtimeCallback,
       subscriberUID,
-      onResetCacheNeededCallback,
+      onResetCacheNeededCallback
     ) => {
       // subscribeOnStream(
       //   symbolInfo,

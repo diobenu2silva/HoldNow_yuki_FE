@@ -4,7 +4,7 @@ import React, {
   useState,
   ReactNode,
   useEffect,
-} from "react";
+} from 'react';
 
 // Define the type for your modal component props
 interface ModalProps {
@@ -27,18 +27,18 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
 
   const openModal = (content: ReactNode) => {
     setModalContent(content);
-    document.body.classList.add("modal-open");
+    document.body.classList.add('modal-open');
   };
 
   const closeModal = () => {
     setModalContent(null);
-    document.body.classList.remove("modal-open");
+    document.body.classList.remove('modal-open');
   };
 
   useEffect(() => {
     return () => {
       // Cleanup function to remove class when component unmounts
-      document.body.classList.remove("modal-open");
+      document.body.classList.remove('modal-open');
     };
   }, []);
 
@@ -55,7 +55,7 @@ export const useModal = () => {
   const context = useContext(ModalContext);
 
   if (!context) {
-    throw new Error("useModal must be used within a ModalProvider");
+    throw new Error('useModal must be used within a ModalProvider');
   }
   return context;
 };

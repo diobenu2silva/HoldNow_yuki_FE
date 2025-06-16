@@ -1,10 +1,10 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     screens: {
@@ -38,7 +38,7 @@ const config: Config = {
       // => @media (min-width: 1348px) { ... }
       '2xl': '1536px',
       // => @media (min-width: 1536px) { ... }
-      '3xl': '1820px'
+      '3xl': '1820px',
       // => @media (min-width: 1820px) { ... }
     },
     extend: {

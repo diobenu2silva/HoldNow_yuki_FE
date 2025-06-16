@@ -1,13 +1,12 @@
-"use client"
-import { coinInfo } from "@/utils/types";
-import { FC, useContext, useState } from "react";
+'use client';
+import { coinInfo } from '@/utils/types';
+import { FC, useContext, useState } from 'react';
 
 interface TokenDataProps {
   coinData: coinInfo;
 }
 
 const TokenData: FC<TokenDataProps> = ({ coinData }) => {
-
   return (
     <div className="flex flex-col xs:flex-row gap-3 px-2">
       <img

@@ -1,5 +1,5 @@
-import { PublicKey } from "@solana/web3.js"
-import BN from "bn.js";
+import { PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
 
 export type ChartTable = {
   table: {
@@ -29,68 +29,68 @@ export interface userInfo {
 }
 
 export interface metadataInfo {
-  name: string,
-  symbol: string,
-  image: string,
-  description: string,
-  createdOn: Date,
-  twitter?: string,
-  website?: string,
-  telegram?: string,
+  name: string;
+  symbol: string;
+  image: string;
+  description: string;
+  createdOn: Date;
+  twitter?: string;
+  website?: string;
+  telegram?: string;
 }
 
 export interface coinInfo {
   commit: any;
-  _id?: string,
-  name: string,
-  creator: string | userInfo,
-  ticker: string,
-  description?: string,
-  url: string,
-  token: string,
-  tokenSupply: number,
-  tokenReserves: number,
-  lamportReserves: number,
-  progressMcap: number,
-  atLaunched: Date,
+  _id?: string;
+  name: string;
+  creator: string | userInfo;
+  ticker: string;
+  description?: string;
+  url: string;
+  token: string;
+  tokenSupply: number;
+  tokenReserves: number;
+  lamportReserves: number;
+  progressMcap: number;
+  atLaunched: Date;
 
-  website?: string,
-  telegram?: string,
-  twitter?: string,
-  frontBanner?: string,
-  
-  stagesNumber: number,
-  stageDuration:number,
-  sellTaxMax: number,
-  sellTaxMin: number,
-  sellTaxDecay: number,
-  tokenPoolDestination: number,
-  bondingCurve: boolean,
-  currentStage: number,
-  atStageStarted: Date,
-  airdropStage: boolean
+  website?: string;
+  telegram?: string;
+  twitter?: string;
+  frontBanner?: string;
+
+  stagesNumber: number;
+  stageDuration: number;
+  sellTaxMax: number;
+  sellTaxMin: number;
+  sellTaxDecay: number;
+  tokenPoolDestination: number;
+  bondingCurve: boolean;
+  currentStage: number;
+  atStageStarted: Date;
+  airdropStage: boolean;
 }
 export interface createCoinInfo {
-  name: string,
-  ticker: string,
-  url: string,
-  description: string,
-  presale: number,
-  twitter?: string,
-  website?: string,
-  telegram?: string,
+  name: string;
+  ticker: string;
+  url: string;
+  description: string;
+  presale: number;
+  twitter?: string;
+  website?: string;
+  telegram?: string;
 }
 
 export interface launchDataInfo {
-  name: string,
-  symbol: string,
-  uri: string,
-  decimals: number,
-  tokenNumberStages: number,
-  tokenStageDuration: number,
-  tokenSellTaxDecay: number,
-  tokenSellTaxRange: number[],
-  tokenPoolDestination: number,
+  name: string;
+  symbol: string;
+  uri: string;
+  decimals: number;
+  tokenNumberStages: number;
+  tokenStageDuration: number;
+  tokenSellTaxDecay: number;
+  tokenSellTaxRange: number[];
+  tokenPoolDestination: number;
 }
 export interface msgInfo {
   coinId: string | coinInfo;
@@ -108,7 +108,7 @@ export interface tradeInfo {
 export interface holderInfo {
   name: string;
   owner: string;
-  amount: number
+  amount: number;
 }
 
 export interface recordInfo {
@@ -154,7 +154,7 @@ export interface PeriodParamsInfo {
 export type SwapInfo = {
   creator: string;
   solAmountInLamports: number;
-  direction: "Bought" | "Sold";
+  direction: 'Bought' | 'Sold';
   mintAddress: string;
   mintName: string;
   mintSymbol: string;

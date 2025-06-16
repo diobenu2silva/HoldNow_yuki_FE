@@ -7,15 +7,15 @@ import {
   SystemProgram,
   Transaction,
   clusterApiUrl,
-} from "@solana/web3.js";
-import { Holdnow } from "./holdnow";
-import idl from "./holdnow.json";
-import * as anchor from "@coral-xyz/anchor";
-import { WalletContextState } from "@solana/wallet-adapter-react";
-import { errorAlert } from "@/components/others/ToastGroup";
-import { Program } from "@coral-xyz/anchor";
-import { coinInfo, launchDataInfo } from "@/utils/types";
-import { HOLDNOW_PROGRAM_ID } from "./programId";
+} from '@solana/web3.js';
+import { Holdnow } from './holdnow';
+import idl from './holdnow.json';
+import * as anchor from '@coral-xyz/anchor';
+import { WalletContextState } from '@solana/wallet-adapter-react';
+import { errorAlert } from '@/components/others/ToastGroup';
+import { Program } from '@coral-xyz/anchor';
+import { coinInfo, launchDataInfo } from '@/utils/types';
+import { HOLDNOW_PROGRAM_ID } from './programId';
 import {
   MintLayout,
   getAssociatedTokenAddress,
@@ -27,12 +27,12 @@ import {
   getOrCreateAssociatedTokenAccount,
   createSetAuthorityInstruction,
   AuthorityType,
-} from "@solana/spl-token";
+} from '@solana/spl-token';
 import {
   PROGRAM_ID,
   DataV2,
   createCreateMetadataAccountV3Instruction,
-} from "@metaplex-foundation/mpl-token-metadata";
+} from '@metaplex-foundation/mpl-token-metadata';
 import {
   BONDING_CURVE,
   CLAIM_DATA_SEED,
@@ -40,20 +40,20 @@ import {
   REWARD_STATE_SEED,
   SOL_VAULT_SEED,
   VAULT_SEED,
-} from "./seed";
-import { BN } from "bn.js";
-import { getClaimData, sendTx, sleep } from "@/utils/util";
-import { simulateTransaction } from "@coral-xyz/anchor/dist/cjs/utils/rpc";
-import { connect } from "http2";
-import base58 from "bs58";
-import { publicKey } from "@coral-xyz/anchor/dist/cjs/utils";
-import { useState } from "react";
+} from './seed';
+import { BN } from 'bn.js';
+import { getClaimData, sendTx, sleep } from '@/utils/util';
+import { simulateTransaction } from '@coral-xyz/anchor/dist/cjs/utils/rpc';
+import { connect } from 'http2';
+import base58 from 'bs58';
+import { publicKey } from '@coral-xyz/anchor/dist/cjs/utils';
+import { useState } from 'react';
 
-export const commitmentLevel = "processed";
+export const commitmentLevel = 'processed';
 
 export const endpoint =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
-  "https://devnet.helius-rpc.com/?api-key=3b5315ac-170e-4e0e-a60e-4ff5b444fbcf";
+  'https://devnet.helius-rpc.com/?api-key=3b5315ac-170e-4e0e-a60e-4ff5b444fbcf';
 export const connection = new Connection(endpoint, commitmentLevel);
 export const pumpProgramId = new PublicKey(HOLDNOW_PROGRAM_ID);
 export const pumpProgramInterface = JSON.parse(JSON.stringify(idl));
@@ -67,7 +67,7 @@ export const createToken = async (
   coinData: launchDataInfo
 ) => {
   const provider = new anchor.AnchorProvider(connection, wallet, {
-    preflightCommitment: "confirmed",
+    preflightCommitment: 'confirmed',
   });
   anchor.setProvider(provider);
   const program = new Program(
@@ -78,15 +78,15 @@ export const createToken = async (
 
   // check the connection
   if (!wallet.publicKey || !connection) {
-    errorAlert("Wallet Not Connected");
-    return "WalletError";
+    errorAlert('Wallet Not Connected');
+    return 'WalletError';
   }
   try {
     const mintKp = Keypair.generate();
     const mint = mintKp.publicKey;
     const tokenAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
     const [metadataPDA] = await PublicKey.findProgramAddress(
-      [Buffer.from("metadata"), PROGRAM_ID.toBuffer(), mint.toBuffer()],
+      [Buffer.from('metadata'), PROGRAM_ID.toBuffer(), mint.toBuffer()],
       PROGRAM_ID
     );
     const amount = new anchor.BN(10 ** 9).mul(
@@ -224,7 +224,7 @@ export const createToken = async (
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
       const signature = await connection.sendRawTransaction(sTx, {
-        preflightCommitment: "confirmed",
+        preflightCommitment: 'confirmed',
         skipPreflight: false,
       });
       const res = await connection.confirmTransaction(
@@ -233,7 +233,7 @@ export const createToken = async (
           blockhash: blockhash.blockhash,
           lastValidBlockHeight: blockhash.lastValidBlockHeight,
         },
-        "confirmed"
+        'confirmed'
       );
       await sleep(500);
       await sendTx(signature, mint, wallet.publicKey);
@@ -302,7 +302,7 @@ export const swapTx = async (
     return;
   }
   const provider = new anchor.AnchorProvider(connection, wallet, {
-    preflightCommitment: "confirmed",
+    preflightCommitment: 'confirmed',
   });
   anchor.setProvider(provider);
   const program = new Program(
@@ -341,7 +341,7 @@ export const swapTx = async (
     wallet.publicKey
   );
   const info = await connection.getAccountInfo(associatedUserAccount);
-  
+
   try {
     const transaction = new Transaction();
     const cpIx = ComputeBudgetProgram.setComputeUnitPrice({
@@ -415,7 +415,7 @@ export const swapTx = async (
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
       const signature = await connection.sendRawTransaction(sTx, {
-        preflightCommitment: "confirmed",
+        preflightCommitment: 'confirmed',
         skipPreflight: false,
       });
       const blockhash = await connection.getLatestBlockhash();
@@ -426,7 +426,7 @@ export const swapTx = async (
           blockhash: blockhash.blockhash,
           lastValidBlockHeight: blockhash.lastValidBlockHeight,
         },
-        "confirmed"
+        'confirmed'
       );
       await sendTx(signature, mint, wallet.publicKey);
 
@@ -438,9 +438,13 @@ export const swapTx = async (
 };
 
 //Claim transaction
-export const claimTx = async (coin: coinInfo, wallet: WalletContextState, amount: number) => {
+export const claimTx = async (
+  coin: coinInfo,
+  wallet: WalletContextState,
+  amount: number
+) => {
   const provider = new anchor.AnchorProvider(connection, wallet, {
-    preflightCommitment: "confirmed",
+    preflightCommitment: 'confirmed',
   });
   anchor.setProvider(provider);
   const program = new Program(
@@ -495,7 +499,7 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState, amount
       )
     );
   }
-  
+
   const bnAmount = new BN((amount * 1e6).toFixed(0)); // Convert to lamports (1 token = 1e6 lamports)
   const claimIx = await program.methods
     .claim(bnAmount, false)
@@ -528,7 +532,7 @@ export const claimTx = async (coin: coinInfo, wallet: WalletContextState, amount
       return sTx;
     }
   } catch (error) {
-    console.error("Error signing transaction:", error);
+    console.error('Error signing transaction:', error);
   }
 };
 

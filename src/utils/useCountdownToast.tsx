@@ -1,9 +1,10 @@
-import { useEffect } from "react";
-import { showCountdownToast } from "@/utils/showCountdownToast";
+import { useEffect } from 'react';
+import { showCountdownToast } from '@/utils/showCountdownToast';
 
 export const useCountdownToast = (coin: any) => {
   useEffect(() => {
-    if (!coin.airdropStage || !coin.atStageStarted || !coin.currentStage) return;
+    if (!coin.airdropStage || !coin.atStageStarted || !coin.currentStage)
+      return;
 
     const millisecondsInADay = 120 * 1000; // 10 min for demo
     // const millisecondsInADay = 24 * 60 * 60 * 1000;
@@ -13,8 +14,8 @@ export const useCountdownToast = (coin: any) => {
     // Trigger the toast
     const cleanup = showCountdownToast(
       futureTime,
-      `Stage ${coin.currentStage} has completed. Next stage will begin in`,
-      "New Stage has begun!"
+      `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} has completed. Next stage will begin in`,
+      'New Stage has begun!'
     );
 
     // CLEANUP on unmount or coin change

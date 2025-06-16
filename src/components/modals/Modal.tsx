@@ -11,14 +11,19 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ data }) => {
-  const { setProfileEditModal, setImageUrl, setUser, user } = useContext(UserContext);
+  const { setProfileEditModal, setImageUrl, setUser, user } =
+    useContext(UserContext);
   const [index, setIndex] = useState<userInfo>(data);
-  const [imagePreview, setImagePreview] = useState<string | null>(data.avatar || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    data.avatar || null
+  );
   const [fileName, setFileName] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setIndex({ ...index, [e.target.id]: e.target.value });
   };
 
@@ -63,7 +68,6 @@ const Modal: React.FC<ModalProps> = ({ data }) => {
     }
   };
 
-
   const uploadImage = async (image: string): Promise<string> => {
     // Your logic here
     const uploadSuccess = true; // Example logic
@@ -85,7 +89,11 @@ const Modal: React.FC<ModalProps> = ({ data }) => {
             stroke="currentColor"
             className="w-6 h-6"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
         <h2 className="text-center text-2xl font-bold">Edit Profile</h2>

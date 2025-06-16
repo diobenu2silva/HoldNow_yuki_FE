@@ -1,5 +1,5 @@
-import { errorAlertCenter } from "@/components/others/ToastGroup";
-import axios, { AxiosRequestConfig, Method } from "axios";
+import { errorAlertCenter } from '@/components/others/ToastGroup';
+import axios, { AxiosRequestConfig, Method } from 'axios';
 
 // Define the type for user data, this can be more specific based on your API requirements
 interface UserData {
@@ -16,16 +16,18 @@ const handleEndpoint = async (
   method: Method,
   token: boolean
 ): Promise<any> => {
-  const bippleToken = typeof window !== "undefined" ? localStorage?.getItem("auth_token") : null;
+  const bippleToken =
+    typeof window !== 'undefined' ? localStorage?.getItem('auth_token') : null;
 
   try {
     // Configure the request
     const config: AxiosRequestConfig = {
       method: method.toUpperCase() as Method,
       url: `${API_BASE_URL}/${endpoint}`,
-      data: method.toUpperCase() !== "GET" ? userData : null,
+      data: method.toUpperCase() !== 'GET' ? userData : null,
       headers: {
-        authorization: token && bippleToken ? `Bearer ${bippleToken}` : undefined,
+        authorization:
+          token && bippleToken ? `Bearer ${bippleToken}` : undefined,
       },
     };
 
@@ -36,13 +38,13 @@ const handleEndpoint = async (
     // Handle different types of errors
     if (error.response) {
       // The server responded with a status code
-      errorAlertCenter(error.response.data?.error || "Request failed");
+      errorAlertCenter(error.response.data?.error || 'Request failed');
     } else if (error.request) {
       // The request was made but no response was received
-      errorAlertCenter("No response received from server");
+      errorAlertCenter('No response received from server');
     } else {
       // Something happened during request setup
-      errorAlertCenter("Error setting up the request");
+      errorAlertCenter('Error setting up the request');
     }
     throw error; // Optionally rethrow the error for higher-level handling
   }

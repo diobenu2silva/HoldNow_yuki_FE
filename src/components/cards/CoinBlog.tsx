@@ -1,11 +1,11 @@
-import { coinInfo, userInfo } from "@/utils/types";
-import { FC, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import UserContext from "@/context/UserContext";
-import { HiOutlinePuzzle } from "react-icons/hi";
-import { TbWorld } from "react-icons/tb";
-import { FaXTwitter } from "react-icons/fa6";
-import { FaTelegramPlane } from "react-icons/fa";
+import { coinInfo, userInfo } from '@/utils/types';
+import { FC, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import UserContext from '@/context/UserContext';
+import { HiOutlinePuzzle } from 'react-icons/hi';
+import { TbWorld } from 'react-icons/tb';
+import { FaXTwitter } from 'react-icons/fa6';
+import { FaTelegramPlane } from 'react-icons/fa';
 
 interface CoinBlogProps {
   coin: coinInfo;
@@ -14,26 +14,30 @@ interface CoinBlogProps {
 
 export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
   const { solPrice } = useContext(UserContext);
-  const [marketCapValue, setMarketCapValue] = useState<number>(0)
-  const router = useRouter()
+  const [marketCapValue, setMarketCapValue] = useState<number>(0);
+  const router = useRouter();
 
   const handleToProfile = (id: string) => {
-    router.push(`/profile/${id}`)
-  }
+    router.push(`/profile/${id}`);
+  };
 
   const getMarketCapData = async (coin: coinInfo) => {
     const prog = coin.progressMcap * solPrice;
-    setMarketCapValue(Math.round(prog/100)/10);
-  }
+    setMarketCapValue(Math.round(prog / 100) / 10);
+  };
 
   useEffect(() => {
-    getMarketCapData(coin)
-  }, [coin])
+    getMarketCapData(coin);
+  }, [coin]);
 
   return (
     <div className="flex flex-col h-full items-center justify-between border-[#64ffda] border-[1px] hover:bg-custom-gradient rounded-lg text-white gap-2">
       <div className="flex flex-row w-full">
-        <img src={coin?.url} alt="image" className="w-28 h-28 object-cover overflow-hidden rounded-tl-md" />
+        <img
+          src={coin?.url}
+          alt="image"
+          className="w-28 h-28 object-cover overflow-hidden rounded-tl-md"
+        />
         <div className="flex flex-col px-2 gap-1 pt-3">
           <div className="w-full text-xl text-white font-bold">
             {coin?.name}
@@ -43,7 +47,9 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
               Created by
               <HiOutlinePuzzle className="text-2xl" />
             </div>
-            <div onClick={() => handleToProfile((coin?.creator as userInfo)?._id)}>
+            <div
+              onClick={() => handleToProfile((coin?.creator as userInfo)?._id)}
+            >
               <div className="text-white px-1">
                 {(coin?.creator as userInfo)?.name}
               </div>
@@ -54,7 +60,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
             {coin?.name} [ticker: {coin?.ticker}]
           </div>
 
-          {componentKey === "coin" ? (
+          {componentKey === 'coin' ? (
             coin?.description && <div>{coin?.description}</div>
           ) : (
             <></>
@@ -98,18 +104,16 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
           <div className="flex flex-row gap-1 items-center">
             Market Cap
             <div className="text-gradient font-bold">
-              {(coin.progressMcap * solPrice/1000).toFixed(2)} K
+              {((coin.progressMcap * solPrice) / 1000).toFixed(2)} K
             </div>
             {`(${marketCapValue}%)`}
           </div>
-          <div className="text-gradient font-bold">
-            100 K
-          </div>
+          <div className="text-gradient font-bold">100 K</div>
         </div>
         <div className="w-full h-2 rounded-full bg-white relative flex">
           <div
             className="justify-start h-2 rounded-full absolute top-0 left-0 bg-blue-700"
-            style={{ width: `${marketCapValue}%` }}  // Fix: Corrected percentage calculation
+            style={{ width: `${marketCapValue}%` }} // Fix: Corrected percentage calculation
           />
         </div>
       </div>

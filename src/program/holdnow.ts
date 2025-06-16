@@ -1,2409 +1,2410 @@
 export type Holdnow = {
-  "version": "0.1.0",
-  "name": "holdnow",
-  "constants": [
+  version: '0.1.0';
+  name: 'holdnow';
+  constants: [
     {
-      "name": "GLOBAL_STATE_SEED",
-      "type": "bytes",
-      "value": "[71, 76, 79, 66, 65, 76, 45, 83, 84, 65, 84, 69, 45, 83, 69, 69, 68]"
-    }
-  ],
-  "instructions": [
+      name: 'GLOBAL_STATE_SEED';
+      type: 'bytes';
+      value: '[71, 76, 79, 66, 65, 76, 45, 83, 84, 65, 84, 69, 45, 83, 69, 69, 68]';
+    },
+  ];
+  instructions: [
     {
-      "name": "initialize",
-      "accounts": [
+      name: 'initialize';
+      accounts: [
         {
-          "name": "global",
-          "isMut": true,
-          "isSigner": false
+          name: 'global';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "rewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'rewardRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: 'owner';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "setParams",
-      "accounts": [
+      name: 'setParams';
+      accounts: [
         {
-          "name": "global",
-          "isMut": true,
-          "isSigner": false
+          name: 'global';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
-        }
-      ],
-      "args": [
+          name: 'user';
+          isMut: true;
+          isSigner: true;
+        },
+      ];
+      args: [
         {
-          "name": "feeRecipient",
-          "type": "publicKey"
+          name: 'feeRecipient';
+          type: 'publicKey';
         },
         {
-          "name": "ownerWallet",
-          "type": "publicKey"
+          name: 'ownerWallet';
+          type: 'publicKey';
         },
         {
-          "name": "initialVirtualTokenReserves",
-          "type": "u64"
+          name: 'initialVirtualTokenReserves';
+          type: 'u64';
         },
         {
-          "name": "initialVirtualSolReserves",
-          "type": "u64"
+          name: 'initialVirtualSolReserves';
+          type: 'u64';
         },
         {
-          "name": "initialRealTokenReserves",
-          "type": "u64"
+          name: 'initialRealTokenReserves';
+          type: 'u64';
         },
         {
-          "name": "tokenTotalSupply",
-          "type": "u64"
+          name: 'tokenTotalSupply';
+          type: 'u64';
         },
         {
-          "name": "feeBasisPoints",
-          "type": "u64"
+          name: 'feeBasisPoints';
+          type: 'u64';
         },
         {
-          "name": "createFee",
-          "type": "u64"
+          name: 'createFee';
+          type: 'u64';
         },
         {
-          "name": "stagingPoolFee",
-          "type": "u64"
-        }
-      ]
+          name: 'stagingPoolFee';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "create",
-      "accounts": [
+      name: 'create';
+      accounts: [
         {
-          "name": "rewardRecipient",
-          "isMut": false,
-          "isSigner": false
+          name: 'rewardRecipient';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedUserAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUserAccount';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "numberStage",
-          "type": "u64"
+          name: 'numberStage';
+          type: 'u64';
         },
         {
-          "name": "stageDuration",
-          "type": "u64"
+          name: 'stageDuration';
+          type: 'u64';
         },
         {
-          "name": "sellTaxMin",
-          "type": "u64"
+          name: 'sellTaxMin';
+          type: 'u64';
         },
         {
-          "name": "sellTaxMax",
-          "type": "u64"
+          name: 'sellTaxMax';
+          type: 'u64';
         },
         {
-          "name": "sellTaxDecay",
-          "type": "u64"
+          name: 'sellTaxDecay';
+          type: 'u64';
         },
         {
-          "name": "tokenPoolDestination",
-          "type": "u64"
+          name: 'tokenPoolDestination';
+          type: 'u64';
         },
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount';
+          type: 'u64';
         },
         {
-          "name": "airdropAmount",
-          "type": "u64"
-        }
-      ]
+          name: 'airdropAmount';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "buy",
-      "accounts": [
+      name: 'buy';
+      accounts: [
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "rewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'rewardRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: 'mint';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUser';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'clock';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount';
+          type: 'u64';
         },
         {
-          "name": "maxSolCost",
-          "type": "u64"
-        }
-      ]
+          name: 'maxSolCost';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "sell",
-      "accounts": [
+      name: 'sell';
+      accounts: [
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'rewardRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUser';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'clock';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount';
+          type: 'u64';
         },
         {
-          "name": "minSolOutput",
-          "type": "u64"
-        }
-      ]
+          name: 'minSolOutput';
+          type: 'u64';
+        },
+      ];
     },
     {
-      "name": "stageCompleted",
-      "accounts": [
+      name: 'stageCompleted';
+      accounts: [
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: 'mint';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
-        }
-      ],
-      "args": []
+          name: 'user';
+          isMut: true;
+          isSigner: true;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "claim",
-      "accounts": [
+      name: 'claim';
+      accounts: [
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "rewardRecipient",
-          "isMut": false,
-          "isSigner": false
+          name: 'rewardRecipient';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUser';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "backendWallet",
-          "isMut": false,
-          "isSigner": true
+          name: 'backendWallet';
+          isMut: false;
+          isSigner: true;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount';
+          type: 'u64';
         },
         {
-          "name": "isAirdrop",
-          "type": "bool"
-        }
-      ]
+          name: 'isAirdrop';
+          type: 'bool';
+        },
+      ];
     },
     {
-      "name": "moveRaydium",
-      "accounts": [
+      name: 'moveRaydium';
+      accounts: [
         {
-          "name": "global",
-          "isMut": true,
-          "isSigner": false
+          name: 'global';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "ammProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'ammProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'associatedTokenProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "sysvarRent",
-          "isMut": false,
-          "isSigner": false
+          name: 'sysvarRent';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "amm",
-          "isMut": true,
-          "isSigner": false
+          name: 'amm';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "ammAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'ammAuthority';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "ammOpenOrders",
-          "isMut": true,
-          "isSigner": false
+          name: 'ammOpenOrders';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "lpMint",
-          "isMut": true,
-          "isSigner": false
+          name: 'lpMint';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "pcMint",
-          "isMut": true,
-          "isSigner": false
+          name: 'pcMint';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "coinVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'coinVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "pcVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'pcVault';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "targetOrders",
-          "isMut": true,
-          "isSigner": false
+          name: 'targetOrders';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "ammConfig",
-          "isMut": true,
-          "isSigner": false
+          name: 'ammConfig';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "marketProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketProgram';
+          isMut: false;
+          isSigner: false;
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "userTokenCoin",
-          "isMut": true,
-          "isSigner": false
+          name: 'userTokenCoin';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "userTokenPc",
-          "isMut": true,
-          "isSigner": false
+          name: 'userTokenPc';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "userTokenLp",
-          "isMut": true,
-          "isSigner": false
+          name: 'userTokenLp';
+          isMut: true;
+          isSigner: false;
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user';
+          isMut: true;
+          isSigner: true;
         },
         {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
+          name: 'clock';
+          isMut: false;
+          isSigner: false;
+        },
+      ];
+      args: [
         {
-          "name": "nonce",
-          "type": "u8"
+          name: 'nonce';
+          type: 'u8';
         },
         {
-          "name": "initPcAmount",
-          "type": "u64"
-        }
-      ]
-    }
-  ],
-  "accounts": [
+          name: 'initPcAmount';
+          type: 'u64';
+        },
+      ];
+    },
+  ];
+  accounts: [
     {
-      "name": "bondingCurve",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'bondingCurve';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "virtualTokenReserves",
-            "type": "u64"
+            name: 'virtualTokenReserves';
+            type: 'u64';
           },
           {
-            "name": "virtualSolReserves",
-            "type": "u64"
+            name: 'virtualSolReserves';
+            type: 'u64';
           },
           {
-            "name": "realTokenReserves",
-            "type": "u64"
+            name: 'realTokenReserves';
+            type: 'u64';
           },
           {
-            "name": "realSolReserves",
-            "type": "u64"
+            name: 'realSolReserves';
+            type: 'u64';
           },
           {
-            "name": "tokenTotalSupply",
-            "type": "u64"
+            name: 'tokenTotalSupply';
+            type: 'u64';
           },
           {
-            "name": "tokenMint",
-            "type": "publicKey"
+            name: 'tokenMint';
+            type: 'publicKey';
           },
           {
-            "name": "complete",
-            "type": "bool"
+            name: 'complete';
+            type: 'bool';
           },
           {
-            "name": "bondingCurveStart",
-            "type": "i64"
+            name: 'bondingCurveStart';
+            type: 'i64';
           },
           {
-            "name": "airdropAmount",
-            "type": "u64"
+            name: 'airdropAmount';
+            type: 'u64';
           },
           {
-            "name": "currentStage",
-            "type": "u64"
+            name: 'currentStage';
+            type: 'u64';
           },
           {
-            "name": "currentStageComplete",
-            "type": "bool"
+            name: 'currentStageComplete';
+            type: 'bool';
           },
           {
-            "name": "numberStage",
-            "type": "u64"
+            name: 'numberStage';
+            type: 'u64';
           },
           {
-            "name": "stageDuration",
-            "type": "i64"
+            name: 'stageDuration';
+            type: 'i64';
           },
           {
-            "name": "sellTaxMax",
-            "type": "u64"
+            name: 'sellTaxMax';
+            type: 'u64';
           },
           {
-            "name": "sellTaxMin",
-            "type": "u64"
+            name: 'sellTaxMin';
+            type: 'u64';
           },
           {
-            "name": "sellTaxDecay",
-            "type": "u64"
+            name: 'sellTaxDecay';
+            type: 'u64';
           },
           {
-            "name": "tokenPoolDestination",
-            "type": "u64"
+            name: 'tokenPoolDestination';
+            type: 'u64';
           },
           {
-            "name": "atStartStage",
-            "type": "i64"
-          }
-        ]
-      }
+            name: 'atStartStage';
+            type: 'i64';
+          },
+        ];
+      };
     },
     {
-      "name": "global",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'global';
+      type: {
+        kind: 'struct';
+        fields: [
           {
-            "name": "initialized",
-            "type": "bool"
+            name: 'initialized';
+            type: 'bool';
           },
           {
-            "name": "authority",
-            "type": "publicKey"
+            name: 'authority';
+            type: 'publicKey';
           },
           {
-            "name": "feeRecipient",
-            "type": "publicKey"
+            name: 'feeRecipient';
+            type: 'publicKey';
           },
           {
-            "name": "ownerWallet",
-            "type": "publicKey"
+            name: 'ownerWallet';
+            type: 'publicKey';
           },
           {
-            "name": "initialVirtualTokenReserves",
-            "type": "u64"
+            name: 'initialVirtualTokenReserves';
+            type: 'u64';
           },
           {
-            "name": "initialVirtualSolReserves",
-            "type": "u64"
+            name: 'initialVirtualSolReserves';
+            type: 'u64';
           },
           {
-            "name": "initialRealTokenReserves",
-            "type": "u64"
+            name: 'initialRealTokenReserves';
+            type: 'u64';
           },
           {
-            "name": "tokenTotalSupply",
-            "type": "u64"
+            name: 'tokenTotalSupply';
+            type: 'u64';
           },
           {
-            "name": "feeBasisPoints",
-            "type": "u64"
+            name: 'feeBasisPoints';
+            type: 'u64';
           },
           {
-            "name": "createFee",
-            "type": "u64"
+            name: 'createFee';
+            type: 'u64';
           },
           {
-            "name": "stagingPoolFee",
-            "type": "u64"
+            name: 'stagingPoolFee';
+            type: 'u64';
           },
           {
-            "name": "backendWallet",
-            "type": "publicKey"
-          }
-        ]
-      }
-    }
-  ],
-  "events": [
+            name: 'backendWallet';
+            type: 'publicKey';
+          },
+        ];
+      };
+    },
+  ];
+  events: [
     {
-      "name": "ClaimStageEvent",
-      "fields": [
+      name: 'ClaimStageEvent';
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "rewardAmount",
-          "type": "u64",
-          "index": false
+          name: 'rewardAmount';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "currentStage",
-          "type": "u64",
-          "index": false
+          name: 'currentStage';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'reserveLamport';
+          type: 'u64';
+          index: false;
+        },
+      ];
     },
     {
-      "name": "CompleteEvent",
-      "fields": [
+      name: 'CompleteEvent';
+      fields: [
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "timestamp",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'timestamp';
+          type: 'i64';
+          index: false;
+        },
+      ];
     },
     {
-      "name": "CompleteStageEvent",
-      "fields": [
+      name: 'CompleteStageEvent';
+      fields: [
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "currentStage",
-          "type": "u64",
-          "index": false
+          name: 'currentStage';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "timestamp",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'timestamp';
+          type: 'i64';
+          index: false;
+        },
+      ];
     },
     {
-      "name": "LaunchEvent",
-      "fields": [
+      name: 'LaunchEvent';
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "tokenSupply",
-          "type": "u64",
-          "index": false
+          name: 'tokenSupply';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
+          name: 'reserveLamport';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "stagesNumber",
-          "type": "u64",
-          "index": false
+          name: 'stagesNumber';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "stageDuration",
-          "type": "u64",
-          "index": false
+          name: 'stageDuration';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "sellTaxMin",
-          "type": "u64",
-          "index": false
+          name: 'sellTaxMin';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "sellTaxMax",
-          "type": "u64",
-          "index": false
+          name: 'sellTaxMax';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "sellTaxDecay",
-          "type": "u64",
-          "index": false
+          name: 'sellTaxDecay';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "tokenPoolDestination",
-          "type": "u64",
-          "index": false
+          name: 'tokenPoolDestination';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "complete",
-          "type": "bool",
-          "index": false
-        }
-      ]
+          name: 'complete';
+          type: 'bool';
+          index: false;
+        },
+      ];
     },
     {
-      "name": "MoveStageEvent",
-      "fields": [
+      name: 'MoveStageEvent';
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "currentStage",
-          "type": "u64",
-          "index": false
+          name: 'currentStage';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'reserveLamport';
+          type: 'u64';
+          index: false;
+        },
+      ];
     },
     {
-      "name": "MovedRaydiumEvent",
-      "fields": [
+      name: 'MovedRaydiumEvent';
+      fields: [
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "token",
-          "type": "u64",
-          "index": false
+          name: 'token';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "sol",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'sol';
+          type: 'u64';
+          index: false;
+        },
+      ];
     },
     {
-      "name": "SetParamsEvent",
-      "fields": [
+      name: 'SetParamsEvent';
+      fields: [
         {
-          "name": "feeRecipient",
-          "type": "publicKey",
-          "index": false
+          name: 'feeRecipient';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "ownerWallet",
-          "type": "publicKey",
-          "index": false
+          name: 'ownerWallet';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "initialVirtualTokenReserves",
-          "type": "u64",
-          "index": false
+          name: 'initialVirtualTokenReserves';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "initialVirtualSolReserves",
-          "type": "u64",
-          "index": false
+          name: 'initialVirtualSolReserves';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "initialRealTokenReserves",
-          "type": "u64",
-          "index": false
+          name: 'initialRealTokenReserves';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "tokenTotalSupply",
-          "type": "u64",
-          "index": false
+          name: 'tokenTotalSupply';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "feeBasisPoints",
-          "type": "u64",
-          "index": false
+          name: 'feeBasisPoints';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "createFee",
-          "type": "u64",
-          "index": false
+          name: 'createFee';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "stagingPoolFee",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'stagingPoolFee';
+          type: 'u64';
+          index: false;
+        },
+      ];
     },
     {
-      "name": "SwapEvent",
-      "fields": [
+      name: 'SwapEvent';
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "rewardCapAddr",
-          "type": "publicKey",
-          "index": false
+          name: 'rewardCapAddr';
+          type: 'publicKey';
+          index: false;
         },
         {
-          "name": "solAmount",
-          "type": "u64",
-          "index": false
+          name: 'solAmount';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "tokenAmount",
-          "type": "u64",
-          "index": false
+          name: 'tokenAmount';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "rewardAmount",
-          "type": "u64",
-          "index": false
+          name: 'rewardAmount';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "isBuy",
-          "type": "bool",
-          "index": false
+          name: 'isBuy';
+          type: 'bool';
+          index: false;
         },
         {
-          "name": "tokenSupply",
-          "type": "u64",
-          "index": false
+          name: 'tokenSupply';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "timestamp",
-          "type": "i64",
-          "index": false
+          name: 'timestamp';
+          type: 'i64';
+          index: false;
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
+          name: 'reserveLamport';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken';
+          type: 'u64';
+          index: false;
         },
         {
-          "name": "feeAmount",
-          "type": "u64",
-          "index": false
-        }
-      ]
-    }
-  ],
-  "errors": [
+          name: 'feeAmount';
+          type: 'u64';
+          index: false;
+        },
+      ];
+    },
+  ];
+  errors: [
     {
-      "code": 6000,
-      "name": "NotAuthorized",
-      "msg": "The given account is not authorized to execute this instruction."
+      code: 6000;
+      name: 'NotAuthorized';
+      msg: 'The given account is not authorized to execute this instruction.';
     },
     {
-      "code": 6001,
-      "name": "InValidFeeRecipient",
-      "msg": "The given account is not valid fee recipient."
+      code: 6001;
+      name: 'InValidFeeRecipient';
+      msg: 'The given account is not valid fee recipient.';
     },
     {
-      "code": 6002,
-      "name": "AlreadyInitialized",
-      "msg": "The program is already initialized."
+      code: 6002;
+      name: 'AlreadyInitialized';
+      msg: 'The program is already initialized.';
     },
     {
-      "code": 6003,
-      "name": "TooMuchSolRequired",
-      "msg": "slippage: Too much SOL required to buy the given amount of tokens."
+      code: 6003;
+      name: 'TooMuchSolRequired';
+      msg: 'slippage: Too much SOL required to buy the given amount of tokens.';
     },
     {
-      "code": 6004,
-      "name": "TooLittleSolReceived",
-      "msg": "slippage: Too little SOL received to sell the given amount of tokens."
+      code: 6004;
+      name: 'TooLittleSolReceived';
+      msg: 'slippage: Too little SOL received to sell the given amount of tokens.';
     },
     {
-      "code": 6005,
-      "name": "MintDoesNotMatchBondingCurve",
-      "msg": "The mint does not match the bonding curve."
+      code: 6005;
+      name: 'MintDoesNotMatchBondingCurve';
+      msg: 'The mint does not match the bonding curve.';
     },
     {
-      "code": 6006,
-      "name": "BondingCurveComplete",
-      "msg": "The bonding curve has completed and liquidity migrated to raydium."
+      code: 6006;
+      name: 'BondingCurveComplete';
+      msg: 'The bonding curve has completed and liquidity migrated to raydium.';
     },
     {
-      "code": 6007,
-      "name": "BondingCurveNotComplete",
-      "msg": "The bonding curve has not completed."
+      code: 6007;
+      name: 'BondingCurveNotComplete';
+      msg: 'The bonding curve has not completed.';
     },
     {
-      "code": 6008,
-      "name": "NotInitialized",
-      "msg": "The program is not initialized."
+      code: 6008;
+      name: 'NotInitialized';
+      msg: 'The program is not initialized.';
     },
     {
-      "code": 6009,
-      "name": "MathOverflow",
-      "msg": "Math operation overflow."
+      code: 6009;
+      name: 'MathOverflow';
+      msg: 'Math operation overflow.';
     },
     {
-      "code": 6010,
-      "name": "ZeroAmount",
-      "msg": "Amount should be bigger than 0."
+      code: 6010;
+      name: 'ZeroAmount';
+      msg: 'Amount should be bigger than 0.';
     },
     {
-      "code": 6011,
-      "name": "InvalidAmount",
-      "msg": "Amount is invalid to create the pool."
+      code: 6011;
+      name: 'InvalidAmount';
+      msg: 'Amount is invalid to create the pool.';
     },
     {
-      "code": 6012,
-      "name": "InvalidSupply",
-      "msg": "Supply is invalid to create the pool."
+      code: 6012;
+      name: 'InvalidSupply';
+      msg: 'Supply is invalid to create the pool.';
     },
     {
-      "code": 6013,
-      "name": "FreezeAuthorityEnabled",
-      "msg": "Freeze authority enabled."
+      code: 6013;
+      name: 'FreezeAuthorityEnabled';
+      msg: 'Freeze authority enabled.';
     },
     {
-      "code": 6014,
-      "name": "MitAuthorityEnabled",
-      "msg": "Mint authority enabled."
+      code: 6014;
+      name: 'MitAuthorityEnabled';
+      msg: 'Mint authority enabled.';
     },
     {
-      "code": 6015,
-      "name": "InvalidTaxPercentage",
-      "msg": "TaxPercentage invalid."
+      code: 6015;
+      name: 'InvalidTaxPercentage';
+      msg: 'TaxPercentage invalid.';
     },
     {
-      "code": 6016,
-      "name": "InvalidFeeBasisPoints",
-      "msg": "FeeBasisPoints invalid."
+      code: 6016;
+      name: 'InvalidFeeBasisPoints';
+      msg: 'FeeBasisPoints invalid.';
     },
     {
-      "code": 6017,
-      "name": "CurrentStageComplete",
-      "msg": "The Current stage has completed."
+      code: 6017;
+      name: 'CurrentStageComplete';
+      msg: 'The Current stage has completed.';
     },
     {
-      "code": 6018,
-      "name": "InsufficientFunds",
-      "msg": "The Token is insufficient."
+      code: 6018;
+      name: 'InsufficientFunds';
+      msg: 'The Token is insufficient.';
     },
     {
-      "code": 6019,
-      "name": "NotMoveNextStage",
-      "msg": "Now, Next stage doesn't start."
+      code: 6019;
+      name: 'NotMoveNextStage';
+      msg: "Now, Next stage doesn't start.";
     },
     {
-      "code": 6020,
-      "name": "NotStageComplete",
-      "msg": "Now, current stage has not completeted."
+      code: 6020;
+      name: 'NotStageComplete';
+      msg: 'Now, current stage has not completeted.';
     },
     {
-      "code": 6021,
-      "name": "IncorrectPoolDestination",
-      "msg": "Now, Token pool destination is incorrect."
+      code: 6021;
+      name: 'IncorrectPoolDestination';
+      msg: 'Now, Token pool destination is incorrect.';
     },
     {
-      "code": 6022,
-      "name": "InvalidAirdropAmount",
-      "msg": "Invalid airdrop allocation specified."
+      code: 6022;
+      name: 'InvalidAirdropAmount';
+      msg: 'Invalid airdrop allocation specified.';
     },
     {
-      "code": 6023,
-      "name": "InvalidClaimAmount",
-      "msg": "Invalid Claim Amount."
+      code: 6023;
+      name: 'InvalidClaimAmount';
+      msg: 'Invalid Claim Amount.';
     },
     {
-      "code": 6024,
-      "name": "InvalidNoClaimAmount",
-      "msg": "No Claimable Amount"
-    }
-  ]
+      code: 6024;
+      name: 'InvalidNoClaimAmount';
+      msg: 'No Claimable Amount';
+    },
+  ];
 };
 
 export const IDL: Holdnow = {
-  "version": "0.1.0",
-  "name": "holdnow",
-  "constants": [
+  version: '0.1.0',
+  name: 'holdnow',
+  constants: [
     {
-      "name": "GLOBAL_STATE_SEED",
-      "type": "bytes",
-      "value": "[71, 76, 79, 66, 65, 76, 45, 83, 84, 65, 84, 69, 45, 83, 69, 69, 68]"
-    }
+      name: 'GLOBAL_STATE_SEED',
+      type: 'bytes',
+      value:
+        '[71, 76, 79, 66, 65, 76, 45, 83, 84, 65, 84, 69, 45, 83, 69, 69, 68]',
+    },
   ],
-  "instructions": [
+  instructions: [
     {
-      "name": "initialize",
-      "accounts": [
+      name: 'initialize',
+      accounts: [
         {
-          "name": "global",
-          "isMut": true,
-          "isSigner": false
+          name: 'global',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "rewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'rewardRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": true
+          name: 'owner',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "setParams",
-      "accounts": [
+      name: 'setParams',
+      accounts: [
         {
-          "name": "global",
-          "isMut": true,
-          "isSigner": false
+          name: 'global',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
-        }
+          name: 'user',
+          isMut: true,
+          isSigner: true,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "feeRecipient",
-          "type": "publicKey"
+          name: 'feeRecipient',
+          type: 'publicKey',
         },
         {
-          "name": "ownerWallet",
-          "type": "publicKey"
+          name: 'ownerWallet',
+          type: 'publicKey',
         },
         {
-          "name": "initialVirtualTokenReserves",
-          "type": "u64"
+          name: 'initialVirtualTokenReserves',
+          type: 'u64',
         },
         {
-          "name": "initialVirtualSolReserves",
-          "type": "u64"
+          name: 'initialVirtualSolReserves',
+          type: 'u64',
         },
         {
-          "name": "initialRealTokenReserves",
-          "type": "u64"
+          name: 'initialRealTokenReserves',
+          type: 'u64',
         },
         {
-          "name": "tokenTotalSupply",
-          "type": "u64"
+          name: 'tokenTotalSupply',
+          type: 'u64',
         },
         {
-          "name": "feeBasisPoints",
-          "type": "u64"
+          name: 'feeBasisPoints',
+          type: 'u64',
         },
         {
-          "name": "createFee",
-          "type": "u64"
+          name: 'createFee',
+          type: 'u64',
         },
         {
-          "name": "stagingPoolFee",
-          "type": "u64"
-        }
-      ]
+          name: 'stagingPoolFee',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "create",
-      "accounts": [
+      name: 'create',
+      accounts: [
         {
-          "name": "rewardRecipient",
-          "isMut": false,
-          "isSigner": false
+          name: 'rewardRecipient',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedUserAccount",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUserAccount',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "numberStage",
-          "type": "u64"
+          name: 'numberStage',
+          type: 'u64',
         },
         {
-          "name": "stageDuration",
-          "type": "u64"
+          name: 'stageDuration',
+          type: 'u64',
         },
         {
-          "name": "sellTaxMin",
-          "type": "u64"
+          name: 'sellTaxMin',
+          type: 'u64',
         },
         {
-          "name": "sellTaxMax",
-          "type": "u64"
+          name: 'sellTaxMax',
+          type: 'u64',
         },
         {
-          "name": "sellTaxDecay",
-          "type": "u64"
+          name: 'sellTaxDecay',
+          type: 'u64',
         },
         {
-          "name": "tokenPoolDestination",
-          "type": "u64"
+          name: 'tokenPoolDestination',
+          type: 'u64',
         },
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount',
+          type: 'u64',
         },
         {
-          "name": "airdropAmount",
-          "type": "u64"
-        }
-      ]
+          name: 'airdropAmount',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "buy",
-      "accounts": [
+      name: 'buy',
+      accounts: [
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "rewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'rewardRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: 'mint',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUser',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'clock',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount',
+          type: 'u64',
         },
         {
-          "name": "maxSolCost",
-          "type": "u64"
-        }
-      ]
+          name: 'maxSolCost',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "sell",
-      "accounts": [
+      name: 'sell',
+      accounts: [
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "rewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'rewardRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUser',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'clock',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount',
+          type: 'u64',
         },
         {
-          "name": "minSolOutput",
-          "type": "u64"
-        }
-      ]
+          name: 'minSolOutput',
+          type: 'u64',
+        },
+      ],
     },
     {
-      "name": "stageCompleted",
-      "accounts": [
+      name: 'stageCompleted',
+      accounts: [
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false
+          name: 'mint',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
-        }
+          name: 'user',
+          isMut: true,
+          isSigner: true,
+        },
       ],
-      "args": []
+      args: [],
     },
     {
-      "name": "claim",
-      "accounts": [
+      name: 'claim',
+      accounts: [
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "rewardRecipient",
-          "isMut": false,
-          "isSigner": false
+          name: 'rewardRecipient',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "global",
-          "isMut": false,
-          "isSigner": false
+          name: 'global',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "associatedRewardRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedRewardRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedBondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedBondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "associatedUser",
-          "isMut": true,
-          "isSigner": false
+          name: 'associatedUser',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "backendWallet",
-          "isMut": false,
-          "isSigner": true
+          name: 'backendWallet',
+          isMut: false,
+          isSigner: true,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "amount",
-          "type": "u64"
+          name: 'amount',
+          type: 'u64',
         },
         {
-          "name": "isAirdrop",
-          "type": "bool"
-        }
-      ]
+          name: 'isAirdrop',
+          type: 'bool',
+        },
+      ],
     },
     {
-      "name": "moveRaydium",
-      "accounts": [
+      name: 'moveRaydium',
+      accounts: [
         {
-          "name": "global",
-          "isMut": true,
-          "isSigner": false
+          name: 'global',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "feeRecipient",
-          "isMut": true,
-          "isSigner": false
+          name: 'feeRecipient',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
+          name: 'mint',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          name: 'vault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "bondingCurve",
-          "isMut": true,
-          "isSigner": false
+          name: 'bondingCurve',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "ammProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'ammProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'tokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'associatedTokenProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "sysvarRent",
-          "isMut": false,
-          "isSigner": false
+          name: 'sysvarRent',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "amm",
-          "isMut": true,
-          "isSigner": false
+          name: 'amm',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "ammAuthority",
-          "isMut": false,
-          "isSigner": false
+          name: 'ammAuthority',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "ammOpenOrders",
-          "isMut": true,
-          "isSigner": false
+          name: 'ammOpenOrders',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "lpMint",
-          "isMut": true,
-          "isSigner": false
+          name: 'lpMint',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "pcMint",
-          "isMut": true,
-          "isSigner": false
+          name: 'pcMint',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "coinVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'coinVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "pcVault",
-          "isMut": true,
-          "isSigner": false
+          name: 'pcVault',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "targetOrders",
-          "isMut": true,
-          "isSigner": false
+          name: 'targetOrders',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "ammConfig",
-          "isMut": true,
-          "isSigner": false
+          name: 'ammConfig',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "marketProgram",
-          "isMut": false,
-          "isSigner": false
+          name: 'marketProgram',
+          isMut: false,
+          isSigner: false,
         },
         {
-          "name": "market",
-          "isMut": true,
-          "isSigner": false
+          name: 'market',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "userTokenCoin",
-          "isMut": true,
-          "isSigner": false
+          name: 'userTokenCoin',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "userTokenPc",
-          "isMut": true,
-          "isSigner": false
+          name: 'userTokenPc',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "userTokenLp",
-          "isMut": true,
-          "isSigner": false
+          name: 'userTokenLp',
+          isMut: true,
+          isSigner: false,
         },
         {
-          "name": "user",
-          "isMut": true,
-          "isSigner": true
+          name: 'user',
+          isMut: true,
+          isSigner: true,
         },
         {
-          "name": "clock",
-          "isMut": false,
-          "isSigner": false
-        }
+          name: 'clock',
+          isMut: false,
+          isSigner: false,
+        },
       ],
-      "args": [
+      args: [
         {
-          "name": "nonce",
-          "type": "u8"
+          name: 'nonce',
+          type: 'u8',
         },
         {
-          "name": "initPcAmount",
-          "type": "u64"
-        }
-      ]
-    }
+          name: 'initPcAmount',
+          type: 'u64',
+        },
+      ],
+    },
   ],
-  "accounts": [
+  accounts: [
     {
-      "name": "bondingCurve",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'bondingCurve',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "virtualTokenReserves",
-            "type": "u64"
+            name: 'virtualTokenReserves',
+            type: 'u64',
           },
           {
-            "name": "virtualSolReserves",
-            "type": "u64"
+            name: 'virtualSolReserves',
+            type: 'u64',
           },
           {
-            "name": "realTokenReserves",
-            "type": "u64"
+            name: 'realTokenReserves',
+            type: 'u64',
           },
           {
-            "name": "realSolReserves",
-            "type": "u64"
+            name: 'realSolReserves',
+            type: 'u64',
           },
           {
-            "name": "tokenTotalSupply",
-            "type": "u64"
+            name: 'tokenTotalSupply',
+            type: 'u64',
           },
           {
-            "name": "tokenMint",
-            "type": "publicKey"
+            name: 'tokenMint',
+            type: 'publicKey',
           },
           {
-            "name": "complete",
-            "type": "bool"
+            name: 'complete',
+            type: 'bool',
           },
           {
-            "name": "bondingCurveStart",
-            "type": "i64"
+            name: 'bondingCurveStart',
+            type: 'i64',
           },
           {
-            "name": "airdropAmount",
-            "type": "u64"
+            name: 'airdropAmount',
+            type: 'u64',
           },
           {
-            "name": "currentStage",
-            "type": "u64"
+            name: 'currentStage',
+            type: 'u64',
           },
           {
-            "name": "currentStageComplete",
-            "type": "bool"
+            name: 'currentStageComplete',
+            type: 'bool',
           },
           {
-            "name": "numberStage",
-            "type": "u64"
+            name: 'numberStage',
+            type: 'u64',
           },
           {
-            "name": "stageDuration",
-            "type": "i64"
+            name: 'stageDuration',
+            type: 'i64',
           },
           {
-            "name": "sellTaxMax",
-            "type": "u64"
+            name: 'sellTaxMax',
+            type: 'u64',
           },
           {
-            "name": "sellTaxMin",
-            "type": "u64"
+            name: 'sellTaxMin',
+            type: 'u64',
           },
           {
-            "name": "sellTaxDecay",
-            "type": "u64"
+            name: 'sellTaxDecay',
+            type: 'u64',
           },
           {
-            "name": "tokenPoolDestination",
-            "type": "u64"
+            name: 'tokenPoolDestination',
+            type: 'u64',
           },
           {
-            "name": "atStartStage",
-            "type": "i64"
-          }
-        ]
-      }
+            name: 'atStartStage',
+            type: 'i64',
+          },
+        ],
+      },
     },
     {
-      "name": "global",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: 'global',
+      type: {
+        kind: 'struct',
+        fields: [
           {
-            "name": "initialized",
-            "type": "bool"
+            name: 'initialized',
+            type: 'bool',
           },
           {
-            "name": "authority",
-            "type": "publicKey"
+            name: 'authority',
+            type: 'publicKey',
           },
           {
-            "name": "feeRecipient",
-            "type": "publicKey"
+            name: 'feeRecipient',
+            type: 'publicKey',
           },
           {
-            "name": "ownerWallet",
-            "type": "publicKey"
+            name: 'ownerWallet',
+            type: 'publicKey',
           },
           {
-            "name": "initialVirtualTokenReserves",
-            "type": "u64"
+            name: 'initialVirtualTokenReserves',
+            type: 'u64',
           },
           {
-            "name": "initialVirtualSolReserves",
-            "type": "u64"
+            name: 'initialVirtualSolReserves',
+            type: 'u64',
           },
           {
-            "name": "initialRealTokenReserves",
-            "type": "u64"
+            name: 'initialRealTokenReserves',
+            type: 'u64',
           },
           {
-            "name": "tokenTotalSupply",
-            "type": "u64"
+            name: 'tokenTotalSupply',
+            type: 'u64',
           },
           {
-            "name": "feeBasisPoints",
-            "type": "u64"
+            name: 'feeBasisPoints',
+            type: 'u64',
           },
           {
-            "name": "createFee",
-            "type": "u64"
+            name: 'createFee',
+            type: 'u64',
           },
           {
-            "name": "stagingPoolFee",
-            "type": "u64"
+            name: 'stagingPoolFee',
+            type: 'u64',
           },
           {
-            "name": "backendWallet",
-            "type": "publicKey"
-          }
-        ]
-      }
-    }
+            name: 'backendWallet',
+            type: 'publicKey',
+          },
+        ],
+      },
+    },
   ],
-  "events": [
+  events: [
     {
-      "name": "ClaimStageEvent",
-      "fields": [
+      name: 'ClaimStageEvent',
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "rewardAmount",
-          "type": "u64",
-          "index": false
+          name: 'rewardAmount',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "currentStage",
-          "type": "u64",
-          "index": false
+          name: 'currentStage',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'reserveLamport',
+          type: 'u64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "CompleteEvent",
-      "fields": [
+      name: 'CompleteEvent',
+      fields: [
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "timestamp",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "CompleteStageEvent",
-      "fields": [
+      name: 'CompleteStageEvent',
+      fields: [
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "currentStage",
-          "type": "u64",
-          "index": false
+          name: 'currentStage',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "timestamp",
-          "type": "i64",
-          "index": false
-        }
-      ]
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "LaunchEvent",
-      "fields": [
+      name: 'LaunchEvent',
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "tokenSupply",
-          "type": "u64",
-          "index": false
+          name: 'tokenSupply',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
+          name: 'reserveLamport',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "stagesNumber",
-          "type": "u64",
-          "index": false
+          name: 'stagesNumber',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "stageDuration",
-          "type": "u64",
-          "index": false
+          name: 'stageDuration',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "sellTaxMin",
-          "type": "u64",
-          "index": false
+          name: 'sellTaxMin',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "sellTaxMax",
-          "type": "u64",
-          "index": false
+          name: 'sellTaxMax',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "sellTaxDecay",
-          "type": "u64",
-          "index": false
+          name: 'sellTaxDecay',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "tokenPoolDestination",
-          "type": "u64",
-          "index": false
+          name: 'tokenPoolDestination',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "complete",
-          "type": "bool",
-          "index": false
-        }
-      ]
+          name: 'complete',
+          type: 'bool',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "MoveStageEvent",
-      "fields": [
+      name: 'MoveStageEvent',
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "currentStage",
-          "type": "u64",
-          "index": false
+          name: 'currentStage',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'reserveLamport',
+          type: 'u64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "MovedRaydiumEvent",
-      "fields": [
+      name: 'MovedRaydiumEvent',
+      fields: [
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "token",
-          "type": "u64",
-          "index": false
+          name: 'token',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "sol",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'sol',
+          type: 'u64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "SetParamsEvent",
-      "fields": [
+      name: 'SetParamsEvent',
+      fields: [
         {
-          "name": "feeRecipient",
-          "type": "publicKey",
-          "index": false
+          name: 'feeRecipient',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "ownerWallet",
-          "type": "publicKey",
-          "index": false
+          name: 'ownerWallet',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "initialVirtualTokenReserves",
-          "type": "u64",
-          "index": false
+          name: 'initialVirtualTokenReserves',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "initialVirtualSolReserves",
-          "type": "u64",
-          "index": false
+          name: 'initialVirtualSolReserves',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "initialRealTokenReserves",
-          "type": "u64",
-          "index": false
+          name: 'initialRealTokenReserves',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "tokenTotalSupply",
-          "type": "u64",
-          "index": false
+          name: 'tokenTotalSupply',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "feeBasisPoints",
-          "type": "u64",
-          "index": false
+          name: 'feeBasisPoints',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "createFee",
-          "type": "u64",
-          "index": false
+          name: 'createFee',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "stagingPoolFee",
-          "type": "u64",
-          "index": false
-        }
-      ]
+          name: 'stagingPoolFee',
+          type: 'u64',
+          index: false,
+        },
+      ],
     },
     {
-      "name": "SwapEvent",
-      "fields": [
+      name: 'SwapEvent',
+      fields: [
         {
-          "name": "mint",
-          "type": "publicKey",
-          "index": false
+          name: 'mint',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "user",
-          "type": "publicKey",
-          "index": false
+          name: 'user',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "bondingCurve",
-          "type": "publicKey",
-          "index": false
+          name: 'bondingCurve',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "rewardCapAddr",
-          "type": "publicKey",
-          "index": false
+          name: 'rewardCapAddr',
+          type: 'publicKey',
+          index: false,
         },
         {
-          "name": "solAmount",
-          "type": "u64",
-          "index": false
+          name: 'solAmount',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "tokenAmount",
-          "type": "u64",
-          "index": false
+          name: 'tokenAmount',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "rewardAmount",
-          "type": "u64",
-          "index": false
+          name: 'rewardAmount',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "isBuy",
-          "type": "bool",
-          "index": false
+          name: 'isBuy',
+          type: 'bool',
+          index: false,
         },
         {
-          "name": "tokenSupply",
-          "type": "u64",
-          "index": false
+          name: 'tokenSupply',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "timestamp",
-          "type": "i64",
-          "index": false
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
         },
         {
-          "name": "reserveLamport",
-          "type": "u64",
-          "index": false
+          name: 'reserveLamport',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "reserveToken",
-          "type": "u64",
-          "index": false
+          name: 'reserveToken',
+          type: 'u64',
+          index: false,
         },
         {
-          "name": "feeAmount",
-          "type": "u64",
-          "index": false
-        }
-      ]
-    }
+          name: 'feeAmount',
+          type: 'u64',
+          index: false,
+        },
+      ],
+    },
   ],
-  "errors": [
+  errors: [
     {
-      "code": 6000,
-      "name": "NotAuthorized",
-      "msg": "The given account is not authorized to execute this instruction."
+      code: 6000,
+      name: 'NotAuthorized',
+      msg: 'The given account is not authorized to execute this instruction.',
     },
     {
-      "code": 6001,
-      "name": "InValidFeeRecipient",
-      "msg": "The given account is not valid fee recipient."
+      code: 6001,
+      name: 'InValidFeeRecipient',
+      msg: 'The given account is not valid fee recipient.',
     },
     {
-      "code": 6002,
-      "name": "AlreadyInitialized",
-      "msg": "The program is already initialized."
+      code: 6002,
+      name: 'AlreadyInitialized',
+      msg: 'The program is already initialized.',
     },
     {
-      "code": 6003,
-      "name": "TooMuchSolRequired",
-      "msg": "slippage: Too much SOL required to buy the given amount of tokens."
+      code: 6003,
+      name: 'TooMuchSolRequired',
+      msg: 'slippage: Too much SOL required to buy the given amount of tokens.',
     },
     {
-      "code": 6004,
-      "name": "TooLittleSolReceived",
-      "msg": "slippage: Too little SOL received to sell the given amount of tokens."
+      code: 6004,
+      name: 'TooLittleSolReceived',
+      msg: 'slippage: Too little SOL received to sell the given amount of tokens.',
     },
     {
-      "code": 6005,
-      "name": "MintDoesNotMatchBondingCurve",
-      "msg": "The mint does not match the bonding curve."
+      code: 6005,
+      name: 'MintDoesNotMatchBondingCurve',
+      msg: 'The mint does not match the bonding curve.',
     },
     {
-      "code": 6006,
-      "name": "BondingCurveComplete",
-      "msg": "The bonding curve has completed and liquidity migrated to raydium."
+      code: 6006,
+      name: 'BondingCurveComplete',
+      msg: 'The bonding curve has completed and liquidity migrated to raydium.',
     },
     {
-      "code": 6007,
-      "name": "BondingCurveNotComplete",
-      "msg": "The bonding curve has not completed."
+      code: 6007,
+      name: 'BondingCurveNotComplete',
+      msg: 'The bonding curve has not completed.',
     },
     {
-      "code": 6008,
-      "name": "NotInitialized",
-      "msg": "The program is not initialized."
+      code: 6008,
+      name: 'NotInitialized',
+      msg: 'The program is not initialized.',
     },
     {
-      "code": 6009,
-      "name": "MathOverflow",
-      "msg": "Math operation overflow."
+      code: 6009,
+      name: 'MathOverflow',
+      msg: 'Math operation overflow.',
     },
     {
-      "code": 6010,
-      "name": "ZeroAmount",
-      "msg": "Amount should be bigger than 0."
+      code: 6010,
+      name: 'ZeroAmount',
+      msg: 'Amount should be bigger than 0.',
     },
     {
-      "code": 6011,
-      "name": "InvalidAmount",
-      "msg": "Amount is invalid to create the pool."
+      code: 6011,
+      name: 'InvalidAmount',
+      msg: 'Amount is invalid to create the pool.',
     },
     {
-      "code": 6012,
-      "name": "InvalidSupply",
-      "msg": "Supply is invalid to create the pool."
+      code: 6012,
+      name: 'InvalidSupply',
+      msg: 'Supply is invalid to create the pool.',
     },
     {
-      "code": 6013,
-      "name": "FreezeAuthorityEnabled",
-      "msg": "Freeze authority enabled."
+      code: 6013,
+      name: 'FreezeAuthorityEnabled',
+      msg: 'Freeze authority enabled.',
     },
     {
-      "code": 6014,
-      "name": "MitAuthorityEnabled",
-      "msg": "Mint authority enabled."
+      code: 6014,
+      name: 'MitAuthorityEnabled',
+      msg: 'Mint authority enabled.',
     },
     {
-      "code": 6015,
-      "name": "InvalidTaxPercentage",
-      "msg": "TaxPercentage invalid."
+      code: 6015,
+      name: 'InvalidTaxPercentage',
+      msg: 'TaxPercentage invalid.',
     },
     {
-      "code": 6016,
-      "name": "InvalidFeeBasisPoints",
-      "msg": "FeeBasisPoints invalid."
+      code: 6016,
+      name: 'InvalidFeeBasisPoints',
+      msg: 'FeeBasisPoints invalid.',
     },
     {
-      "code": 6017,
-      "name": "CurrentStageComplete",
-      "msg": "The Current stage has completed."
+      code: 6017,
+      name: 'CurrentStageComplete',
+      msg: 'The Current stage has completed.',
     },
     {
-      "code": 6018,
-      "name": "InsufficientFunds",
-      "msg": "The Token is insufficient."
+      code: 6018,
+      name: 'InsufficientFunds',
+      msg: 'The Token is insufficient.',
     },
     {
-      "code": 6019,
-      "name": "NotMoveNextStage",
-      "msg": "Now, Next stage doesn't start."
+      code: 6019,
+      name: 'NotMoveNextStage',
+      msg: "Now, Next stage doesn't start.",
     },
     {
-      "code": 6020,
-      "name": "NotStageComplete",
-      "msg": "Now, current stage has not completeted."
+      code: 6020,
+      name: 'NotStageComplete',
+      msg: 'Now, current stage has not completeted.',
     },
     {
-      "code": 6021,
-      "name": "IncorrectPoolDestination",
-      "msg": "Now, Token pool destination is incorrect."
+      code: 6021,
+      name: 'IncorrectPoolDestination',
+      msg: 'Now, Token pool destination is incorrect.',
     },
     {
-      "code": 6022,
-      "name": "InvalidAirdropAmount",
-      "msg": "Invalid airdrop allocation specified."
+      code: 6022,
+      name: 'InvalidAirdropAmount',
+      msg: 'Invalid airdrop allocation specified.',
     },
     {
-      "code": 6023,
-      "name": "InvalidClaimAmount",
-      "msg": "Invalid Claim Amount."
+      code: 6023,
+      name: 'InvalidClaimAmount',
+      msg: 'Invalid Claim Amount.',
     },
     {
-      "code": 6024,
-      "name": "InvalidNoClaimAmount",
-      "msg": "No Claimable Amount"
-    }
-  ]
+      code: 6024,
+      name: 'InvalidNoClaimAmount',
+      msg: 'No Claimable Amount',
+    },
+  ],
 };

@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig } from 'axios';
 import {
   ChartTable,
   coinInfo,
@@ -6,16 +6,16 @@ import {
   msgInfo,
   replyInfo,
   userInfo,
-} from "./types";
-import { claimTx } from "@/program/web3";
-import { WalletContextState } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
-import { useClaim } from "@/context/ClaimContext";
+} from './types';
+import { claimTx } from '@/program/web3';
+import { WalletContextState } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { useClaim } from '@/context/ClaimContext';
 
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const headers: Record<string, string> = {
-  "ngrok-skip-browser-warning": "true",
+  'ngrok-skip-browser-warning': 'true',
 };
 
 const config: AxiosRequestConfig = {
@@ -32,7 +32,7 @@ export const getUser = async ({ id }: { id: string }): Promise<any> => {
     const response = await axios.get(`${BACKEND_URL}/user/${id}`, config);
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 
@@ -46,10 +46,18 @@ export const getClaimData = async (
       config
     );
 
-    return response.data;;
+    return response.data;
   } catch (err) {
-    console.log("__yuki__ error getting the claim data : ", err);
-    return { tokenBal: 0, hodlSum: 0, rewardCap: 0, isBlocked: true, tokenReserves: 0, lamportReserves: 0, solPrice: 0 }
+    console.log('__yuki__ error getting the claim data : ', err);
+    return {
+      tokenBal: 0,
+      hodlSum: 0,
+      rewardCap: 0,
+      isBlocked: true,
+      tokenReserves: 0,
+      lamportReserves: 0,
+      solPrice: 0,
+    };
   }
 };
 
@@ -62,7 +70,7 @@ export const updateUser = async (id: string, data: userInfo): Promise<any> => {
     );
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 
@@ -75,7 +83,7 @@ export const walletConnect = async ({
     const response = await axios.post(`${BACKEND_URL}/user/`, data);
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 
@@ -92,7 +100,7 @@ export const confirmWallet = async ({
     );
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 export const getClaim = async (coinId: string, id: string): Promise<any> => {
@@ -103,7 +111,7 @@ export const getClaim = async (coinId: string, id: string): Promise<any> => {
     );
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 export const getCoinsInfo = async (): Promise<coinInfo[]> => {
@@ -133,10 +141,9 @@ export const getCoinsInfoBy = async (id: string): Promise<coinInfo[]> => {
 export const getCoinInfo = async (data: string): Promise<any> => {
   try {
     const response = await axios.get(`${BACKEND_URL}/coin/${data}`, config);
-    console.log("__yuki__ getCoinInfo response: ", response.data);
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 
@@ -153,7 +160,7 @@ export const sendTx = async (signature, token, user) => {
       config
     );
   } catch (error) {
-    return { error: "signature failed" };
+    return { error: 'signature failed' };
   }
 };
 
@@ -162,7 +169,7 @@ export const getUserInfo = async (data: string): Promise<any> => {
     const response = await axios.get(`${BACKEND_URL}/user/${data}`, config);
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 
@@ -186,7 +193,7 @@ export const getCoinTrade = async (data: string): Promise<any> => {
     );
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 
@@ -195,7 +202,7 @@ export const postReply = async (data: replyInfo) => {
     const response = await axios.post(`${BACKEND_URL}/feedback/`, data, config);
     return response.data;
   } catch (err) {
-    return { error: "error setting up the request" };
+    return { error: 'error setting up the request' };
   }
 };
 
@@ -209,17 +216,17 @@ export const findHolders = async (mint: string) => {
   while (true) {
     const response = await fetch(
       process.env.NEXT_PUBLIC_SOLANA_RPC ||
-        "https://devnet.helius-rpc.com/?api-key=44b7171f-7de7-4e68-9d08-eff1ef7529bd",
+        'https://devnet.helius-rpc.com/?api-key=44b7171f-7de7-4e68-9d08-eff1ef7529bd',
       {
         //   const response = await fetch("https://white-aged-glitter.solana-mainnet.quiknode.pro/743d4e1e3949c3127beb7f7815cf2ca9743b43a6/", {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "getTokenAccounts",
-          id: "helius-test",
+          jsonrpc: '2.0',
+          method: 'getTokenAccounts',
+          id: 'helius-test',
           params: {
             page: page,
             limit: 1000,
@@ -253,7 +260,7 @@ export const getSolPriceInUSD = async () => {
   try {
     // Fetch the price data from CoinGecko
     const response = await axios.get(
-      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
+      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
     );
     const solPriceInUSD = response.data.solana.usd;
     return solPriceInUSD;
@@ -264,15 +271,15 @@ export const claim = async (
   userData: userInfo,
   coin: coinInfo,
   wallet: WalletContextState,
-  amount: number,
+  amount: number
 ) => {
   const signedTx = await claimTx(coin, wallet, amount);
   if (!signedTx) {
-    console.log("Claim transaction failed");
+    console.log('Claim transaction failed');
     return;
   }
   const data = {
-    signedTxBase64: Buffer.from(signedTx).toString("base64"),
+    signedTxBase64: Buffer.from(signedTx).toString('base64'),
     token: coin.token,
     user: userData.wallet,
   };
@@ -283,12 +290,12 @@ export const claim = async (
       config
     );
     if (response.data.error) {
-      console.log("Claim axios error: ", response.data.error);
+      console.log('Claim axios error: ', response.data.error);
       return response.data.error;
     }
-    return "success";
+    return 'success';
   } catch (error) {
-    console.log("Claim error: ", error.response?.data || error.message);
+    console.log('Claim error: ', error.response?.data || error.message);
   }
 };
 

@@ -1,9 +1,15 @@
 import UserContext from '@/context/UserContext';
 import { coinInfo, replyInfo, tradeInfo, userInfo } from '@/utils/types';
 import { postReply, updateUser } from '@/utils/util';
-import React, { ChangeEvent, useContext, useMemo, useRef, useState } from 'react';
+import React, {
+  ChangeEvent,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { errorAlert, successAlert } from '../others/ToastGroup';
-import ImgIcon from "@/../public/assets/images/imce-logo.jpg";
+import ImgIcon from '@/../public/assets/images/imce-logo.jpg';
 
 import Image from 'next/image';
 
@@ -14,27 +20,26 @@ interface ModalProps {
 const ReplyModal: React.FC<ModalProps> = ({ data }) => {
   const { postReplyModal, setPostReplyModal, user } = useContext(UserContext);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>("");
-  const [msg, setMsg] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [msg, setMsg] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const replyPost = async () => {
     let reply: replyInfo;
-    if(!user) {
-      errorAlert("Please Connect Wallet")
+    if (!user) {
+      errorAlert('Please Connect Wallet');
       return;
     }
     if (imageUrl) {
       const url = await uploadImage(imageUrl);
       if (url && user._id) {
-
         reply = {
           coinId: data._id,
           sender: user._id,
           msg: msg,
-          img: url
-        }
+          img: url,
+        };
       }
     } else {
       if (user._id) {
@@ -42,12 +47,12 @@ const ReplyModal: React.FC<ModalProps> = ({ data }) => {
           coinId: data._id,
           sender: user._id,
           msg: msg,
-        }
+        };
       }
     }
     await postReply(reply);
     handleModalToggle();
-  }
+  };
 
   const handleModalToggle = () => {
     setPostReplyModal(!postReplyModal);
@@ -72,9 +77,8 @@ const ReplyModal: React.FC<ModalProps> = ({ data }) => {
     return uploadSuccess ? 'uploaded-image-url' : '';
   };
 
-
   return (
-    <div className='fixed w-full inset-0 flex items-center justify-center z-50 backdrop-blur-md'>
+    <div className="fixed w-full inset-0 flex items-center justify-center z-50 backdrop-blur-md">
       <div className="flex w-full max-w-[300px] sm:max-w-xl flex-col p-6 rounded-md gap-3 bg-[#140B56] border-[1px] border-white text-white relative">
         <h2 className="text-center text-2xl font-bold">Post Reply</h2>
         <div className=" w-full px-2 flex flex-col">
@@ -137,8 +141,18 @@ const ReplyModal: React.FC<ModalProps> = ({ data }) => {
           )}
         </div>
         <div className="flex justify-around p-3">
-          <button onClick={replyPost} className="mt-2 px-4 py-2 bg-custom-gradient text-white rounded-md">POST</button>
-          <button onClick={handleModalToggle} className="mt-2 px-4 py-2 bg-custom-gradient text-white rounded-md">Cancel</button>
+          <button
+            onClick={replyPost}
+            className="mt-2 px-4 py-2 bg-custom-gradient text-white rounded-md"
+          >
+            POST
+          </button>
+          <button
+            onClick={handleModalToggle}
+            className="mt-2 px-4 py-2 bg-custom-gradient text-white rounded-md"
+          >
+            Cancel
+          </button>
         </div>
       </div>
     </div>

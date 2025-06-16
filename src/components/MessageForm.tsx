@@ -1,4 +1,4 @@
-import { msgInfo, userInfo } from "@/utils/types";
+import { msgInfo, userInfo } from '@/utils/types';
 
 interface MessageFormProps {
   msg: msgInfo;
@@ -19,7 +19,9 @@ export const MessageForm: React.FC<MessageFormProps> = ({ msg }) => {
           <div className="text-sm text-gray-300">
             {msg.sender && (msg.sender as userInfo).name}
           </div>
-          {msg.time && <div className="text-sm text-gray-300">{msg.time.toString()}</div>}
+          {msg.time && (
+            <div className="text-sm text-gray-300">{msg.time.toString()}</div>
+          )}
         </div>
         <div className="flex flex-row w-full border-[1px] border-[#143F72] rounded-lg object-cover overflow-hidden gap-1 items-start justify-start">
           {msg.img !== undefined && (
