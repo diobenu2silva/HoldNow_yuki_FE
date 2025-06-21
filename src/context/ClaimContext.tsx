@@ -25,7 +25,7 @@ const ClaimContext = createContext<ClaimContextType | undefined>(undefined);
 export const ClaimProvider: React.FC<{
   children: React.ReactNode;
   intervalMs?: number;
-}> = ({ children, intervalMs = 10000 }) => {
+}> = ({ children, intervalMs = 5000 }) => {
   const [claimAmount, setClaimAmount] = useState<
     [number, number, number, number, number, coinInfo]
   >([0, 0, 0, 0, 0, {} as coinInfo]);

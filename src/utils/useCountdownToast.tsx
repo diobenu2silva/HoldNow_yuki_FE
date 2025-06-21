@@ -2,23 +2,27 @@ import { useEffect } from 'react';
 import { showCountdownToast } from '@/utils/showCountdownToast';
 
 export const useCountdownToast = (coin: any) => {
-  useEffect(() => {
-    if (!coin.airdropStage || !coin.atStageStarted || !coin.currentStage)
-      return;
 
-    const millisecondsInADay = 300 * 1000; // 10 min for demo
-    // const millisecondsInADay = 24 * 60 * 60 * 1000;
-    const startTime = new Date(coin.atStageStarted);
-    const futureTime = new Date(startTime.getTime() + millisecondsInADay);
+  const { airdropStage, atStageStarted, currentStage, bondingCurve } = coin;
+  useEffect(() => {
+    if (!airdropStage || !atStageStarted || !currentStage) return;
+      
+
+    const stage = coin.currentStage;
+    console.log("showing countdown toast for stage:", stage, "bondingCurve :", bondingCurve);
+    const alertText = (bondingCurve) ?
+      'All Stages has completed. The next stage will begin shortly, and a new link will be posted here when it begins. Stay tuned!'
+      : `Stage ${stage} has started. Next stage will begin in`;
+    // const milliseconds = 24 * 60 * 60 * 1000;
+    const milliseconds = (!bondingCurve) ? 120 * 1000 : 5 * 1000; // 10 min for demo
+    
+    const startTime = new Date(atStageStarted);
+    const futureTime = new Date(startTime.getTime() + milliseconds);
 
     // Trigger the toast
-    let stage = coin.currentStage;
-    if (stage > coin.stagesNumber) {
-      stage = coin.stagesNumber;
-    }
     const cleanup = showCountdownToast(
       futureTime,
-      `Stage ${stage} has completed. Next stage will begin in`,
+      alertText,
       'New Stage has begun!'
     );
 

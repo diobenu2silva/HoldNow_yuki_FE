@@ -67,25 +67,32 @@ export default function TradingPage() {
     setCoinId(parameter);
   }, [parameter]);
 
-  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] = claimAmount;
+  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] =
+    claimAmount;
   // console.log("__yuki__ claimInUSD:", claimInUSD, " claimHodl:", claimHodl, "currentClaim:", currentClaim, "solPrice:", solPrice, "coinData:", coinData);
   const fetchData = async () => {
     setCoin(coinData);
-    const millisecondsInADay = 300 * 1000;
-    // const millisecondsInADay = 24 * 60 * 60 * 1000;
-    const nowDate = new Date();
-    const atStageStartedDate = new Date(coinData.atStageStarted);
-    const period = nowDate.getTime() - atStageStartedDate.getTime();
-    const stageProgress =
-      Math.round(
-        (period * 10000) / (millisecondsInADay * coinData.stageDuration)
-      ) / 100;
-    setStageProg(stageProgress > 100 ? 100 : stageProgress);
+    if (!coinData.bondingCurve) {
+      const millisecondsInADay = 120 * 1000;
+      // const millisecondsInADay = 24 * 60 * 60 * 1000;
+      const nowDate = new Date();
+      const atStageStartedDate = new Date(coinData.atStageStarted);
+      const period = nowDate.getTime() - atStageStartedDate.getTime();
+      const stageProgress =
+        Math.round(
+          (period * 10000) / (millisecondsInADay * coinData.stageDuration)
+        ) / 100;
+      setStageProg(stageProgress > 100 ? 100 : stageProgress);
 
-    setProgress(Math.round((coinData.progressMcap * solPrice) / 10) / 100);
-    setLiquidity(
-      Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
-    );
+      setProgress(Math.round((coinData.progressMcap * solPrice) / 10) / 100);
+      setLiquidity(
+        Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+      );
+    } else {
+      setProgress(100);
+      setLiquidity(0);
+      setStageProg(100);
+    }
   };
 
   useEffect(() => {
@@ -164,9 +171,13 @@ export default function TradingPage() {
           <TradeForm coin={coin} progress={progress} />
 
           <div className="w-full flex flex-col text-center text-white gap-4 py-4 border-[1px] border-[#64ffda] rounded-lg px-3">
-            <p className="font-semibold text-xl">
-              Stage {Math.min(coin.currentStage, coin.stagesNumber)} Reward Claim
-            </p>
+            {coin.bondingCurve ? (
+              <p className="font-semibold text-xl">{`All Stages Completed`}</p>
+            ) : (
+              <p className="font-semibold text-xl">
+                {`Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Reward Claim`}
+              </p>
+            )}
             {login && publicKey ? (
               <div className="w-full justify-center items-center flex flex-col gap-2">
                 <p className="text-sm px-5">You are eligible to claim:</p>
@@ -184,25 +195,31 @@ export default function TradingPage() {
               </p>
             )}
             <div className="flex flex-col">
-              {login && publicKey ? (
-                <div
-                  onClick={coin.airdropStage ? handleClaim : undefined}
-                  className={`w-1/2 border-[1px] border-[#64ffda] cursor-pointer rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto
-                    ${
-                      coin.airdropStage
-                        ? 'hover:bg-[#64ffda]/30'
-                        : 'bg-gray-300 cursor-not-allowed'
-                    }`}
-                >
-                  Claim
-                </div>
-              ) : (
-                <div
-                  className="w-1/2 border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto"
-                  onClick={() => setVisible(true)}
-                >
-                  Connect Wallet
-                </div>
+              { !coin.bondingCurve && (
+                login && publicKey ? (
+                  <div
+                    onClick={
+                      coin.airdropStage && !coin.bondingCurve
+                        ? handleClaim
+                        : undefined
+                    }
+                    className={`w-1/2 border-[1px] border-[#64ffda] cursor-pointer rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto
+                      ${
+                        coin.airdropStage
+                          ? 'hover:bg-[#64ffda]/30'
+                          : 'bg-gray-300 cursor-not-allowed'
+                      }`}
+                  >
+                    Claim
+                  </div>
+                ) : (
+                  <div
+                    className="w-1/2 border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto"
+                    onClick={() => setVisible(true)}
+                  >
+                    Connect Wallet
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -238,9 +255,11 @@ export default function TradingPage() {
           <div className="flex flex-col gap-3">
             <div className="w-full flex flex-col gap-2 px-3 py-2">
               <p className="text-white text-base lg:text-xl">
-                {coin.airdropStage
-                  ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`
-                  : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
+                {coin.bondingCurve
+                  ? 'All Stages Completed'
+                  : coin.airdropStage
+                    ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`
+                    : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
               </p>
               <div className="bg-white rounded-full h-2 relative">
                 <div
