@@ -10,6 +10,7 @@ import { errorAlert } from '../others/ToastGroup';
 import { useClaim } from '@/context/ClaimContext';
 import { claim } from '@/utils/util';
 
+
 interface TradingFormProps {
   coin: coinInfo;
   progress: Number;
@@ -22,8 +23,9 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const [tokenName, setTokenName] = useState<string>('Token');
   const [canTrade, setCanTrade] = useState<boolean>(false);
   const { user, setWeb3Tx } = useContext(UserContext);
-  // const { claimAmount, setClaimAmount } = useClaim();
-
+  
+  const { claimAmount } = useClaim();
+  
   const wallet = useWallet();
   const SolList = [
     { id: 0, price: 'reset' },
@@ -81,7 +83,8 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
         wallet,
         parseFloat(amount),
         isSell,
-        minSol
+        minSol,
+        0, // claimAmount[2],
       );
       // if (res) {
       //   setTimeout(async () => {

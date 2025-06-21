@@ -115,8 +115,13 @@ export const getClaim = async (coinId: string, id: string): Promise<any> => {
   }
 };
 export const getCoinsInfo = async (): Promise<coinInfo[]> => {
-  const res = await axios.get(`${BACKEND_URL}/coin/`, config);
-  return res.data;
+  try {
+    const res = await axios.get(`${BACKEND_URL}/coin/`, config);
+    return res.data;
+  } catch (err) {
+    console.log('__yuki__ getCoinsInof Error fetching coins info:', err);
+    return [];
+  }
 };
 
 export const getCoinsInfoBySort = async (

@@ -38,6 +38,7 @@ import {
   CLAIM_DATA_SEED,
   GLOBAL_STATE_SEED,
   REWARD_STATE_SEED,
+  REWARD_VAULT_SEED,
   SOL_VAULT_SEED,
   VAULT_SEED,
 } from './seed';
@@ -156,11 +157,11 @@ export const createToken = async (
 
     // Create Pool instruction
     const [rewardRecipient] = await PublicKey.findProgramAddress(
-      [Buffer.from(REWARD_STATE_SEED)],
+      [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
       program.programId
     );
     const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
-      [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
+      [Buffer.from(REWARD_VAULT_SEED), mint.toBuffer()],
       program.programId
     );
     const [bondingCurve] = await PublicKey.findProgramAddress(
@@ -227,6 +228,7 @@ export const createToken = async (
         preflightCommitment: 'confirmed',
         skipPreflight: false,
       });
+      console.log("__yuki__, ", await connection.simulateTransaction(signedTx));
       const res = await connection.confirmTransaction(
         {
           signature,
@@ -295,7 +297,8 @@ export const swapTx = async (
   wallet: WalletContextState,
   amount: number,
   type: number,
-  slipAmount: number
+  slipAmount: number,
+  currentClaim: number = 0,
 ): Promise<any> => {
   // check the connection
   if (!wallet.publicKey || !connection) {
@@ -317,11 +320,11 @@ export const swapTx = async (
   const globalAccountData = await program.account.global.fetch(global);
   const feeRecipient = globalAccountData.feeRecipient;
   const [rewardRecipient] = await PublicKey.findProgramAddress(
-    [Buffer.from(REWARD_STATE_SEED)],
+    [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
     program.programId
   );
   const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
-    [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
+    [Buffer.from(REWARD_VAULT_SEED), mint.toBuffer()],
     program.programId
   );
   const [bondingCurve] = await PublicKey.findProgramAddress(
@@ -387,7 +390,8 @@ export const swapTx = async (
         .sell(
           new anchor.BN(amount * Math.pow(10, 6)),
           // new anchor.BN(slipAmount  * (80 / 100)),
-          new anchor.BN(0)
+          new anchor.BN(0),
+          new anchor.BN(currentClaim * Math.pow(10, 6)),
         )
         .accounts({
           global,
@@ -433,7 +437,8 @@ export const swapTx = async (
       return res;
     }
   } catch (error) {
-    throw error;
+    console.log("__yuki__ swapTx Error: ", error);
+    return {};
   }
 };
 
@@ -459,11 +464,11 @@ export const claimTx = async (
     program.programId
   );
   const [rewardRecipient] = await PublicKey.findProgramAddress(
-    [Buffer.from(REWARD_STATE_SEED)],
+    [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
     program.programId
   );
   const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
-    [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
+    [Buffer.from(REWARD_VAULT_SEED), mint.toBuffer()],
     program.programId
   );
   const [vault] = await PublicKey.findProgramAddress(
@@ -552,6 +557,7 @@ export const getTokenBalance = async (
     return 0;
   }
 
+  console.log('__yuki__ Token Account:', response.value[0].pubkey.toBase58());
   // Get the balance
   const tokenAccountInfo = await connection.getTokenAccountBalance(
     response.value[0].pubkey

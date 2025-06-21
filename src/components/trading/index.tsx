@@ -67,12 +67,11 @@ export default function TradingPage() {
     setCoinId(parameter);
   }, [parameter]);
 
-  const [claimInUSD, claimHodl, solPrice, coinData] = claimAmount;
-  // console.log("__yuki__ claimInUSD:", claimInUSD, " claimHodl:", claimHodl, "solPrice:", solPrice, "coinData:", coinData);
+  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] = claimAmount;
+  // console.log("__yuki__ claimInUSD:", claimInUSD, " claimHodl:", claimHodl, "currentClaim:", currentClaim, "solPrice:", solPrice, "coinData:", coinData);
   const fetchData = async () => {
     setCoin(coinData);
-
-    const millisecondsInADay = 120 * 1000;
+    const millisecondsInADay = 300 * 1000;
     // const millisecondsInADay = 24 * 60 * 60 * 1000;
     const nowDate = new Date();
     const atStageStartedDate = new Date(coinData.atStageStarted);
@@ -96,7 +95,9 @@ export default function TradingPage() {
   useCountdownToast(coin);
 
   useEffect(() => {
-    if (stageProg > coin.sellTaxDecay) {
+    if (coinData.airdropStage) {
+      setSellTax(0);
+    } else if (stageProg > coin.sellTaxDecay) {
       setSellTax(coin.sellTaxMin);
     } else {
       setSellTax(
@@ -164,8 +165,7 @@ export default function TradingPage() {
 
           <div className="w-full flex flex-col text-center text-white gap-4 py-4 border-[1px] border-[#64ffda] rounded-lg px-3">
             <p className="font-semibold text-xl">
-              Stage {Math.min(coin.currentStage, coin.stagesNumber)} Reward
-              Claim
+              Stage {Math.min(coin.currentStage, coin.stagesNumber)} Reward Claim
             </p>
             {login && publicKey ? (
               <div className="w-full justify-center items-center flex flex-col gap-2">
@@ -240,7 +240,7 @@ export default function TradingPage() {
               <p className="text-white text-base lg:text-xl">
                 {coin.airdropStage
                   ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`
-                  : `Stage ${coin.currentStage} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
+                  : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
               </p>
               <div className="bg-white rounded-full h-2 relative">
                 <div

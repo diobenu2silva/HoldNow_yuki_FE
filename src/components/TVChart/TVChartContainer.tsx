@@ -11,7 +11,7 @@ import {
   widget,
 } from '@/libraries/charting_library';
 import { usePathname } from 'next/navigation';
-import { Bar, PeriodParamsInfo, recordInfo } from '@/utils/types';
+import { Bar, PeriodParamsInfo, coinInfo, recordInfo } from '@/utils/types';
 import { getCoinTrade } from '@/utils/util';
 import {
   chartOverrides,
@@ -91,7 +91,7 @@ export const TVChartContainer = ({
         }
       };
     }
-  }, [name, pairIndex, claimAmount[1]]);
+  }, [name, pairIndex, claimAmount[4]]);
 
   return (
     <div className="relative mb-[1px] h-[500px] w-full ">

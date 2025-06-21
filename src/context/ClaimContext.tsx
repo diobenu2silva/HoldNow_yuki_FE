@@ -14,9 +14,9 @@ import React, {
 } from 'react';
 
 type ClaimContextType = {
-  claimAmount: [number, number, number, coinInfo];
+  claimAmount: [number, number, number, number, number, coinInfo];
   setClaimAmount: React.Dispatch<
-    React.SetStateAction<[number, number, number, coinInfo]>
+    React.SetStateAction<[number, number, number, number, number, coinInfo]>
   >;
 };
 
@@ -25,10 +25,10 @@ const ClaimContext = createContext<ClaimContextType | undefined>(undefined);
 export const ClaimProvider: React.FC<{
   children: React.ReactNode;
   intervalMs?: number;
-}> = ({ children, intervalMs = 5000 }) => {
+}> = ({ children, intervalMs = 10000 }) => {
   const [claimAmount, setClaimAmount] = useState<
-    [number, number, number, coinInfo]
-  >([0, 0, 0, {} as coinInfo]);
+    [number, number, number, number, number, coinInfo]
+  >([0, 0, 0, 0, 0, {} as coinInfo]);
   const pathname = usePathname();
   const wallet = useWallet();
 
@@ -45,13 +45,15 @@ export const ClaimProvider: React.FC<{
         setClaimAmount([
           response.claimInUSD ?? 0,
           response.claimHodl ?? 0,
+          response.currentClaim ?? 0,
           response.solPrice ?? 0,
+          response.rewardCap ?? 0,
           coin ?? ({} as coinInfo),
         ]);
       }
     } catch (error) {
       console.error('__yuki__ Error fetching claim data:', error);
-      setClaimAmount([0, 0, 0, coin]);
+      setClaimAmount([0, 0, 0, 0, 0, coin]);
     }
   };
 
