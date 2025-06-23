@@ -71,6 +71,13 @@ export default function TradingPage() {
     claimAmount;
   // console.log("__yuki__ claimInUSD:", claimInUSD, " claimHodl:", claimHodl, "currentClaim:", currentClaim, "solPrice:", solPrice, "coinData:", coinData);
   const fetchData = async () => {
+    console.log('__yuki__ fetchData called with coinData:', {
+      name: coinData.name,
+      movedToRaydium: coinData.movedToRaydium,
+      moveRaydiumFailed: coinData.moveRaydiumFailed,
+      moveRaydiumFailureReason: coinData.moveRaydiumFailureReason
+    });
+    
     setCoin(coinData);
     if (!coinData.bondingCurve) {
       const millisecondsInADay = 120 * 1000;
@@ -98,6 +105,36 @@ export default function TradingPage() {
   useEffect(() => {
     fetchData();
   }, [publicKey, web3Tx, , claimInUSD, claimHodl, solPrice, coinData]);
+
+  // Handle Raydium status changes and trigger notifications
+  useEffect(() => {
+    console.log('__yuki__ Trading page useEffect triggered - coinData:', {
+      movedToRaydium: coinData.movedToRaydium,
+      moveRaydiumFailed: coinData.moveRaydiumFailed,
+      moveRaydiumFailureReason: coinData.moveRaydiumFailureReason,
+      raydiumUrl: coinData.raydiumUrl
+    });
+    
+    if (coinData.moveRaydiumFailed) {
+      console.log('__yuki__ Move to Raydium failed:', coinData.moveRaydiumFailureReason);
+      // The notification will be displayed automatically via the conditional rendering
+    }
+    
+    if (coinData.movedToRaydium) {
+      console.log('__yuki__ Moved to Raydium successfully:', coinData.raydiumUrl);
+      // The notification will be displayed automatically via the conditional rendering
+    }
+  }, [coinData.movedToRaydium, coinData.moveRaydiumFailed, coinData.moveRaydiumFailureReason, coinData.raydiumUrl]);
+
+  // Debug logging for render state
+  useEffect(() => {
+    console.log('__yuki__ Render check - coin state:', {
+      name: coin.name,
+      movedToRaydium: coin.movedToRaydium,
+      moveRaydiumFailed: coin.moveRaydiumFailed,
+      moveRaydiumFailureReason: coin.moveRaydiumFailureReason
+    });
+  }, [coin.movedToRaydium, coin.moveRaydiumFailed, coin.moveRaydiumFailureReason]);
 
   useCountdownToast(coin);
 
@@ -145,6 +182,45 @@ export default function TradingPage() {
           </div>
         </div>
       </div>
+
+      {/* Raydium Move Failed Notification */}
+      {coin.moveRaydiumFailed && (
+        <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
+            <div className="flex items-center justify-between bg-white/10 p-3 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <span className="text-red-300">✗</span>
+                <span className="font-medium">{coin.name} ({coin.ticker})</span>
+              </div>
+              <span className="text-white font-medium">{coin.moveRaydiumFailureReason || 'Unknown error'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Raydium Notification */}
+      {coin.movedToRaydium && (
+        <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
+            <div className="flex items-center justify-between bg-white/10 p-3 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <span className="text-green-400">✓</span>
+                <span className="font-medium">{coin.name} ({coin.ticker})</span>
+              </div>
+              <a
+                href={coin.raydiumUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+              >
+                Trade on Raydium
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="w-full flex flex-col md3:flex-row gap-4">
         <div className="w-full px-2">

@@ -65,11 +65,50 @@ export const ClaimProvider: React.FC<{
 
     run();
 
-    intervalId = setInterval(run, intervalMs);
+    // Only start interval if not moved to Raydium AND not failed
+    // Continue polling even after bondingCurve is true to get moveRaydiumFailed status
+    if (!claimAmount[5]?.movedToRaydium && !claimAmount[5]?.moveRaydiumFailed) {
+      intervalId = setInterval(run, intervalMs);
+    }
+    
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [wallet.connected, pathname, intervalMs]);
+  }, [wallet.connected, pathname, intervalMs, claimAmount[5]?.movedToRaydium, claimAmount[5]?.moveRaydiumFailed]);
+
+  // Fetch updated coin data when movedToRaydium becomes true to get failure status
+  useEffect(() => {
+    if (claimAmount[5]?.movedToRaydium) {
+      const fetchUpdatedData = async () => {
+        const segments = pathname.split('/');
+        const parameter = segments[segments.length - 1];
+        const coin = await getCoinInfo(parameter);
+        
+        if (coin.token && wallet.publicKey) {
+          try {
+            const response = await getClaimData(
+              coin.token,
+              wallet.publicKey.toBase58()
+            );
+            setClaimAmount([
+              response.claimInUSD ?? 0,
+              response.claimHodl ?? 0,
+              response.currentClaim ?? 0,
+              response.solPrice ?? 0,
+              response.rewardCap ?? 0,
+              coin ?? ({} as coinInfo),
+            ]);
+          } catch (error) {
+            console.error('__yuki__ Error fetching updated claim data:', error);
+            setClaimAmount([0, 0, 0, 0, 0, coin]);
+          }
+        }
+      };
+      
+      // Fetch once after a short delay to ensure backend has updated the data
+      setTimeout(fetchUpdatedData, 2000);
+    }
+  }, [claimAmount[5]?.movedToRaydium, pathname, wallet.publicKey]);
 
   return (
     <ClaimContext.Provider value={{ claimAmount, setClaimAmount }}>

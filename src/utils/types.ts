@@ -69,7 +69,15 @@ export interface coinInfo {
   currentStage: number;
   atStageStarted: Date;
   airdropStage: boolean;
+  
+  // Raydium-related properties
+  movedToRaydium?: boolean;
+  raydiumUrl?: string;
+  movedToRaydiumAt?: Date;
+  moveRaydiumFailed?: boolean;
+  moveRaydiumFailureReason?: string;
 }
+
 export interface createCoinInfo {
   name: string;
   ticker: string;
@@ -92,6 +100,7 @@ export interface launchDataInfo {
   tokenSellTaxRange: number[];
   tokenPoolDestination: number;
 }
+
 export interface msgInfo {
   coinId: string | coinInfo;
   sender: string | userInfo;
@@ -120,6 +129,7 @@ export interface recordInfo {
   tokenAmount: number;
   tx: string;
 }
+
 export interface CharTable {
   table: {
     time: number;
@@ -130,6 +140,7 @@ export interface CharTable {
     volume: number;
   }[];
 }
+
 export interface Bar {
   time: number;
   low: number;
@@ -138,12 +149,14 @@ export interface Bar {
   close: number;
   volume: number;
 }
+
 export interface replyInfo {
   coinId: string;
   sender: string;
   msg: string;
   img?: string;
 }
+
 export interface PeriodParamsInfo {
   from: number;
   to: number;

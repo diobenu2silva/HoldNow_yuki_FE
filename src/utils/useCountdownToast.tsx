@@ -12,7 +12,7 @@ export const useCountdownToast = (coin: any) => {
     console.log("showing countdown toast for stage:", stage, "bondingCurve :", bondingCurve);
     const alertText = (bondingCurve) ?
       'All Stages has completed. The next stage will begin shortly, and a new link will be posted here when it begins. Stay tuned!'
-      : `Stage ${stage} has started. Next stage will begin in`;
+      : `Stage ${stage} has completed. Next stage will begin in`;
     // const milliseconds = 24 * 60 * 60 * 1000;
     const milliseconds = (!bondingCurve) ? 120 * 1000 : 5 * 1000; // 10 min for demo
     
