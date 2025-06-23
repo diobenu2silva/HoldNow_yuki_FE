@@ -10,9 +10,32 @@ export const useCountdownToast = (coin: any) => {
 
     const stage = coin.currentStage;
     console.log("showing countdown toast for stage:", stage, "bondingCurve :", bondingCurve);
-    const alertText = (bondingCurve) ?
-      'All Stages has completed. The next stage will begin shortly, and a new link will be posted here when it begins. Stay tuned!'
-      : `Stage ${stage} has completed. Next stage will begin in`;
+    
+    let alertText, completionMsg;
+    if (bondingCurve) {
+      // All stages completed, next is Move to Raydium
+      alertText = (
+        <>
+          All Stages has completed.
+          <br />
+          <br />
+          Move to Raydium will begin in
+        </>
+      );
+      completionMsg = 'Move to Raydium has begun!';
+    } else {
+      // Regular stage progression
+      alertText = (
+        <>
+          Stage {stage} has completed.
+          <br />
+          <br />
+          Next stage will begin in
+        </>
+      );
+      completionMsg = 'New Stage has begun!';
+    }
+    
     // const milliseconds = 24 * 60 * 60 * 1000;
     const milliseconds = (!bondingCurve) ? 120 * 1000 : 5 * 1000; // 10 min for demo
     
@@ -23,7 +46,7 @@ export const useCountdownToast = (coin: any) => {
     const cleanup = showCountdownToast(
       futureTime,
       alertText,
-      'New Stage has begun!'
+      completionMsg
     );
 
     // CLEANUP on unmount or coin change

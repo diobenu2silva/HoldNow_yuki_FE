@@ -65,6 +65,10 @@ export default function TradingPage() {
   useEffect(() => {
     setParam(parameter);
     setCoinId(parameter);
+    setCoin({} as coinInfo);
+    setProgress(0);
+    setLiquidity(0);
+    setStageProg(0);
   }, [parameter]);
 
   const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] =
@@ -334,7 +338,7 @@ export default function TradingPage() {
                 {coin.bondingCurve
                   ? 'All Stages Completed'
                   : coin.airdropStage
-                    ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`
+                    ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of 1 Day`
                     : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
               </p>
               <div className="bg-white rounded-full h-2 relative">

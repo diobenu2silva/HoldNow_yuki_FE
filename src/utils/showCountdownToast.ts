@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify';
+import React from 'react';
 
 // Global toast and interval trackers
 let activeToastId: string | number | null = null;
@@ -6,9 +7,9 @@ let countdownInterval: NodeJS.Timeout | null = null;
 
 export const showCountdownToast = (
   finalTime: Date,
-  mainMsg: string,
+  mainMsg: string | React.ReactElement,
   finalMsg: string
-) => {
+): (() => void) => {
   // Clean up any existing timer
   if (countdownInterval) {
     clearInterval(countdownInterval);
@@ -19,7 +20,7 @@ export const showCountdownToast = (
     display: 'flex' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    whiteSpace: 'normal' as const,
+    whiteSpace: 'pre-line' as const,
     maxWidth: '600px',
     width: '100%',
     margin: '0 auto',
@@ -31,16 +32,14 @@ export const showCountdownToast = (
     overflowWrap: 'break-word' as const,
   };
 
-  // Check if this is the "All stages completed" message
-  const isAllStagesCompleted = mainMsg.includes('All Stages has completed');
-
   countdownInterval = setInterval(() => {
     const now = new Date();
     const diff = finalTime.getTime() - now.getTime();
 
     if (diff <= 0) {
-      if (isAllStagesCompleted) {
-        // For "All stages completed" message, show it for longer
+      // Check if this is the "All stages completed" message by checking the finalMsg
+      if (finalMsg.includes('Move to Raydium has begun')) {
+        // For "Move to Raydium has begun" message, show it for longer
         toast.update(activeToastId as string | number, {
           render: finalMsg,
           type: "success",
@@ -64,9 +63,12 @@ export const showCountdownToast = (
     const seconds = Math.floor((diff / 1000) % 60);
     const timeStr = `${hours}h ${minutes}m ${seconds}s`;
 
+    // Convert JSX to string for toast display
+    const mainMsgText = typeof mainMsg === 'string' ? mainMsg : 'All Stages has completed.\n\nMove to Raydium will begin in';
+
     // Show the toast immediately with the countdown
     if (!activeToastId) {
-      activeToastId = toast.info(`${mainMsg} ${timeStr}. Stay tuned!`, {
+      activeToastId = toast.info(`${mainMsgText} ${timeStr}. Stay tuned!`, {
         position: 'top-center',
         autoClose: false,
         closeOnClick: false,
@@ -77,7 +79,7 @@ export const showCountdownToast = (
       });
     } else {
       toast.update(activeToastId as string | number, {
-        render: `${mainMsg} ${timeStr}. Stay tuned!`,
+        render: `${mainMsgText} ${timeStr}. Stay tuned!`,
         icon: false,
         style: commonStyle,
       });
