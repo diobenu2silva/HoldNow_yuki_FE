@@ -18,7 +18,6 @@ export const useCountdownToast = (coin: any) => {
         <>
           All Stages has completed.
           <br />
-          <br />
           Move to Raydium will begin in
         </>
       );
