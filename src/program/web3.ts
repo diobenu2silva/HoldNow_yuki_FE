@@ -184,6 +184,16 @@ export const createToken = async (
       [Buffer.from(GLOBAL_STATE_SEED)],
       program.programId
     );
+
+    // Create transfer instruction
+    const transferIx = SystemProgram.transfer({
+      fromPubkey: wallet.publicKey,
+      toPubkey: vault,
+      lamports: 890_880,
+    });
+
+    transaction.add(transferIx);
+
     const globalStateData = await program.account.global.fetch(global);
     const feeRecipient = globalStateData.feeRecipient;
     const createIx = await program.methods
@@ -222,11 +232,12 @@ export const createToken = async (
     transaction.sign(mintKp);
 
     if (wallet.signTransaction) {
+      console.log("__yuki__ signTransaction");
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
       const signature = await connection.sendRawTransaction(sTx, {
         preflightCommitment: 'confirmed',
-        skipPreflight: false,
+        skipPreflight: true,
       });
       console.log("__yuki__, ", await connection.simulateTransaction(signedTx));
       const res = await connection.confirmTransaction(
