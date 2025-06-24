@@ -67,9 +67,6 @@ export default function TradingPage() {
     setParam(parameter);
     setCoinId(parameter);
     setCoin({} as coinInfo);
-    setProgress(0);
-    setLiquidity(0);
-    setStageProg(0);
     setIsLoading(true);
   }, [parameter]);
 
