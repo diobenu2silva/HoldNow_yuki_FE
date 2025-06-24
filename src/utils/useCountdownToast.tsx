@@ -5,10 +5,12 @@ export const useCountdownToast = (coin: any) => {
 
   const { airdropStage, atStageStarted, currentStage, bondingCurve, stagesNumber } = coin;
   useEffect(() => {
-    if (!airdropStage || !atStageStarted || !currentStage) return;
-      
+    console.log("__yuki__ showing countdown toast for stage:", currentStage, "bondingCurve:", bondingCurve);
 
-    console.log("showing countdown toast for stage:", currentStage, "bondingCurve :", bondingCurve);
+    if (!airdropStage || !atStageStarted || bondingCurve) return;
+      
+    // When airdrop stage begins, currentStage is the completed stage number
+    console.log("showing countdown toast for stage:", currentStage, "bondingCurve:", bondingCurve);
     
     let alertText, completionMsg;
     if (currentStage == stagesNumber) {
@@ -21,8 +23,8 @@ export const useCountdownToast = (coin: any) => {
         </>
       );
       completionMsg = 'Move to Raydium has begun!';
-    } else {
-      // Regular stage progression
+    } else if (currentStage < stagesNumber) {
+      // Regular stage progression - show the completed stage number
       alertText = (
         <>
           Stage {currentStage} has completed.
@@ -33,9 +35,12 @@ export const useCountdownToast = (coin: any) => {
       );
       completionMsg = 'New Stage has begun!';
     }
+    else {
+      return;
+    }
     
     // const milliseconds = 24 * 60 * 60 * 1000;
-    const milliseconds = 120 * 1000;
+    const milliseconds = 120 * 1000; // 10 min for demo
     
     const startTime = new Date(atStageStarted);
     const futureTime = new Date(startTime.getTime() + milliseconds);
@@ -51,5 +56,5 @@ export const useCountdownToast = (coin: any) => {
     return () => {
       cleanup?.(); // Dismiss toast & clear interval
     };
-  }, [coin.airdropStage, coin.atStageStarted, coin.currentStage]);
+  }, [coin.airdropStage]);
 };

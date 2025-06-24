@@ -56,6 +56,7 @@ export default function TradingPage() {
   const [liquidity, setLiquidity] = useState<number>(0);
   const [stageProg, setStageProg] = useState<number>(0);
   const [sellTax, setSellTax] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const { claimAmount } = useClaim();
   const router = useRouter();
 
@@ -69,6 +70,7 @@ export default function TradingPage() {
     setProgress(0);
     setLiquidity(0);
     setStageProg(0);
+    setIsLoading(true);
   }, [parameter]);
 
   const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] =
@@ -83,6 +85,7 @@ export default function TradingPage() {
     });
     
     setCoin(coinData);
+    setIsLoading(false);
     if (!coinData.bondingCurve) {
       const millisecondsInADay = 120 * 1000;
       // const millisecondsInADay = 24 * 60 * 60 * 1000;
@@ -91,7 +94,7 @@ export default function TradingPage() {
       const period = nowDate.getTime() - atStageStartedDate.getTime();
       const stageProgress =
         Math.round(
-          (period * 10000) / (millisecondsInADay * coinData.stageDuration)
+          (period * 10000) / (millisecondsInADay * (coinData.airdropStage ? 1 : coinData.stageDuration))
         ) / 100;
       setStageProg(stageProgress > 100 ? 100 : stageProgress);
 
@@ -187,8 +190,16 @@ export default function TradingPage() {
         </div>
       </div>
 
-      {/* Raydium Move Failed Notification */}
-      {coin.moveRaydiumFailed && !coin.movedToRaydium && (
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="w-full flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <span className="ml-3 text-white">Loading token data...</span>
+        </div>
+      )}
+
+      {/* Raydium Move Failed Notification - Show only if failed, even if later succeeded */}
+      {!isLoading && coin.moveRaydiumFailed && (
         <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
@@ -203,8 +214,8 @@ export default function TradingPage() {
         </div>
       )}
 
-      {/* Raydium Notification */}
-      {coin.movedToRaydium && !coin.moveRaydiumFailed && (
+      {/* Raydium Success Notification - Show only if succeeded AND never failed */}
+      {!isLoading && coin.movedToRaydium && !coin.moveRaydiumFailed && (
         <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>

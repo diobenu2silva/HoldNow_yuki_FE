@@ -25,7 +25,7 @@ const ClaimContext = createContext<ClaimContextType | undefined>(undefined);
 export const ClaimProvider: React.FC<{
   children: React.ReactNode;
   intervalMs?: number;
-}> = ({ children, intervalMs = 5000 }) => {
+}> = ({ children, intervalMs = 3000 }) => {
   const [claimAmount, setClaimAmount] = useState<
     [number, number, number, number, number, coinInfo]
   >([0, 0, 0, 0, 0, {} as coinInfo]);
@@ -50,6 +50,9 @@ export const ClaimProvider: React.FC<{
           response.rewardCap ?? 0,
           coin ?? ({} as coinInfo),
         ]);
+      } else {
+        // Set coin data even if wallet is not connected
+        setClaimAmount([0, 0, 0, 0, 0, coin ?? ({} as coinInfo)]);
       }
     } catch (error) {
       console.error('__yuki__ Error fetching claim data:', error);
@@ -57,13 +60,20 @@ export const ClaimProvider: React.FC<{
     }
   };
 
+  // Clear cached data and fetch fresh data when pathname changes
+  useEffect(() => {
+    console.log('__yuki__ Pathname changed, clearing cache and fetching fresh data');
+    // Clear the cached data immediately
+    setClaimAmount([0, 0, 0, 0, 0, {} as coinInfo]);
+    // Fetch fresh data
+    _getClaimAmount();
+  }, [pathname]);
+
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     const run = async () => {
       await _getClaimAmount();
     };
-
-    run();
 
     // Only start interval if not moved to Raydium AND not failed
     // Continue polling even after bondingCurve is true to get moveRaydiumFailed status
@@ -74,7 +84,7 @@ export const ClaimProvider: React.FC<{
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [wallet.connected, pathname, intervalMs, claimAmount[5]?.movedToRaydium, claimAmount[5]?.moveRaydiumFailed]);
+  }, [wallet.connected, intervalMs, claimAmount[5]?.movedToRaydium, claimAmount[5]?.moveRaydiumFailed]);
 
   // Fetch updated coin data when movedToRaydium becomes true to get failure status
   useEffect(() => {
