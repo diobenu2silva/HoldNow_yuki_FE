@@ -5,6 +5,36 @@ import React from 'react';
 let activeToastId: string | number | null = null;
 let countdownInterval: NodeJS.Timeout | null = null;
 
+// Helper function to extract text from React element
+const extractTextFromReactElement = (element: React.ReactElement): string => {
+  if (typeof element === 'string') {
+    return element;
+  }
+  
+  if (React.isValidElement(element)) {
+    // Handle simple JSX structure like the one in useCountdownToast
+    const children = (element.props as any).children;
+    if (children) {
+      if (Array.isArray(children)) {
+        return children
+          .map((child: any) => {
+            if (typeof child === 'string') return child;
+            if (child && child.type === 'br') return '\n';
+            if (React.isValidElement(child)) return extractTextFromReactElement(child);
+            return '';
+          })
+          .join('');
+      } else if (typeof children === 'string') {
+        return children;
+      } else if (React.isValidElement(children)) {
+        return extractTextFromReactElement(children);
+      }
+    }
+  }
+  
+  return '';
+};
+
 export const showCountdownToast = (
   finalTime: Date,
   mainMsg: string | React.ReactElement,
@@ -64,7 +94,7 @@ export const showCountdownToast = (
     const timeStr = `${hours}h ${minutes}m ${seconds}s`;
 
     // Convert JSX to string for toast display
-    const mainMsgText = typeof mainMsg === 'string' ? mainMsg : 'All Stages has completed.\n\nMove to Raydium will begin in';
+    const mainMsgText = typeof mainMsg === 'string' ? mainMsg : extractTextFromReactElement(mainMsg);
 
     // Show the toast immediately with the countdown
     if (!activeToastId) {

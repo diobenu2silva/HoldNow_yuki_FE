@@ -3,16 +3,15 @@ import { showCountdownToast } from '@/utils/showCountdownToast';
 
 export const useCountdownToast = (coin: any) => {
 
-  const { airdropStage, atStageStarted, currentStage, bondingCurve } = coin;
+  const { airdropStage, atStageStarted, currentStage, bondingCurve, stagesNumber } = coin;
   useEffect(() => {
     if (!airdropStage || !atStageStarted || !currentStage) return;
       
 
-    const stage = coin.currentStage;
-    console.log("showing countdown toast for stage:", stage, "bondingCurve :", bondingCurve);
+    console.log("showing countdown toast for stage:", currentStage, "bondingCurve :", bondingCurve);
     
     let alertText, completionMsg;
-    if (bondingCurve) {
+    if (currentStage == stagesNumber) {
       // All stages completed, next is Move to Raydium
       alertText = (
         <>
@@ -26,7 +25,7 @@ export const useCountdownToast = (coin: any) => {
       // Regular stage progression
       alertText = (
         <>
-          Stage {stage} has completed.
+          Stage {currentStage} has completed.
           <br />
           <br />
           Next stage will begin in
@@ -36,7 +35,7 @@ export const useCountdownToast = (coin: any) => {
     }
     
     // const milliseconds = 24 * 60 * 60 * 1000;
-    const milliseconds = (!bondingCurve) ? 120 * 1000 : 5 * 1000; // 10 min for demo
+    const milliseconds = 120 * 1000;
     
     const startTime = new Date(atStageStarted);
     const futureTime = new Date(startTime.getTime() + milliseconds);

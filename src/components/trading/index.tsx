@@ -188,7 +188,7 @@ export default function TradingPage() {
       </div>
 
       {/* Raydium Move Failed Notification */}
-      {coin.moveRaydiumFailed && (
+      {coin.moveRaydiumFailed && !coin.movedToRaydium && (
         <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
@@ -204,7 +204,7 @@ export default function TradingPage() {
       )}
 
       {/* Raydium Notification */}
-      {coin.movedToRaydium && (
+      {coin.movedToRaydium && !coin.moveRaydiumFailed && (
         <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
