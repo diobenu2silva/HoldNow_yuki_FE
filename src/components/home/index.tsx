@@ -8,39 +8,6 @@ import { CoinBlog } from '../cards/CoinBlog';
 import TopToken from './TopToken';
 import FilterList from './FilterList';
 
-// Raydium Notification Component
-// const RaydiumNotification: FC<{ coins: coinInfo[] }> = ({ coins }) => {
-//   const raydiumCoins = coins.filter(coin => coin.movedToRaydium);
-  
-//   if (raydiumCoins.length === 0) return null;
-
-//   return (
-//     <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg mb-4">
-//       <div className="max-w-4xl mx-auto">
-//         <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
-//         <div className="space-y-2">
-//           {raydiumCoins.map((coin, index) => (
-//             <div key={index} className="flex items-center justify-between bg-white/10 p-3 rounded-lg">
-//               <div className="flex items-center space-x-3">
-//                 <span className="text-green-400">✓</span>
-//                 <span className="font-medium">{coin.name} ({coin.ticker})</span>
-//               </div>
-//               <a
-//                 href={coin.raydiumUrl}
-//                 target="_blank"
-//                 rel="noopener noreferrer"
-//                 className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-//               >
-//                 Trade on Raydium
-//               </a>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
 const HomePage: FC = () => {
   const { isLoading, setIsLoading, isCreated, solPrice, setSolPrice } =
     useContext(UserContext);
@@ -97,44 +64,7 @@ const HomePage: FC = () => {
     <div className="w-full h-full gap-4 flex flex-col">
       <TopToken />
       <FilterList />
-      {/* <RaydiumNotification coins={data} /> */}
-      {/* <div className="flex">
-        <div ref={dropdownRef} className="mx-4">
-          <button className="bg-green-600 w-[200px] h-[50px] font-medium rounded-md " onClick={() => setIsSort(1)}>
-            SORT: {dataSort}
-          </button>
-          {(isSort == 1) &&
-            <div className="bg-green-400 text-center rounded-sm my-1 absolute w-[200px] text-lg top-64">
-              <p onClick={() => handleSortSelection("bump order")} className="hover:bg-green-200 cursor-pointer">
-                Sort: bump order
-              </p>
-              <p onClick={() => handleSortSelection("last reply")} className="hover:bg-green-200 cursor-pointer">
-                Sort: last reply
-              </p>
-              <p onClick={() => handleSortSelection("reply count")} className="hover:bg-green-200 cursor-pointer">
-                Sort: reply count
-              </p>
-              <p onClick={() => handleSortSelection("market cap")} className="hover:bg-green-200 cursor-pointer">
-                Sort: market cap
-              </p>
-              <p onClick={() => handleSortSelection("creation time")} className="hover:bg-green-200 cursor-pointer">
-                Sort: creation time
-              </p>
-            </div>
-          }
-        </div>
-        <div ref={dropdownRef1}>
-          <button className="bg-green-600 w-[200px] h-[50px] font-medium rounded-md " onClick={() => setIsSort(2)}>
-            Order: {order}
-          </button>
-          {(isSort == 2) &&
-            <div className="bg-green-400 text-center rounded-md my-1 absolute w-[200px] text-lg top-[340px]">
-              <p onClick={() => handleSortSelection("desc")} className="hover:bg-green-200 cursor-pointer">Sort:Desc</p>
-              <p onClick={() => handleSortSelection("asc")} className="hover:bg-green-200 cursor-pointer">Sort:asc</p>
-            </div>
-          }
-        </div>
-      </div> */}
+      
       {data && (
         <div className="w-full h-full flex flex-wrap gap-2 items-center">
           {data.map((temp, index) => (

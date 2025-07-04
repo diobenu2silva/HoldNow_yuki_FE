@@ -309,10 +309,10 @@ export default function TradingPage() {
               <div className="w-full justify-center items-center flex flex-col gap-2">             
                 <p className="text-sm px-5">You are eligible to claim:</p>
                 <p className="text-xl font-semibold">{`${Number(
-                  manualClaimInUSD !== null ? manualClaimInUSD : claimInUSD
+                  (coin.bondingCurve && ( manualClaimInUSD !== null )) ? manualClaimInUSD : claimInUSD
                 ).toPrecision(9)} USD`}</p>
                 <p className="text-xl font-semibold">{`${Number(
-                  manualClaimHodl !== null ? manualClaimHodl : claimHodl
+                  (coin.bondingCurve && ( manualClaimHodl !== null )) ? manualClaimHodl : claimHodl
                 ).toPrecision(6)} HODL`}</p>
               </div>
             ) : (

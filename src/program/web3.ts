@@ -434,7 +434,7 @@ export const swapTx = async (
         skipPreflight: false,
       });
       const blockhash = await connection.getLatestBlockhash();
-      console.log(await connection.simulateTransaction(signedTx));
+      console.log("__yuki__ swapTx simulateTransaction", await connection.simulateTransaction(signedTx));
       const res = await connection.confirmTransaction(
         {
           signature,
@@ -556,6 +556,8 @@ export const getTokenBalance = async (
   walletAddress: string,
   tokenMintAddress: string
 ) => {
+
+  console.log('__yuki__ getTokenBalance called');
   const wallet = new PublicKey(walletAddress);
   const tokenMint = new PublicKey(tokenMintAddress);
 

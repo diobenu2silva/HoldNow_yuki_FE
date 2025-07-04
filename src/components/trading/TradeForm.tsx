@@ -133,14 +133,14 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       <div className="flex flex-row justify-center px-3 py-2">
         <button
           className={`rounded-l-lg py-3 w-full ${isSell === 0 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`}
-          onClick={() => setIsBuy(0)}
+          onClick={() => {setIsBuy(0); getBalance();}}
         >
           {' '}
           Buy
         </button>
         <button
           className={`rounded-r-lg py-3 w-full ${isSell === 1 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`}
-          onClick={() => setIsBuy(1)}
+          onClick={() => {setIsBuy(1); getBalance();}}
         >
           Sell
         </button>
@@ -212,7 +212,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
             </button>
             <button
               disabled={tokenBal && tokenBal !== 0 ? false : true}
-              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'}max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
+              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
               onClick={() => setSol(tokenBal.toString())}
             >
               100%
