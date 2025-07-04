@@ -116,7 +116,7 @@ export const ClaimProvider: React.FC<{
       };
       
       // Fetch once after a short delay to ensure backend has updated the data
-      setTimeout(fetchUpdatedData, 2000);
+      setTimeout(fetchUpdatedData, 500);
     }
   }, [claimAmount[5]?.movedToRaydium, pathname, wallet.publicKey]);
 

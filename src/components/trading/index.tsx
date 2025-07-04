@@ -19,7 +19,7 @@ import SocialList from '../others/socialList';
 import TokenData from '../others/TokenData';
 import { DataCard } from '../cards/DataCard';
 import { FaCopy } from 'react-icons/fa6';
-import { successAlert } from '../others/ToastGroup';
+import { errorAlert, successAlert } from '../others/ToastGroup';
 import { ConnectButton } from '../buttons/ConnectButton';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { getTokenBalance } from '@/program/web3';
@@ -57,6 +57,8 @@ export default function TradingPage() {
   const [stageProg, setStageProg] = useState<number>(0);
   const [sellTax, setSellTax] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [manualClaimInUSD, setManualClaimInUSD] = useState<number | null>(null);
+  const [manualClaimHodl, setManualClaimHodl] = useState<number | null>(null);
   const { claimAmount } = useClaim();
   const router = useRouter();
 
@@ -100,9 +102,41 @@ export default function TradingPage() {
         Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
       );
     } else {
+
+      console.log('__yuki__ bondingCurve is true, and claim requested');
       setProgress(100);
       setLiquidity(0);
       setStageProg(100);
+
+      const fetchUpdatedData = async () => {
+
+        const segments = pathname.split('/');
+        const parameter = segments[segments.length - 1];
+        const coin = await getCoinInfo(parameter);
+        
+        if (coin.token && wallet.publicKey) {
+          console.log('__yuki__ 2nd fetchUpdatedData called');
+          try {
+            const response = await getClaimData(
+              coin.token,
+              wallet.publicKey.toBase58()
+            );
+            setManualClaimInUSD(response.claimInUSD ?? 0);
+            setManualClaimHodl(response.claimHodl ?? 0);
+            console.log('__yuki__ Manual values set:', {
+              manualClaimInUSD: response.claimInUSD ?? 0,
+              manualClaimHodl: response.claimHodl ?? 0
+            });
+          } catch (error) {
+            setManualClaimInUSD(0);
+            setManualClaimHodl(0);
+          }
+        }
+      };
+      
+      // Fetch once after a short delay to ensure backend has updated the data
+      setTimeout(fetchUpdatedData, 100);
+
     }
   };
 
@@ -170,7 +204,12 @@ export default function TradingPage() {
   const wallet = useWallet();
   const handleClaim = async () => {
     const res = await claim(user, coin, wallet, Number(claimHodl));
-    if (res === 'success') setWeb3Tx(res);
+    fetchData();
+
+    if (res !== 'success') {
+      console.log('__yuki__ claim failed');
+      errorAlert('Claim failed');
+    }
     console.log('__yuki__ claim res : ', res);
   };
 
@@ -267,13 +306,13 @@ export default function TradingPage() {
               </p>
             )}
             {login && publicKey ? (
-              <div className="w-full justify-center items-center flex flex-col gap-2">
+              <div className="w-full justify-center items-center flex flex-col gap-2">             
                 <p className="text-sm px-5">You are eligible to claim:</p>
                 <p className="text-xl font-semibold">{`${Number(
-                  claimInUSD
+                  manualClaimInUSD !== null ? manualClaimInUSD : claimInUSD
                 ).toPrecision(9)} USD`}</p>
                 <p className="text-xl font-semibold">{`${Number(
-                  claimHodl
+                  manualClaimHodl !== null ? manualClaimHodl : claimHodl
                 ).toPrecision(6)} HODL`}</p>
               </div>
             ) : (
@@ -283,11 +322,11 @@ export default function TradingPage() {
               </p>
             )}
             <div className="flex flex-col">
-              { !coin.bondingCurve && (
+              { (
                 login && publicKey ? (
                   <div
                     onClick={
-                      coin.airdropStage && !coin.bondingCurve
+                      coin.airdropStage
                         ? handleClaim
                         : undefined
                     }

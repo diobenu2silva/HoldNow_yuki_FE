@@ -45,22 +45,39 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
 
   const getBalance = async () => {
     try {
+      if (!user || !user.wallet) {
+        setTokenBal(0);
+        return;
+      }
       const balance = await getTokenBalance(user.wallet, coin.token);
       setTokenBal(balance ? balance : 0);
     } catch (error) {
+      console.error('__yuki__ Error getting token balance:', error);
       setTokenBal(0);
     }
   };
-  getBalance();
+  
+  useEffect(() => {
+    getBalance();
+  }, [user, coin.token]);
 
   const handlTrade = async () => {
     if (!!!amount) {
       errorAlert('Please set Amount');
       return;
     }
-    const mint = new PublicKey(coin.token);
-    const userWallet = new PublicKey(user.wallet);
-    if (isSell == 0) {
+    
+    // Check if user and wallet are available
+    if (!user || !user.wallet) {
+      errorAlert('Please connect your wallet first');
+      return;
+    }
+    
+    try {
+      const mint = new PublicKey(coin.token);
+      const userWallet = new PublicKey(user.wallet);
+      
+      if (isSell == 0) {
       const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
       const tokenAmount =
         coin.tokenReserves -
@@ -91,6 +108,10 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       //     window.location.reload();
       //   }, 500);
       // }
+    }
+    } catch (error) {
+      console.error('__yuki__ Trade error:', error);
+      errorAlert('Trade failed. Please try again.');
     }
   };
 
