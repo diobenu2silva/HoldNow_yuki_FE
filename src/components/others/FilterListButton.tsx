@@ -5,59 +5,23 @@ import { BiLineChart } from 'react-icons/bi';
 import { CiFilter } from 'react-icons/ci';
 import { BsFilterSquare } from 'react-icons/bs';
 
-const FilterListButton: FC = () => {
-  const [data, setData] = useState<coinInfo[]>([]);
-  const [dataSort, setDataSort] = useState<string>('creation time');
-  const [order, setOrder] = useState('desc');
-  const [isSort, setIsSort] = useState(0);
-  const [currentFilterm, setCurrentFilter] = useState<string>('creation time');
+interface FilterListButtonProps {
+  onSortChange: (sortType: string, order: string) => void;
+  currentSort: string;
+  currentOrder: string;
+}
+
+const FilterListButton: FC<FilterListButtonProps> = ({ onSortChange, currentSort, currentOrder }) => {
   const FilterText = [
     { id: 'last reply', text: 'Last Reply' },
     { id: 'creation time', text: 'Creation Time' },
     { id: 'market cap', text: 'Market Cap' },
   ];
 
-  const handleSortSelection = (option: any) => {
-    setCurrentFilter(option);
-    let sortOption: string = '';
-    let orderOption: string = '';
-    let sortedData = [...data]; // Create a new array to prevent direct state mutation
-    if (option == 'desc' || option == 'asc') {
-      setOrder(option);
-      sortOption = dataSort;
-      orderOption = option;
-    } else {
-      setDataSort(option);
-      sortOption = option;
-      orderOption = order;
-    }
-    if (orderOption == 'desc') {
-      switch (sortOption) {
-        case 'last reply':
-          break;
-        case 'market cap':
-          break;
-        case 'creation time':
-          break;
-        default:
-          sortedData = data;
-          break;
-      }
-    } else {
-      switch (sortOption) {
-        case 'last reply':
-          break;
-        case 'market cap':
-          break;
-        case 'creation time':
-          break;
-        default:
-          sortedData = data;
-          break;
-      }
-    }
-    setData(sortedData);
-    setIsSort(0); // Close the dropdown after selection
+  const handleSortSelection = (sortType: string) => {
+    // Toggle order if same sort type is selected
+    const newOrder = currentSort === sortType && currentOrder === 'desc' ? 'asc' : 'desc';
+    onSortChange(sortType, newOrder);
   };
 
   return (
@@ -66,11 +30,20 @@ const FilterListButton: FC = () => {
         {FilterText.map((item) => (
           <div
             key={item.id}
-            onClick={() => handleSortSelection('creation time')}
-            className="w-full gap-2 flex flex-row items-center bg-[#143F72] hover:bg-custom-gradient py-2 rounded-lg justify-center cursor-pointer text-lg"
+            onClick={() => handleSortSelection(item.id)}
+            className={`w-full gap-2 flex flex-row items-center py-2 rounded-lg justify-center cursor-pointer text-lg ${
+              currentSort === item.id 
+                ? 'bg-custom-gradient' 
+                : 'bg-[#143F72] hover:bg-custom-gradient'
+            }`}
           >
             <p className="text-sm">{item.text}</p>
             <CiFilter />
+            {currentSort === item.id && (
+              <span className="text-xs ml-1">
+                {currentOrder === 'desc' ? '↓' : '↑'}
+              </span>
+            )}
           </div>
         ))}
       </div>

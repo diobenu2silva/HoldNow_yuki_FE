@@ -94,7 +94,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                 ))}
               <div
                 onClick={() => setPostReplyModal(true)}
-                className="w-[200px] flex flex-col justify-center text-center font-semibold bg-custom-gradient rounded-full px-8 py-2 text-xl cursor-pointer text-white mx-auto"
+                className="w-[200px] flex flex-col justify-center text-center font-semibold bg-custom-gradient rounded-full px-8 py-2 text-xl cursor-pointer text-white mx-auto mt-4"
               >
                 Post Reply
               </div>

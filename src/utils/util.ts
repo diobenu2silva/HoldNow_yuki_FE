@@ -190,6 +190,19 @@ export const getMessageByCoin = async (data: string): Promise<msgInfo[]> => {
   }
 };
 
+export const getLatestReplies = async (): Promise<{ coinId: string; latestReplyTime: string }[]> => {
+  try {
+    const response = await axios.get(
+      `${BACKEND_URL}/feedback/latest-replies`,
+      config
+    );
+    return response.data;
+  } catch (err) {
+    console.log('__yuki__ getLatestReplies Error fetching latest replies:', err);
+    return [];
+  }
+};
+
 export const getCoinTrade = async (data: string): Promise<any> => {
   try {
     const response = await axios.get(

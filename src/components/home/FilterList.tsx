@@ -11,7 +11,13 @@ import { BiSearchAlt } from 'react-icons/bi';
 import { coinInfo } from '@/utils/types';
 import FilterListButton from '../others/FilterListButton';
 
-const FilterList: FC = () => {
+interface FilterListProps {
+  onSortChange: (sortType: string, order: string) => void;
+  currentSort: string;
+  currentOrder: string;
+}
+
+const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrder }) => {
   // const {
   //   filterState,
   //   setFilterState,
@@ -30,7 +36,11 @@ const FilterList: FC = () => {
     <div className="w-full gap-4 h-full flex flex-col text-white px-2">
       <div className="flex flex-col md:flex-row gap-3">
         <TimeTranding />
-        <FilterListButton />
+        <FilterListButton 
+          onSortChange={onSortChange}
+          currentSort={currentSort}
+          currentOrder={currentOrder}
+        />
       </div>
       <div className="flex flex-col sm2:flex-row w-full h-full gap-4 justify-between">
         <div className="hidden sm2:flex flex-row items-center">
