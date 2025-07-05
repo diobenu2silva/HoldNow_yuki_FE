@@ -23,7 +23,7 @@ const TopToken: FC = () => {
             alt="TestTokenImg"
             className="h-[160px] xs:h-[250px] rounded-lg animate-hero-zoom"
           />
-          <div className="absolute inset-0 z-10 pointer-events-none">
+          <div className="absolute inset-0 z-10 w-[calc(200%)] pointer-events-none">
             <div
               className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer"
               style={{ filter: 'blur(8px)' }}
