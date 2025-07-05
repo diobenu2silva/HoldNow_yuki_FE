@@ -2,10 +2,20 @@ import { coinInfo, userInfo } from '@/utils/types';
 import { FC, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import UserContext from '@/context/UserContext';
-import { HiOutlinePuzzle } from 'react-icons/hi';
-import { TbWorld } from 'react-icons/tb';
-import { FaXTwitter } from 'react-icons/fa6';
-import { FaTelegramPlane } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { 
+  HiOutlineGlobeAlt, 
+  HiOutlineChatBubbleLeftRight 
+} from 'react-icons/hi2';
+import { 
+  FaTwitter, 
+  FaTelegramPlane 
+} from 'react-icons/fa';
+import { 
+  CurrencyDollarIcon,
+  ArrowTrendingUpIcon,
+  UserIcon
+} from '@heroicons/react/24/outline';
 
 interface CoinBlogProps {
   coin: coinInfo;
@@ -30,93 +40,185 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
     getMarketCapData(coin);
   }, [coin]);
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut" as const
+      }
+    },
+    hover: {
+      y: -5,
+      transition: {
+        duration: 0.2,
+        ease: "easeOut" as const
+      }
+    }
+  };
+
+  const progressVariants = {
+    hidden: { width: 0 },
+    visible: { 
+      width: `${marketCapValue}%`,
+      transition: {
+        duration: 1,
+        ease: "easeOut" as const,
+        delay: 0.3
+      }
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full items-center justify-between border-[#64ffda] border-[1px] hover:bg-custom-gradient rounded-lg text-white gap-2">
-      <div className="flex flex-row w-full">
-        <img
-          src={coin?.url}
-          alt="image"
-          className="w-28 h-28 object-cover overflow-hidden rounded-tl-md"
-        />
-        <div className="flex flex-col px-2 gap-1 pt-3">
-          <div className="w-full text-xl text-white font-bold">
-            {coin?.name}
-          </div>
-          <div className="flex flex-row gap-2">
-            <div className="flex flex-row gap-1 items-center">
-              Created by
-              <HiOutlinePuzzle className="text-2xl" />
-            </div>
-            <div
-              onClick={() => handleToProfile((coin?.creator as userInfo)?._id)}
-            >
-              <div className="text-white px-1">
-                {(coin?.creator as userInfo)?.name}
-              </div>
-            </div>
-          </div>
-          {/* <div>replies: {coin?.replies}</div> */}
-          <div>
-            {coin?.name} [ticker: {coin?.ticker}]
+    <motion.div
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      className="card card-hover card-glow overflow-hidden group cursor-pointer bg-card border-border"
+    >
+      {/* Header Section */}
+      <div className="flex flex-row w-full relative">
+        {/* Token Image */}
+        <div className="relative w-28 h-28 overflow-hidden">
+          <img
+            src={coin?.url}
+            alt={coin?.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </div>
+
+        {/* Token Info */}
+        <div className="flex flex-col px-4 py-3 flex-1 gap-2">
+          {/* Token Name */}
+          <div className="flex items-center gap-2">
+            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+              {coin?.name}
+            </h3>
+            <span className="badge badge-primary text-xs">
+              {coin?.ticker}
+            </span>
           </div>
 
-          {componentKey === 'coin' ? (
-            coin?.description && <div>{coin?.description}</div>
-          ) : (
-            <></>
+          {/* Creator Info */}
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <UserIcon className="w-4 h-4" />
+            <span>Created by</span>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToProfile((coin?.creator as userInfo)?._id);
+              }}
+              className="text-primary hover:text-primary/80 font-medium transition-colors duration-200"
+            >
+              {(coin?.creator as userInfo)?.name}
+            </motion.button>
+          </div>
+
+          {/* Description */}
+          {componentKey === 'coin' && coin?.description && (
+            <p className="text-muted-foreground text-sm line-clamp-2">
+              {coin?.description}
+            </p>
           )}
-          <div className="w-full flex flex-row gap-1 items-center text-white text-xl">
+
+          {/* Social Links */}
+          <div className="flex items-center gap-2 mt-2">
             {coin.twitter && (
-              <a
+              <motion.a
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 href={coin.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+                onClick={(e) => e.stopPropagation()}
+                className="p-2 bg-gradient-primary rounded-lg text-white hover:shadow-glow transition-all duration-200"
               >
-                <FaXTwitter />
-              </a>
+                                 <FaTwitter className="w-4 h-4" />
+              </motion.a>
             )}
             {coin.website && (
-              <a
+              <motion.a
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 href={coin.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+                onClick={(e) => e.stopPropagation()}
+                className="p-2 bg-gradient-accent rounded-lg text-white hover:shadow-glow transition-all duration-200"
               >
-                <TbWorld />
-              </a>
+                <HiOutlineGlobeAlt className="w-4 h-4" />
+              </motion.a>
             )}
             {coin.telegram && (
-              <a
+              <motion.a
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 href={coin.telegram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+                onClick={(e) => e.stopPropagation()}
+                className="p-2 bg-gradient-secondary rounded-lg text-white hover:shadow-glow transition-all duration-200"
               >
-                <FaTelegramPlane />
-              </a>
+                <FaTelegramPlane className="w-4 h-4" />
+              </motion.a>
             )}
           </div>
         </div>
       </div>
-      <div className="w-full flex flex-col gap-1 p-3">
-        <div className="w-full flex flex-row items-center justify-between">
-          <div className="flex flex-row gap-1 items-center">
-            Market Cap
-            <div className="text-gradient font-bold">
+
+      {/* Market Cap Section */}
+      <div className="p-4 bg-muted/50 border-t border-border">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <CurrencyDollarIcon className="w-5 h-5 text-primary" />
+            <span className="text-muted-foreground text-sm">Market Cap</span>
+          </div>
+          <div className="text-right">
+            <div className="text-primary font-bold text-lg">
               {((coin.progressMcap * solPrice) / 1000).toFixed(2)} K
             </div>
-            {`(${marketCapValue}%)`}
+            <div className="text-muted-foreground text-xs">
+              {marketCapValue}% of target
+            </div>
           </div>
-          <div className="text-gradient font-bold">100 K</div>
         </div>
-        <div className="w-full h-2 rounded-full bg-white relative flex">
-          <div
-            className="justify-start h-2 rounded-full absolute top-0 left-0 bg-blue-700"
-            style={{ width: `${marketCapValue}%` }} // Fix: Corrected percentage calculation
-          />
+
+        {/* Progress Bar */}
+        <div className="relative">
+          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+            <motion.div
+              variants={progressVariants}
+              initial="hidden"
+              animate="visible"
+              className="h-full bg-primary rounded-full relative"
+            >
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+            </motion.div>
+          </div>
+          
+          {/* Target indicator */}
+          <div className="absolute top-0 right-0 w-1 h-3 bg-muted-foreground/30 rounded-full" />
+        </div>
+
+        {/* Target Value */}
+        <div className="flex justify-between items-center mt-2">
+          <span className="text-muted-foreground text-xs">Current</span>
+          <div className="flex items-center gap-2">
+            <ArrowTrendingUpIcon className="w-4 h-4 text-green-500" />
+            <span className="text-green-500 font-semibold text-sm">100 K Target</span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+    </motion.div>
   );
 };

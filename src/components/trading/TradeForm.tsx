@@ -129,17 +129,24 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   }, [coin.airdropStage]);
 
   return (
-    <div className="p-3 rounded-lg bg-transparent border-[1px] border-[#64ffda] text-white font-semibold">
+    <div className="p-3 rounded-lg bg-card border-2 border-primary/30 shadow-sm">
       <div className="flex flex-row justify-center px-3 py-2">
         <button
-          className={`rounded-l-lg py-3 w-full ${isSell === 0 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`}
+          className={`rounded-l-lg py-3 w-full transition-all duration-200 ${
+            isSell === 0 
+              ? 'bg-primary text-primary-foreground shadow-sm' 
+              : 'bg-muted hover:bg-accent text-foreground'
+          }`}
           onClick={() => {setIsBuy(0); getBalance();}}
         >
-          {' '}
           Buy
         </button>
         <button
-          className={`rounded-r-lg py-3 w-full ${isSell === 1 ? 'bg-custom-gradient' : 'bg-slate-800 hover:bg-slate-300'}`}
+          className={`rounded-r-lg py-3 w-full transition-all duration-200 ${
+            isSell === 1 
+              ? 'bg-primary text-primary-foreground shadow-sm' 
+              : 'bg-muted hover:bg-accent text-foreground'
+          }`}
           onClick={() => {setIsBuy(1); getBalance();}}
         >
           Sell
@@ -148,22 +155,22 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       <div className="xs:px-4 flex flex-col relative">
         <div
           onClick={() => console.log('set max')}
-          className="rounded bg-transparent text-center w-[200px] p-2 block mb-2 text-ml font-medium text-white dark:text-white mx-auto border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer"
+          className="rounded bg-muted text-center w-[200px] p-2 block mb-2 text-ml font-medium text-foreground mx-auto border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200"
         >
           Set max slippage
         </div>
-        <div className="w-full flex flex-row items-center bg-transparent rounded-lg">
+        <div className="w-full flex flex-row items-center bg-background rounded-lg border-2 border-primary/30">
           <input
             type="number"
             id="setTrade"
             value={amount}
             onChange={handleInputChange}
             pattern="\d*"
-            className="w-full outline-none text-black p-2.5 capitalize rounded-l-lg"
+            className="w-full outline-none text-foreground p-2.5 capitalize rounded-l-lg bg-transparent"
             placeholder="0.0"
             required
           />
-          <div className="flex flex-col text-center p-2.5 border-l-[1px] border-l-[#64ffda] bg-custom-gradient rounded-r-md">
+          <div className="flex flex-col text-center p-2.5 border-l-2 border-l-primary/30 bg-primary text-primary-foreground rounded-r-md">
             {isSell === 0 ? 'SOL' : 'Token'}
           </div>
         </div>
@@ -173,7 +180,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
               return (
                 <div
                   key={item.id}
-                  className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer"
+                  className="max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200 text-foreground"
                   onClick={() => setSol(item.id)}
                 >
                   {item.price}
@@ -184,35 +191,51 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
         ) : (
           <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
             <button
-              className="max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] hover:bg-[#64ffda]/30 cursor-pointer"
+              className="max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200 text-foreground"
               onClick={() => setSol('')}
             >
               reset
             </button>
             <button
               disabled={tokenBal && tokenBal !== 0 ? false : true}
-              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda] `}
+              className={`max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 transition-all duration-200 ${
+                tokenBal && tokenBal !== 0 
+                  ? 'cursor-pointer hover:bg-accent text-foreground' 
+                  : 'cursor-not-allowed text-muted-foreground'
+              }`}
               onClick={() => setSol((tokenBal / 10).toString())}
             >
               10%
             </button>
             <button
               disabled={tokenBal && tokenBal !== 0 ? false : true}
-              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
+              className={`max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 transition-all duration-200 ${
+                tokenBal && tokenBal !== 0 
+                  ? 'cursor-pointer hover:bg-accent text-foreground' 
+                  : 'cursor-not-allowed text-muted-foreground'
+              }`}
               onClick={() => setSol((tokenBal / 4).toString())}
             >
               25%
             </button>
             <button
               disabled={tokenBal && tokenBal !== 0 ? false : true}
-              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'}max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
+              className={`max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 transition-all duration-200 ${
+                tokenBal && tokenBal !== 0 
+                  ? 'cursor-pointer hover:bg-accent text-foreground' 
+                  : 'cursor-not-allowed text-muted-foreground'
+              }`}
               onClick={() => setSol((tokenBal / 2).toString())}
             >
               50%
             </button>
             <button
               disabled={tokenBal && tokenBal !== 0 ? false : true}
-              className={`${tokenBal && tokenBal !== 0 ? 'cursor-pointer hover:bg-[#64ffda]/30' : 'cursor-not-allowed'} max-w-[100px] rounded-lg px-2 py-1 border-[1px] border-[#64ffda]`}
+              className={`max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 transition-all duration-200 ${
+                tokenBal && tokenBal !== 0 
+                  ? 'cursor-pointer hover:bg-accent text-foreground' 
+                  : 'cursor-not-allowed text-muted-foreground'
+              }`}
               onClick={() => setSol(tokenBal.toString())}
             >
               100%
@@ -224,7 +247,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
           <></>
         ) : (
           <div
-            className="border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 w-full text-center rounded-lg py-2"
+            className="border-2 border-primary/30 cursor-pointer hover:bg-accent w-full text-center rounded-lg py-2 transition-all duration-200 text-foreground"
             onClick={handlTrade}
           >
             Place Trade

@@ -29,6 +29,7 @@ import { useClaim } from '@/context/ClaimContext';
 import { PublicKey } from '@solana/web3.js';
 import { useCountdownToast } from '@/utils/useCountdownToast';
 import { token } from '@coral-xyz/anchor/dist/cjs/utils';
+import { motion } from 'framer-motion';
 
 const getBalance = async (wallet: string, token: string) => {
   try {
@@ -59,6 +60,7 @@ export default function TradingPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [manualClaimInUSD, setManualClaimInUSD] = useState<number | null>(null);
   const [manualClaimHodl, setManualClaimHodl] = useState<number | null>(null);
+  const [isErrorExpanded, setIsErrorExpanded] = useState<boolean>(false);
   const { claimAmount } = useClaim();
   const router = useRouter();
 
@@ -201,6 +203,16 @@ export default function TradingPage() {
       setCopySuccess('Failed to copy!');
     }
   };
+
+  const copyErrorToClipboard = async () => {
+    const errorMessage = coin.moveRaydiumFailureReason || 'Unknown error';
+    try {
+      await navigator.clipboard.writeText(errorMessage);
+      successAlert('Error message copied to clipboard!');
+    } catch (err) {
+      errorAlert('Failed to copy error message');
+    }
+  };
   const wallet = useWallet();
   const handleClaim = async () => {
     const res = await claim(user, coin, wallet, Number(claimHodl));
@@ -214,190 +226,223 @@ export default function TradingPage() {
   };
 
   return (
-    <div className="w-full flex flex-col px-3 mx-auto gap-5 pb-20">
-      <div className="text-center">
-        <div className="w-full flex flex-col">
-          <div
-            onClick={() => router.push('/')}
-            className="w-24 cursor-pointer text-white text-2xl flex flex-row items-center gap-2 pb-2"
-          >
-            <IoMdArrowRoundBack /> Back
-          </div>
-        </div>
-      </div>
-
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="w-full flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-          <span className="ml-3 text-white">Loading token data...</span>
-        </div>
-      )}
-
-      {/* Raydium Move Failed Notification - Show only if failed, even if later succeeded */}
-      {!isLoading && coin.moveRaydiumFailed && (
-        <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
-            <div className="flex items-center justify-between bg-white/10 p-3 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <span className="text-red-300">✗</span>
-                <span className="font-medium">{coin.name} ({coin.ticker})</span>
-              </div>
-              <span className="text-white font-medium">{coin.moveRaydiumFailureReason || 'Unknown error'}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Raydium Success Notification - Show only if succeeded AND never failed */}
-      {!isLoading && coin.movedToRaydium && !coin.moveRaydiumFailed && (
-        <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
-            <div className="flex items-center justify-between bg-white/10 p-3 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <span className="text-green-400">✓</span>
-                <span className="font-medium">{coin.name} ({coin.ticker})</span>
-              </div>
-              <a
-                href={coin.raydiumUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+    <div className="w-full min-h-screen">
+      <div className="container py-8">
+        <div className="w-full flex flex-col px-3 mx-auto gap-5 pb-20">
+          <div className="text-center">
+            <div className="w-full flex flex-col">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/')}
+                className="w-24 cursor-pointer text-foreground text-2xl flex flex-row items-center gap-2 pb-2 hover:text-primary transition-colors duration-200"
               >
-                Trade on Raydium
-              </a>
+                <IoMdArrowRoundBack /> Back
+              </motion.div>
             </div>
           </div>
-        </div>
-      )}
 
-      <div className="w-full flex flex-col md3:flex-row gap-4">
-        <div className="w-full px-2">
-          <div className="w-full flex flex-col justify-between text-white gap-2">
-            <div className="flex flex-row gap-2 items-center justify-between">
-              <p className="font-semibold">Token Name - {coin?.name}</p>
-              <p className="font-semibold">Ticker: {coin?.ticker}</p>
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className="w-full flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-foreground">Loading token data...</span>
             </div>
-            <div className="flex flex-row justify-end items-center gap-2 pb-2">
-              <p className="font-semibold">CA: {coin?.token}</p>
-              <p
-                onClick={() => copyToClipBoard(coin?.token)}
-                className="cursor-pointer text-xl"
-              >
-                <FaCopy />
-              </p>
-            </div>
-          </div>
-          <TradingChart param={coin} />
-          <Chatting param={param} coin={coin} />
-        </div>
+          )}
 
-        <div className="w-full max-w-[300px] 2xs:max-w-[420px] px-2 gap-4 flex flex-col mx-auto">
-          <TradeForm coin={coin} progress={progress} />
-
-          <div className="w-full flex flex-col text-center text-white gap-4 py-4 border-[1px] border-[#64ffda] rounded-lg px-3">
-            {coin.bondingCurve ? (
-              <p className="font-semibold text-xl">{`All Stages Completed`}</p>
-            ) : (
-              <p className="font-semibold text-xl">
-                {`Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Reward Claim`}
-              </p>
-            )}
-            {login && publicKey ? (
-              <div className="w-full justify-center items-center flex flex-col gap-2">             
-                <p className="text-sm px-5">You are eligible to claim:</p>
-                <p className="text-xl font-semibold">{`${Number(
-                  (coin.bondingCurve && ( manualClaimInUSD !== null )) ? manualClaimInUSD : claimInUSD
-                ).toPrecision(9)} USD`}</p>
-                <p className="text-xl font-semibold">{`${Number(
-                  (coin.bondingCurve && ( manualClaimHodl !== null )) ? manualClaimHodl : claimHodl
-                ).toPrecision(6)} HODL`}</p>
-              </div>
-            ) : (
-              <p className="text-sm px-5">
-                Connect your wallet to check your eligibility to claim this
-                token
-              </p>
-            )}
-            <div className="flex flex-col">
-              { (
-                login && publicKey ? (
-                  <div
-                    onClick={
-                      coin.airdropStage
-                        ? handleClaim
-                        : undefined
-                    }
-                    className={`w-1/2 border-[1px] border-[#64ffda] cursor-pointer rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto
-                      ${
-                        coin.airdropStage
-                          ? 'hover:bg-[#64ffda]/30'
-                          : 'bg-gray-300 cursor-not-allowed'
+          {/* Raydium Move Failed Notification - Show only if failed, even if later succeeded */}
+          {!isLoading && coin.moveRaydiumFailed && (
+            <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
+              <div className="max-w-6xl mx-auto">
+                <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white/10 p-3 rounded-lg">
+                  <div className="flex items-center space-x-3 min-w-0 flex-shrink-0">
+                    <span className="text-red-300 flex-shrink-0">✗</span>
+                    <span className="font-medium truncate">{coin.name} ({coin.ticker})</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span 
+                      className={`text-white font-medium text-sm sm:text-base break-words flex-1 cursor-pointer hover:text-gray-200 transition-colors overflow-hidden ${
+                        isErrorExpanded ? 'whitespace-normal' : 'truncate'
                       }`}
+                      onClick={() => setIsErrorExpanded(!isErrorExpanded)}
+                      title={isErrorExpanded ? 'Click to collapse' : 'Click to expand'}
+                    >
+                      {coin.moveRaydiumFailureReason || 'Unknown error'}
+                    </span>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={copyErrorToClipboard}
+                      className="flex-shrink-0 text-white hover:text-gray-200 transition-colors p-1"
+                      title="Copy error message"
+                    >
+                      <FaCopy className="w-4 h-4" />
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Raydium Success Notification - Show only if succeeded AND never failed */}
+          {!isLoading && coin.movedToRaydium && !coin.moveRaydiumFailed && (
+            <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
+              <div className="max-w-6xl mx-auto">
+                <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white/10 p-3 rounded-lg">
+                  <div className="flex items-center space-x-3 min-w-0 flex-shrink-0">
+                    <span className="text-green-400 flex-shrink-0">✓</span>
+                    <span className="font-medium truncate">{coin.name} ({coin.ticker})</span>
+                  </div>
+                  <a
+                    href={coin.raydiumUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex-shrink-0"
                   >
-                    Claim
+                    Trade on Raydium
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="w-full flex flex-col md3:flex-row gap-4">
+            <div className="w-full px-2">
+              <div className="w-full flex flex-col justify-between gap-2">
+                <div className="flex flex-row gap-2 items-center justify-between">
+                  <p className="font-semibold text-foreground">Token Name - {coin?.name}</p>
+                  <p className="font-semibold text-foreground">Ticker: {coin?.ticker}</p>
+                </div>
+                <div className="flex flex-row justify-end items-center gap-2 pb-2">
+                  <p className="font-semibold text-foreground">CA: {coin?.token}</p>
+                  <motion.p
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => copyToClipBoard(coin?.token)}
+                    className="cursor-pointer text-xl text-primary hover:text-primary/80 transition-colors duration-200"
+                  >
+                    <FaCopy />
+                  </motion.p>
+                </div>
+              </div>
+              <TradingChart param={coin} />
+              <Chatting param={param} coin={coin} />
+            </div>
+
+            <div className="w-full max-w-[300px] 2xs:max-w-[420px] px-2 gap-4 flex flex-col mx-auto">
+              <TradeForm coin={coin} progress={progress} />
+
+              <div className="w-full flex flex-col text-center gap-4 py-4 border-2 border-primary/30 rounded-lg px-3 bg-card shadow-lg">
+                {coin.bondingCurve ? (
+                  <p className="font-semibold text-xl text-foreground">{`All Stages Completed`}</p>
+                ) : (
+                  <p className="font-semibold text-xl text-foreground">
+                    {`Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Reward Claim`}
+                  </p>
+                )}
+                {login && publicKey ? (
+                  <div className="w-full justify-center items-center flex flex-col gap-2">             
+                    <p className="text-sm px-5 text-muted-foreground">You are eligible to claim:</p>
+                    <p className="text-xl font-semibold text-primary">{`${Number(
+                      (coin.bondingCurve && ( manualClaimInUSD !== null )) ? manualClaimInUSD : claimInUSD
+                    ).toPrecision(9)} USD`}</p>
+                    <p className="text-xl font-semibold text-primary">{`${Number(
+                      (coin.bondingCurve && ( manualClaimHodl !== null )) ? manualClaimHodl : claimHodl
+                    ).toPrecision(6)} HODL`}</p>
                   </div>
                 ) : (
-                  <div
-                    className="w-1/2 border-[1px] border-[#64ffda] cursor-pointer hover:bg-[#64ffda]/30 rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto"
-                    onClick={() => setVisible(true)}
-                  >
-                    Connect Wallet
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-
-          <div className="text-white font-bold flex flex-row items-center gap-1 text-xl justify-center">
-            <p>HODL</p>
-            <p
-              onClick={() => copyToClipBoard(coinId)}
-              className="cursor-pointer"
-            >
-              <FaCopy />
-            </p>
-            / <p>SOL</p>
-          </div>
-
-          <SocialList coin={coin} />
-
-          <div className="w-full flex flex-col gap-4 text-white">
-            <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
-              <DataCard text="MKP CAP" data={`${progress} k`} />
-              <DataCard text="Liquidity" data={`${liquidity} k`} />
-            </div>
-            <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
-              <DataCard
-                text="Stage"
-                data={`${Math.min(coin.currentStage, coin.stagesNumber)} of ${coin.stagesNumber}`}
-              />
-              <DataCard text="Sell Tax" data={`${sellTax} %`} />
-              <DataCard text="Redistribution" data="$ 15.2K" />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="w-full flex flex-col gap-2 px-3 py-2">
-              <p className="text-white text-base lg:text-xl">
-                {coin.bondingCurve
-                  ? 'All Stages Completed'
-                  : coin.airdropStage
-                    ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of 1 Day`
-                    : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
-              </p>
-              <div className="bg-white rounded-full h-2 relative">
-                <div
-                  className="bg-custom-gradient rounded-full h-2"
-                  style={{ width: `${stageProg}%` }}
-                ></div>
+                  <p className="text-sm px-5 text-muted-foreground">
+                    Connect your wallet to check your eligibility to claim this
+                    token
+                  </p>
+                )}
+                <div className="flex flex-col">
+                  { (
+                    login && publicKey ? (
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={
+                          coin.airdropStage
+                            ? handleClaim
+                            : undefined
+                        }
+                        className={`w-1/2 border-2 border-primary/30 cursor-pointer rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto transition-all duration-200
+                          ${
+                            coin.airdropStage
+                              ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl'
+                              : 'bg-muted text-muted-foreground cursor-not-allowed'
+                          }`}
+                      >
+                        Claim
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="w-1/2 border-2 border-primary/30 cursor-pointer hover:bg-accent rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto transition-all duration-200 text-primary"
+                        onClick={() => setVisible(true)}
+                      >
+                        Connect Wallet
+                      </motion.div>
+                    )
+                  )}
+                </div>
               </div>
+
+              <div className="text-foreground font-bold flex flex-row items-center gap-1 text-xl justify-center">
+                <p>HODL</p>
+                <motion.p
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => copyToClipBoard(coinId)}
+                  className="cursor-pointer text-primary hover:text-primary/80 transition-colors duration-200"
+                >
+                  <FaCopy />
+                </motion.p>
+                / <p>SOL</p>
+              </div>
+
+              <SocialList coin={coin} />
+
+              <div className="w-full flex flex-col gap-4">
+                <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
+                  <DataCard text="MKP CAP" data={`${progress} k`} />
+                  <DataCard text="Liquidity" data={`${liquidity} k`} />
+                </div>
+                <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
+                  <DataCard
+                    text="Stage"
+                    data={`${Math.min(coin.currentStage, coin.stagesNumber)} of ${coin.stagesNumber}`}
+                  />
+                  <DataCard text="Sell Tax" data={`${sellTax} %`} />
+                  <DataCard text="Redistribution" data="$ 15.2K" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div className="w-full flex flex-col gap-2 px-3 py-2">
+                  <p className="text-foreground text-base lg:text-xl">
+                    {coin.bondingCurve
+                      ? 'All Stages Completed'
+                      : coin.airdropStage
+                        ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of 1 Day`
+                        : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
+                  </p>
+                  <div className="bg-muted rounded-full h-2 relative">
+                    <div
+                      className="bg-primary rounded-full h-2 transition-all duration-300"
+                      style={{ width: `${stageProg}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <TokenData coinData={coin} />
             </div>
           </div>
-
-          <TokenData coinData={coin} />
         </div>
       </div>
     </div>

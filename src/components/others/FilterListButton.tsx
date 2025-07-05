@@ -31,10 +31,10 @@ const FilterListButton: FC<FilterListButtonProps> = ({ onSortChange, currentSort
           <div
             key={item.id}
             onClick={() => handleSortSelection(item.id)}
-            className={`w-full gap-2 flex flex-row items-center py-2 rounded-lg justify-center cursor-pointer text-lg ${
+            className={`w-full gap-2 flex flex-row items-center py-2 rounded-lg justify-center cursor-pointer text-lg transition-all duration-200 ${
               currentSort === item.id 
-                ? 'bg-custom-gradient' 
-                : 'bg-[#143F72] hover:bg-custom-gradient'
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'bg-muted hover:bg-accent text-foreground'
             }`}
           >
             <p className="text-sm">{item.text}</p>

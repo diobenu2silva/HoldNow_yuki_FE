@@ -15,6 +15,15 @@ import { useRouter } from 'next/navigation';
 import { RiExchangeDollarLine } from 'react-icons/ri';
 import { VscDebugDisconnect } from 'react-icons/vsc';
 import { TbMoodEdit } from 'react-icons/tb';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { motion } from 'framer-motion';
+import { Wallet, User, LogOut, Settings } from 'lucide-react';
 
 export const ConnectButton: FC = () => {
   const { user, setUser, login, setLogin, isLoading, setIsLoading } =
@@ -24,6 +33,7 @@ export const ConnectButton: FC = () => {
   const router = useRouter();
 
   const tempUser = useMemo(() => user, [user]);
+  
   useEffect(() => {
     const handleClick = async () => {
       if (publicKey && !login) {
@@ -36,7 +46,8 @@ export const ConnectButton: FC = () => {
       }
     };
     handleClick();
-  }, [publicKey, login]); // Removed `connect`, `wallet`, and `disconnect` to prevent unnecessary calls
+  }, [publicKey, login]);
+
   const sign = async (updatedUser: userInfo) => {
     try {
       const connection = await walletConnect({ data: updatedUser });
@@ -77,70 +88,68 @@ export const ConnectButton: FC = () => {
     if (typeof disconnect === 'function') {
       await disconnect();
     }
-    // Initialize `user` state to default value
     setUser({} as userInfo);
     setLogin(false);
     localStorage.clear();
   };
+
   const handleToProfile = (id: string) => {
     router.push(id);
   };
-  return (
-    <div>
-      <button className=" rflex flex-row gap-1 items-center justify-end text-white p-2 rounded-full border-[1px] border-[#64ffda] bg-none group relative ">
-        {login && publicKey ? (
-          <>
-            <div className="flex items-center justify-center gap-2 text-[16px] lg:text-md">
-              {user.avatar !== undefined && (
-                <img
-                  src={user.avatar}
-                  alt=""
-                  className="rounded-full"
-                  width={35}
-                  height={35}
-                />
-              )}
-              <div className="">
-                {publicKey.toBase58().slice(0, 4)}....
-                {publicKey.toBase58().slice(-4)}
-              </div>
-              <TbMoodEdit
-                onClick={() => handleToProfile(`/profile/${tempUser._id}`)}
-                className="text-2xl"
-              />
-            </div>
-            <div className="w-full absolute right-0 top-[42px] hidden bg-[#0D1524] rounded-lg group-hover:block">
-              <ul className="border-[0.75px] border-[#64ffda] rounded-lg bg-none object-cover overflow-hidden">
-                <li>
-                  <div
-                    className="flex flex-row gap-1 items-center mb-1 text-primary-100 text-md p-2 hover:bg-white/10"
-                    onClick={() => setVisible(true)}
-                  >
-                    <RiExchangeDollarLine />
-                    Change Wallet
-                  </div>
-                </li>
-                <li>
-                  <div
-                    className="flex gap-1 items-center text-primary-100 text-md p-2 hover:bg-white/10"
-                    onClick={logOut}
-                  >
-                    <VscDebugDisconnect />
-                    Disconnect
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </>
-        ) : (
-          <div
-            className="flex items-center justify-center gap-1 text-md"
-            onClick={() => setVisible(true)}
+
+  if (login && publicKey) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            Connect Wallet
-          </div>
-        )}
-      </button>
-    </div>
+            <Button variant="outline" className="p-3 text-primary flex flex-col justify-center items-center border-2 border-primary/30 rounded-full cursor-pointer bg-card hover:bg-accent transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                {user.avatar && (
+                  <img
+                    src={user.avatar}
+                    alt="Avatar"
+                    className="w-5 h-5 rounded-full"
+                  />
+                )}
+                <span className="text-sm font-medium text-primary">
+                  {user.name}
+                </span>
+              </div>
+            </Button>
+          </motion.div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-popover border-border w-48">
+          <DropdownMenuItem onClick={() => handleToProfile(`/profile/${tempUser._id}`)}>
+            <User className="mr-2 h-4 w-4" />
+            <span>Profile</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setVisible(true)}>
+            <Wallet className="mr-2 h-4 w-4" />
+            <span>Change Wallet</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={logOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Disconnect</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <Button 
+        onClick={() => setVisible(true)}
+        className="p-3 text-primary flex flex-col justify-center items-center border-2 border-primary/30 rounded-full cursor-pointer bg-card hover:bg-accent transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm"
+      >
+        <Wallet className="h-5 w-5" />
+      </Button>
+    </motion.div>
   );
 };

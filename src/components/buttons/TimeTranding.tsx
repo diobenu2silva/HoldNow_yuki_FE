@@ -11,7 +11,7 @@ const TimeTranding: FC = () => {
   ];
 
   return (
-    <div className="bg-[#143F72] px-2 py-1 flex flex-row gap-2 text-white rounded-lg mx-auto">
+    <div className="bg-muted px-2 py-1 flex flex-row gap-2 text-foreground rounded-lg mx-auto border border-border">
       <div className="flex flex-row gap-1 items-center text-sm">
         <BiLineChart />
         Trending
@@ -21,7 +21,7 @@ const TimeTranding: FC = () => {
           <div
             key={index}
             onClick={() => console.log(item.id)}
-            className="bg-[#0F3159] py-1 px-2.5 xs:px-5 rounded-lg cursor-pointer hover:bg-[#147EDF] text-sm"
+            className="bg-background py-1 px-2.5 xs:px-5 rounded-lg cursor-pointer hover:bg-accent text-sm transition-colors duration-200"
           >
             {item.name}
           </div>

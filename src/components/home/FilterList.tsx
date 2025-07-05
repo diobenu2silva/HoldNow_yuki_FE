@@ -33,7 +33,7 @@ const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrd
   const searchToken = () => {};
 
   return (
-    <div className="w-full gap-4 h-full flex flex-col text-white px-2">
+    <div className="w-full gap-4 h-full flex flex-col px-2">
       <div className="flex flex-col md:flex-row gap-3">
         <TimeTranding />
         <FilterListButton 
@@ -46,24 +46,24 @@ const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrd
         <div className="hidden sm2:flex flex-row items-center">
           <div
             onClick={() => setFilterState(false)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
-              filterState ? 'border-b-[#143F72]' : 'border-b-[#2C8DFE]'
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
+              filterState ? 'border-b-muted-foreground text-muted-foreground' : 'border-b-primary text-primary'
             }`}
           >
             Following
           </div>
           <div
             onClick={() => setFilterState(true)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
-              filterState ? 'border-b-[#2C8DFE]' : 'border-b-[#143F72]'
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
+              filterState ? 'border-b-primary text-primary' : 'border-b-muted-foreground text-muted-foreground'
             }`}
           >
             Terminal
           </div>
         </div>
         <div className="w-full flex flex-col xs:flex-row gap-2">
-          <div className="min-w-[169px] flex flex-row items-center gap-2 px-3 py-1 border-[1px] border-[#143F72] rounded-lg mx-auto">
-            Include NSFW
+          <div className="min-w-[169px] flex flex-row items-center gap-2 px-3 py-1 border border-border rounded-lg mx-auto bg-card">
+            <span className="text-foreground">Include NSFW</span>
             {
               <Image
                 src={nsfwFilterState ? switchOn : switchOff}
@@ -73,17 +73,17 @@ const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrd
               />
             }
           </div>
-          <div className="w-full max-w-[720px] flex flex-row items-center gap-1 pl-5 border-[1px] border-[#143F72] rounded-lg text-white">
-            <BiSearchAlt className="text-4xl" />
+          <div className="w-full max-w-[720px] flex flex-row items-center gap-1 pl-5 border border-border rounded-lg bg-card">
+            <BiSearchAlt className="text-4xl text-muted-foreground" />
             <input
               type="text"
               value={token}
               placeholder=" Search for Token"
               onChange={(e) => setToken(e.target.value)}
-              className=" bg-grey-400 w-full py-1 outline-none bg-transparent"
+              className="w-full py-1 outline-none bg-transparent text-foreground placeholder:text-muted-foreground"
             />
             <button
-              className="w-[100px] h-[40px] rounded-r-lg px-2 bg-slate-800 active:bg-opacity-70 bg-custom-gradient"
+              className="w-[100px] h-[40px] rounded-r-lg px-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200"
               onClick={searchToken}
             >
               Search
@@ -93,16 +93,16 @@ const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrd
         <div className="sm2:hidden flex flex-row items-center mx-auto">
           <div
             onClick={() => setFilterState(false)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
-              filterState ? 'border-b-[#143F72]' : 'border-b-[#2C8DFE]'
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
+              filterState ? 'border-b-muted-foreground text-muted-foreground' : 'border-b-primary text-primary'
             }`}
           >
             Following
           </div>
           <div
             onClick={() => setFilterState(true)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
-              filterState ? 'border-b-[#2C8DFE]' : 'border-b-[#143F72]'
+            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
+              filterState ? 'border-b-primary text-primary' : 'border-b-muted-foreground text-muted-foreground'
             }`}
           >
             Terminal

@@ -4,6 +4,8 @@ import './globals.css';
 import Providers from '@/provider/providers';
 import 'dotenv/config.js';
 import Header from '@/components/header/Header';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -20,12 +22,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning={true}>
-        <Providers>
-          <Header></Header>
-          {children}
-        </Providers>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Providers>
+            <Header></Header>
+            {children}
+            <Toaster />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

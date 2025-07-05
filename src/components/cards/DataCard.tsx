@@ -10,9 +10,9 @@ interface CoinBlogProps {
 
 export const DataCard: React.FC<CoinBlogProps> = ({ text, data }) => {
   return (
-    <div className="w-full flex flex-col justify-center items-center gap-2 py-3 rounded-lg border-[1px] border-[#64ffda]">
-      <p className="font-medium">{text}</p>
-      <p className="font-semibold">{data}</p>
+    <div className="w-full flex flex-col justify-center items-center gap-2 py-3 rounded-lg border-2 border-primary/30 bg-card shadow-sm">
+      <p className="font-medium text-muted-foreground">{text}</p>
+      <p className="font-semibold text-foreground">{data}</p>
     </div>
   );
 };

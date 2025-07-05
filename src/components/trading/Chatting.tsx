@@ -7,6 +7,7 @@ import UserContext from '@/context/UserContext';
 import ReplyModal from '../modals/ReplyModal';
 import { BiSort } from 'react-icons/bi';
 import { Holder } from './Holders';
+import { motion } from 'framer-motion';
 
 interface ChattingProps {
   param: string | null;
@@ -52,33 +53,33 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
 
   return (
     <div className="pt-8">
-      <div className="flex flex-row items-center text-white font-semibold">
+      <div className="flex flex-row items-center font-semibold">
         <div
           onClick={() => setCurrentTable('thread')}
-          className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
+          className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
             currentTable === 'thread'
-              ? 'border-b-[#2C8DFE]'
-              : 'border-b-[#143F72]'
+              ? 'border-b-primary text-primary'
+              : 'border-b-muted-foreground text-muted-foreground'
           }`}
         >
           Thread
         </div>
         <div
           onClick={() => setCurrentTable('transaction')}
-          className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
+          className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
             currentTable === 'transaction'
-              ? 'border-b-[#2C8DFE]'
-              : 'border-b-[#143F72]'
+              ? 'border-b-primary text-primary'
+              : 'border-b-muted-foreground text-muted-foreground'
           }`}
         >
           Transaction
         </div>
         <div
           onClick={() => setCurrentTable('top holders')}
-          className={`border-b-[2px] px-4 py-1 text-base cursor-pointer ${
+          className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
             currentTable === 'top holders'
-              ? 'border-b-[#2C8DFE]'
-              : 'border-b-[#143F72]'
+              ? 'border-b-primary text-primary'
+              : 'border-b-muted-foreground text-muted-foreground'
           }`}
         >
           Top Holders
@@ -92,12 +93,14 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                 messages.map((message, index) => (
                   <MessageForm key={index} msg={message}></MessageForm>
                 ))}
-              <div
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setPostReplyModal(true)}
-                className="w-[200px] flex flex-col justify-center text-center font-semibold bg-custom-gradient rounded-full px-8 py-2 text-xl cursor-pointer text-white mx-auto mt-4"
+                className="w-[200px] flex flex-col justify-center text-center font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-2 text-xl cursor-pointer mx-auto mt-4 shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 Post Reply
-              </div>
+              </motion.div>
             </div>
           )}
         </div>
@@ -105,16 +108,16 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
           {currentTable == 'transaction' && (
             <div className="w-full h-full py-4">
               <table className="w-full h-full">
-                <thead className="w-full border-b-[1px] border-b-[#0F3159] text-white">
+                <thead className="w-full border-b-2 border-b-border">
                   <tr className="text-lg">
-                    <th className="py-2 text-gradient">Account</th>
-                    <th className="py-2 text-gradient">Type</th>
-                    <th className="py-2 flex flex-row gap-1 justify-center items-center cursor-pointer text-gradient">
+                    <th className="py-2 text-primary">Account</th>
+                    <th className="py-2 text-primary">Type</th>
+                    <th className="py-2 flex flex-row gap-1 justify-center items-center cursor-pointer text-primary">
                       SOL
-                      <BiSort style={{ color: '#0047CA' }} />
+                      <BiSort className="text-primary" />
                     </th>
-                    <th className="py-2 text-gradient">Date</th>
-                    <th className="py-2 text-gradient">Transaction</th>
+                    <th className="py-2 text-primary">Date</th>
+                    <th className="py-2 text-primary">Transaction</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,20 +134,20 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
           {currentTable == 'top holders' && (
             <div className="w-full h-full py-4">
               <table className="w-full h-full">
-                <thead className="w-full border-b-[1px] border-b-[#0F3159] text-white">
+                <thead className="w-full border-b-2 border-b-border">
                   <tr className="text-lg">
-                    <th className="py-2 text-gradient">Account</th>
-                    <th className="py-2 flex flex-row gap-1 justify-center items-center cursor-pointer text-gradient">
+                    <th className="py-2 text-primary">Account</th>
+                    <th className="py-2 flex flex-row gap-1 justify-center items-center cursor-pointer text-primary">
                       Amount
-                      <BiSort style={{ color: '#0047CA' }} />
+                      <BiSort className="text-primary" />
                     </th>
-                    <th className="py-2 text-gradient">solscan</th>
+                    <th className="py-2 text-primary">solscan</th>
                   </tr>
                 </thead>
                 <tbody>
                   {holders &&
                     holders.map((holder, index) => (
-                      <Holder holder={holder}></Holder>
+                      <Holder key={index} holder={holder}></Holder>
                     ))}
                 </tbody>
               </table>
