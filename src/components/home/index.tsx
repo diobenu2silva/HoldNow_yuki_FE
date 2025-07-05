@@ -10,6 +10,9 @@ import FilterList from './FilterList';
 import Pagination from './Pagination';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TokenCardSkeleton } from '../loadings/Skeleton';
+import { Switch } from '@/components/ui/switch';
+import { BiSearchAlt } from 'react-icons/bi';
+import { isImageNSFW } from '@/utils/nsfwCheck';
 
 const HomePage: FC = () => {
   const { isLoading, setIsLoading, isCreated, solPrice, setSolPrice } =
@@ -25,6 +28,8 @@ const HomePage: FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [nsfwFilterState, setNsfwFilterState] = useState(false);
+  const [searchToken, setSearchToken] = useState('');
   const router = useRouter();
 
   const handleToRouter = (id: string) => {
@@ -101,16 +106,52 @@ const HomePage: FC = () => {
     setCurrentPage(1); // Reset to first page when sorting changes
   };
 
+  // Reset to first page when NSFW filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [nsfwFilterState, searchToken]);
+
   // Memoized sorted data
   const sortedData = useMemo(() => {
     return sortCoins(data, currentSort, currentOrder);
   }, [data, currentSort, currentOrder, latestReplies]);
 
+  // NSFW detection map
+  const [nsfwMap, setNsfwMap] = useState<{[url: string]: boolean}>({});
+
+  // Filtering logic
+  const filteredData = useMemo(() => {
+    let filtered = sortedData;
+    if (!nsfwFilterState) {
+      filtered = filtered.filter(token => !nsfwMap[token.url]);
+    }
+    if (searchToken.trim()) {
+      const searchLower = searchToken.toLowerCase();
+      filtered = filtered.filter(token =>
+        token.name.toLowerCase().includes(searchLower) ||
+        token.ticker.toLowerCase().includes(searchLower) ||
+        (token.description && token.description.toLowerCase().includes(searchLower))
+      );
+    }
+    return filtered;
+  }, [sortedData, nsfwFilterState, searchToken, nsfwMap]);
+
   // Pagination logic
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentData = sortedData.slice(startIndex, endIndex);
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  // NSFW image detection effect (must come after currentData is defined)
+  useEffect(() => {
+    currentData.forEach(token => {
+      if (token.url && nsfwMap[token.url] === undefined) {
+        isImageNSFW(token.url).then(isNsfw => {
+          setNsfwMap(prev => ({ ...prev, [token.url]: isNsfw }));
+        });
+      }
+    });
+  }, [currentData]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -190,26 +231,27 @@ const HomePage: FC = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-6"
         >
-          <FilterList 
+          <FilterList
             onSortChange={handleSortChange}
             currentSort={currentSort}
             currentOrder={currentOrder}
           />
         </motion.div>
 
-        {/* View Mode Toggle */}
+        {/* Combined Controls - View Mode, NSFW Filter, Search */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex justify-between items-center mb-6"
+          className="flex w-full items-center gap-x-6 mb-6 h-10"
         >
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground text-sm">View Mode:</span>
-            <div className="flex bg-muted rounded-lg p-1">
+          {/* Left side - View Mode */}
+          <div className="flex items-center h-full">
+            <span className="text-muted-foreground text-sm whitespace-nowrap">View Mode:</span>
+            <div className="flex bg-muted rounded-lg p-1 ml-2 h-full">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
                   viewMode === 'grid'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -219,7 +261,7 @@ const HomePage: FC = () => {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
                   viewMode === 'list'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -230,7 +272,40 @@ const HomePage: FC = () => {
             </div>
           </div>
 
-          {/* Items per page selector */}
+          {/* Center - NSFW Filter */}
+          <div className="flex items-center gap-4 h-full">
+            <div className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-card h-full">
+              <span className="text-foreground text-sm whitespace-nowrap">Include NSFW</span>
+              <Switch
+                checked={nsfwFilterState}
+                onCheckedChange={setNsfwFilterState}
+                className="h-full data-[state=checked]:bg-pink-500 border-2 border-pink-400 focus:ring-2 focus:ring-pink-400"
+              />
+            </div>
+          </div>
+
+          {/* Right side - Search Box */}
+          <div className="flex flex-1 items-center h-full">
+            <div className="relative w-full h-full">
+              <input
+                type="text"
+                value={searchToken}
+                placeholder="Search for Token..."
+                onChange={(e) => setSearchToken(e.target.value)}
+                className="w-full h-full py-2 px-4 pl-10 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <BiSearchAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Items per page selector */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex justify-end items-center mb-6"
+        >
           <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="text-muted-foreground text-sm">Items per page:</span>
             <select
@@ -242,7 +317,7 @@ const HomePage: FC = () => {
               <option value={12}>12</option>
               <option value={24}>24</option>
               <option value={36}>36</option>
-              <option value={sortedData.length}>All ({sortedData.length})</option>
+              <option value={filteredData.length}>All ({filteredData.length})</option>
             </select>
           </div>
         </motion.div>
@@ -292,7 +367,7 @@ const HomePage: FC = () => {
                     onClick={() => handleToRouter(`/trading/${temp._id}`)}
                     className={viewMode === 'list' ? 'w-full' : 'cursor-pointer'}
                   >
-                    <CoinBlog coin={temp} componentKey="coin" />
+                    <CoinBlog coin={temp} componentKey="coin" isNSFW={!!nsfwMap[temp.url]} />
                   </div>
                 </motion.div>
               ))}
@@ -304,7 +379,12 @@ const HomePage: FC = () => {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <div className="text-muted-foreground text-lg">No tokens found</div>
+            <div className="text-muted-foreground text-lg">
+              {searchToken.trim() 
+                ? `No tokens found matching "${searchToken}"`
+                : "No tokens found"
+              }
+            </div>
           </motion.div>
         )}
 
@@ -321,7 +401,7 @@ const HomePage: FC = () => {
               totalPages={totalPages}
               onPageChange={handlePageChange}
               itemsPerPage={itemsPerPage}
-              totalItems={sortedData.length}
+              totalItems={filteredData.length}
             />
           </motion.div>
         )}

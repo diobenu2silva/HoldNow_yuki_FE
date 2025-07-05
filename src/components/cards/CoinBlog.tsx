@@ -20,9 +20,10 @@ import {
 interface CoinBlogProps {
   coin: coinInfo;
   componentKey: string;
+  isNSFW?: boolean; // new prop for future use
 }
 
-export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey }) => {
+export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }) => {
   const { solPrice } = useContext(UserContext);
   const [marketCapValue, setMarketCapValue] = useState<number>(0);
   const router = useRouter();

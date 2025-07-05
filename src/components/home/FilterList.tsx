@@ -1,5 +1,5 @@
 'use client';
-import { FC, useContext, useState } from 'react';
+import { FC, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserContext from '@/context/UserContext';
@@ -10,24 +10,17 @@ import switchOff from '@/../public/assets/images/switch-off.png';
 import { BiSearchAlt } from 'react-icons/bi';
 import { coinInfo } from '@/utils/types';
 import FilterListButton from '../others/FilterListButton';
+import { Switch } from '@/components/ui/switch';
 
 interface FilterListProps {
   onSortChange: (sortType: string, order: string) => void;
   currentSort: string;
   currentOrder: string;
+  nsfwFilterState?: boolean;
+  setNsfwFilterState?: (checked: boolean) => void;
 }
 
-const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrder }) => {
-  // const {
-  //   filterState,
-  //   setFilterState,
-  //   nsfwFilterState,
-  //   setNsfwFilterState,
-  // } = useContext(UserContext);
-
-  const [filterState, setFilterState] = useState<boolean>(false);
-  const [nsfwFilterState, setNsfwFilterState] = useState<boolean>(false);
-
+const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrder, nsfwFilterState, setNsfwFilterState }) => {
   const [token, setToken] = useState('');
 
   const searchToken = () => {};
@@ -42,73 +35,37 @@ const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrd
           currentOrder={currentOrder}
         />
       </div>
-      <div className="flex flex-col sm2:flex-row w-full h-full gap-4 justify-between">
-        <div className="hidden sm2:flex flex-row items-center">
-          <div
-            onClick={() => setFilterState(false)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
-              filterState ? 'border-b-muted-foreground text-muted-foreground' : 'border-b-primary text-primary'
-            }`}
-          >
-            Following
-          </div>
-          <div
-            onClick={() => setFilterState(true)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
-              filterState ? 'border-b-primary text-primary' : 'border-b-muted-foreground text-muted-foreground'
-            }`}
-          >
-            Terminal
-          </div>
-        </div>
-        <div className="w-full flex flex-col xs:flex-row gap-2">
-          <div className="min-w-[169px] flex flex-row items-center gap-2 px-3 py-1 border border-border rounded-lg mx-auto bg-card">
-            <span className="text-foreground">Include NSFW</span>
-            {
-              <Image
-                src={nsfwFilterState ? switchOn : switchOff}
-                alt=""
-                onClick={() => setNsfwFilterState(!nsfwFilterState)}
-                className="cursor-pointer"
+      {/* Only show NSFW filter if props are provided */}
+      {nsfwFilterState !== undefined && setNsfwFilterState && (
+        <div className="flex flex-col sm2:flex-row w-full h-full gap-4 justify-between">
+          <div className="w-full flex flex-col xs:flex-row gap-2">
+            <div className="min-w-[169px] flex flex-row items-center gap-2 px-3 py-1 border border-border rounded-lg mx-auto bg-card">
+              <span className="text-foreground">Include NSFW</span>
+              <Switch
+                checked={nsfwFilterState}
+                onCheckedChange={setNsfwFilterState}
+                className="data-[state=checked]:bg-pink-500 border-2 border-pink-400 focus:ring-2 focus:ring-pink-400"
               />
-            }
-          </div>
-          <div className="w-full max-w-[720px] flex flex-row items-center gap-1 pl-5 border border-border rounded-lg bg-card">
-            <BiSearchAlt className="text-4xl text-muted-foreground" />
-            <input
-              type="text"
-              value={token}
-              placeholder=" Search for Token"
-              onChange={(e) => setToken(e.target.value)}
-              className="w-full py-1 outline-none bg-transparent text-foreground placeholder:text-muted-foreground"
-            />
-            <button
-              className="w-[100px] h-[40px] rounded-r-lg px-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200"
-              onClick={searchToken}
-            >
-              Search
-            </button>
-          </div>
-        </div>
-        <div className="sm2:hidden flex flex-row items-center mx-auto">
-          <div
-            onClick={() => setFilterState(false)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
-              filterState ? 'border-b-muted-foreground text-muted-foreground' : 'border-b-primary text-primary'
-            }`}
-          >
-            Following
-          </div>
-          <div
-            onClick={() => setFilterState(true)}
-            className={`border-b-[2px] px-4 py-1 text-base cursor-pointer transition-colors duration-200 ${
-              filterState ? 'border-b-primary text-primary' : 'border-b-muted-foreground text-muted-foreground'
-            }`}
-          >
-            Terminal
+            </div>
+            <div className="w-full max-w-[720px] flex flex-row items-center gap-1 pl-5 border border-border rounded-lg bg-card">
+              <BiSearchAlt className="text-4xl text-muted-foreground" />
+              <input
+                type="text"
+                value={token}
+                placeholder=" Search for Token"
+                onChange={(e) => setToken(e.target.value)}
+                className="w-full py-1 outline-none bg-transparent text-foreground placeholder:text-muted-foreground"
+              />
+              <button
+                className="w-[100px] h-[40px] rounded-r-lg px-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200"
+                onClick={searchToken}
+              >
+                Search
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
