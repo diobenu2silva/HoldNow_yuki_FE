@@ -51,26 +51,26 @@ const SelectInput: React.FC<SelectInputProps> = ({
   }, []);
 
   return (
-    <div className="">
-      <label htmlFor="presale" className="text-lg font-semibold text-white">
+    <div className="space-y-2">
+      <label htmlFor="presale" className="text-lg font-semibold text-foreground">
         {header}
       </label>
       <div
         onClick={() => setStageStateModal(true)}
-        className="w-full p-2.5 rounded-lg bg-gray-800 text-white outline-none border-[#64ffda] border-[1px] relative capitalize flex flex-row justify-between items-center cursor-pointer"
+        className="w-full p-3 rounded-lg bg-background text-foreground outline-none border-2 border-border relative capitalize flex flex-row justify-between items-center cursor-pointer hover:border-primary transition-colors duration-200"
       >
         {textData}
-        <FaSort className="text-2xl" />
+        <FaSort className="text-2xl text-muted-foreground" />
         <div
           ref={menuDropdown}
-          className={`${stageStateModal ? `${style} border-[1px] border-[#64ffda]` : 'h-0'} w-full absolute flex flex-col rounded-lg left-0 top-11 bg-[#0D1524] text-white font-semibold object-cover overflow-hidden z-10`}
+          className={`${stageStateModal ? `${style} border-2 border-primary` : 'h-0'} w-full absolute flex flex-col rounded-lg left-0 top-12 bg-background text-foreground font-semibold object-cover overflow-hidden z-10 shadow-lg`}
         >
           {data.map((item: any, index: number) => {
             return (
               <div
                 key={index}
                 onClick={() => handleNumberStageChange(item)}
-                className={`${item.text === textData ? 'bg-blue-500' : 'hover:bg-gray-500'} py-2 px-2 cursor-pointer`}
+                className={`${item.text === textData ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'} py-3 px-3 cursor-pointer transition-colors duration-200`}
               >
                 {item.text}
               </div>

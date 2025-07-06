@@ -250,7 +250,7 @@ export const createToken = async (
       );
       await sleep(500);
       await sendTx(signature, mint, wallet.publicKey);
-      return res;
+      return { res, mint: mint.toString() };
     }
   } catch (error) {
     return false;
@@ -457,7 +457,8 @@ export const swapTx = async (
 export const claimTx = async (
   coin: coinInfo,
   wallet: WalletContextState,
-  amount: number
+  amount: number,
+  free: boolean,
 ) => {
   const provider = new anchor.AnchorProvider(connection, wallet, {
     preflightCommitment: 'confirmed',
@@ -515,10 +516,10 @@ export const claimTx = async (
       )
     );
   }
-
+  
   const bnAmount = new BN((amount * 1e6).toFixed(0)); // Convert to lamports (1 token = 1e6 lamports)
   const claimIx = await program.methods
-    .claim(bnAmount, false)
+    .claim(bnAmount, free)
     .accounts({
       mint,
       rewardRecipient,

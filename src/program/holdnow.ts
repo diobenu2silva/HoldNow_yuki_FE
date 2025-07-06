@@ -437,7 +437,7 @@ export type Holdnow = {
           "type": "u64"
         },
         {
-          "name": "isAirdrop",
+          "name": "forfree",
           "type": "bool"
         }
       ]
@@ -616,6 +616,10 @@ export type Holdnow = {
           },
           {
             "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
             "type": "publicKey"
           },
           {
@@ -1641,7 +1645,7 @@ export const IDL: Holdnow = {
           "type": "u64"
         },
         {
-          "name": "isAirdrop",
+          "name": "forfree",
           "type": "bool"
         }
       ]
@@ -1820,6 +1824,10 @@ export const IDL: Holdnow = {
           },
           {
             "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
             "type": "publicKey"
           },
           {

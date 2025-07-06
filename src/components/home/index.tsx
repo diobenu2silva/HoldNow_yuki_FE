@@ -1,6 +1,6 @@
 'use client';
 import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import UserContext from '@/context/UserContext';
 import { coinInfo } from '@/utils/types';
 import { getCoinsInfo, getSolPriceInUSD, getLatestReplies } from '@/utils/util';
@@ -33,12 +33,12 @@ const HomePage: FC = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigatingTo, setNavigatingTo] = useState<string>('');
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleToRouter = (id: string) => {
     setIsNavigating(true);
     setNavigatingTo(id);
     
-    // Small delay to show loading state, then navigate
     router.push(id);
   };
 
@@ -152,9 +152,9 @@ const HomePage: FC = () => {
   useEffect(() => {
     currentData.forEach(token => {
       if (token.url && nsfwMap[token.url] === undefined) {
-        isImageNSFW(token.url).then(isNsfw => {
-          setNsfwMap(prev => ({ ...prev, [token.url]: isNsfw }));
-        });
+        // isImageNSFW(token.url).then(isNsfw => {
+        //   setNsfwMap(prev => ({ ...prev, [token.url]: isNsfw }));
+        // });
       }
     });
   }, [currentData]);
@@ -196,20 +196,14 @@ const HomePage: FC = () => {
     fetchData();
   }, []);
 
-  // Reset navigation state when component unmounts or route changes
+  // Reset navigation state when route changes
   useEffect(() => {
-    const handleRouteChange = () => {
+    // Reset navigation state when pathname changes (route has changed)
+    if (isNavigating && pathname !== '/') {
       setIsNavigating(false);
       setNavigatingTo('');
-    };
-
-    // Listen for route changes
-    window.addEventListener('beforeunload', handleRouteChange);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleRouteChange);
-    };
-  }, []);
+    }
+  }, [pathname, isNavigating]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -389,7 +383,7 @@ const HomePage: FC = () => {
                 : 'flex flex-col gap-4'
             }`}
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {currentData.map((temp, index) => (
                 <motion.div
                   key={`${temp._id}-${index}`}

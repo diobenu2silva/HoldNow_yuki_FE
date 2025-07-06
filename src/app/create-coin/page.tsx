@@ -1,5 +1,5 @@
 'use client';
-import CreateToken from '@/components/creatToken';
+import CreateToken from '@/components/createToken';
 
 export default function Page() {
   return (

@@ -1,6 +1,9 @@
 import * as nsfwjs from 'nsfwjs';
 import * as tf from '@tensorflow/tfjs';
 
+tf.disableDeprecationWarnings();
+tf.env().set('DEBUG', false);
+
 let model: nsfwjs.NSFWJS | null = null;
 
 export async function loadNSFWModel() {

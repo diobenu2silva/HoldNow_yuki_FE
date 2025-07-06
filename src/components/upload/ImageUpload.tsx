@@ -34,7 +34,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   return (
     <div className="w-full flex flex-col justify-between gap-6">
       <div className="w-full justify-between flex flex-col items-start gap-2">
-        <label className="block text-lg font-semibold text-white">
+        <label className="block text-lg font-semibold text-foreground">
           {header}
         </label>
         <input
@@ -45,11 +45,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           onChange={handleFileChange}
         />
         <div className="w-full h-full flex flex-row justify-between gap-4 items-center">
-          <div className="w-full py-2 px-3 bg-gray-800 rounded-lg min-h-10 text-white border-[#64ffda] border-[1px]">
+          <div className="w-full py-3 px-3 bg-background rounded-lg min-h-10 text-foreground border-2 border-border">
             {selectedFileName}
           </div>
           <button
-            className="py-2 px-4 bg-gray-700 text-white rounded-lg border-[#64ffda] border-[1px]"
+            className="py-2 px-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg border-2 border-primary transition-colors duration-200"
             onClick={() => fileInputRef.current?.click()}
           >
             Browse...

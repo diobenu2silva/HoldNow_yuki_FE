@@ -291,7 +291,7 @@ export const claim = async (
   wallet: WalletContextState,
   amount: number
 ) => {
-  const signedTx = await claimTx(coin, wallet, amount);
+  const signedTx = await claimTx(coin, wallet, amount, false);
   if (!signedTx) {
     console.log('Claim transaction failed');
     return;

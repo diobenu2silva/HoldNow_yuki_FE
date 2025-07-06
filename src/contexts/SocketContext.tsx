@@ -129,51 +129,27 @@ const SocketProvider = (props: { children: any }) => {
     return () => {
       socket.off('connect');
       socket.off('disconnect');
-      setSocket(undefined);
-      // socket?.disconnect();
+      socket.disconnect();
     };
-  }, [router]);
+  }, []); // Remove router dependency to prevent recreation on route changes
 
   useEffect(() => {
-    socket?.on('connectionUpdated', async (counter: number) => {
-      // console.log("--------@ Connection Updated: ", counter);
+    if (!socket) return;
 
-      connectionUpdatedHandler(counter);
-    });
-
-    socket?.on('Creation', () => {
+    socket.on('connectionUpdated', connectionUpdatedHandler);
+    socket.on('Creation', () => {
       console.log('--------@ Token Creation: ');
     });
-    socket?.on('TokenCreated', async (name: string, mint: string) => {
-      console.log('--------@ Token Created!: ', name);
-
-      createSuccessHandler(name, mint);
-    });
-
-    socket?.on('TokenNotCreated', async (name: string, mint: string) => {
-      console.log('--------@ Token Not Created: ', name);
-
-      createFailedHandler(name, mint);
-    });
-
-    socket?.on(
-      'MessageUpdated',
-      async (updateCoinId: string, newMessage: msgInfo) => {
-        if (updateCoinId && newMessage) {
-          console.log('--------@ Message Updated:', updateCoinId, newMessage);
-
-          createMessageHandler(updateCoinId, newMessage);
-        }
-      }
-    );
+    socket.on('TokenCreated', createSuccessHandler);
+    socket.on('TokenNotCreated', createFailedHandler);
+    socket.on('MessageUpdated', createMessageHandler);
 
     return () => {
-      socket?.off('Creation', createSuccessHandler);
-      socket?.off('TokenCreated', createSuccessHandler);
-      socket?.off('TokenNotCreated', createFailedHandler);
-      socket?.off('MessageUpdated', createMessageHandler);
-
-      socket?.disconnect();
+      socket.off('connectionUpdated', connectionUpdatedHandler);
+      socket.off('Creation');
+      socket.off('TokenCreated', createSuccessHandler);
+      socket.off('TokenNotCreated', createFailedHandler);
+      socket.off('MessageUpdated', createMessageHandler);
     };
   }, [socket]);
 

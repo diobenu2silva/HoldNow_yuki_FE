@@ -37,6 +37,7 @@ export interface metadataInfo {
   twitter?: string;
   website?: string;
   telegram?: string;
+  frontBanner?: string;
 }
 
 export interface coinInfo {

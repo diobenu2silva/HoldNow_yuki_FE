@@ -6,6 +6,7 @@ import 'dotenv/config.js';
 import Header from '@/components/header/Header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
+import PageTransition from '@/components/PageTransition';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,7 +33,9 @@ export default function RootLayout({
         >
           <Providers>
             <Header></Header>
-            {children}
+            <PageTransition>
+              {children}
+            </PageTransition>
             <Toaster />
           </Providers>
         </ThemeProvider>

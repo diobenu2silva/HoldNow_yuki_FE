@@ -437,7 +437,7 @@
           "type": "u64"
         },
         {
-          "name": "isAirdrop",
+          "name": "forfree",
           "type": "bool"
         }
       ]
@@ -616,6 +616,10 @@
           },
           {
             "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
             "type": "publicKey"
           },
           {

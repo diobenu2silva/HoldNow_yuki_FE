@@ -306,7 +306,7 @@ export default function TradingPage() {
             <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white/10 p-3 rounded-lg">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/10 p-3 rounded-lg">
                   <div className="flex items-center space-x-3 min-w-0 flex-shrink-0">
                     <span className="text-green-400 flex-shrink-0">✓</span>
                     <span className="font-medium truncate">{coin.name} ({coin.ticker})</span>
@@ -315,7 +315,7 @@ export default function TradingPage() {
                     href={coin.raydiumUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex-shrink-0"
+                    className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex-shrink-0 ml-auto sm:ml-0"
                   >
                     Trade on Raydium
                   </a>
@@ -413,7 +413,7 @@ export default function TradingPage() {
                 <motion.p
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => copyToClipBoard(coinId)}
+                  onClick={() => copyToClipBoard(coin.token)}
                   className="cursor-pointer text-primary hover:text-primary/80 transition-colors duration-200"
                 >
                   <FaCopy />
