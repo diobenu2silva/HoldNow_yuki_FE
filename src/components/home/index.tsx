@@ -30,9 +30,15 @@ const HomePage: FC = () => {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [nsfwFilterState, setNsfwFilterState] = useState(false);
   const [searchToken, setSearchToken] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigatingTo, setNavigatingTo] = useState<string>('');
   const router = useRouter();
 
   const handleToRouter = (id: string) => {
+    setIsNavigating(true);
+    setNavigatingTo(id);
+    
+    // Small delay to show loading state, then navigate
     router.push(id);
   };
 
@@ -190,6 +196,21 @@ const HomePage: FC = () => {
     fetchData();
   }, []);
 
+  // Reset navigation state when component unmounts or route changes
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setIsNavigating(false);
+      setNavigatingTo('');
+    };
+
+    // Listen for route changes
+    window.addEventListener('beforeunload', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleRouteChange);
+    };
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -212,7 +233,20 @@ const HomePage: FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen">
+    <div className="w-full min-h-screen relative">
+      {/* Navigation Loading Overlay */}
+      {isNavigating && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <div className="text-foreground text-lg font-medium">Loading trading page...</div>
+            <div className="text-muted-foreground text-sm mt-2">
+              Navigating to {navigatingTo.split('/').pop()}
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="container py-8">
         {/* Header Section */}
         <motion.div

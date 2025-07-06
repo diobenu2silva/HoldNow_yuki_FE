@@ -3,7 +3,7 @@ import { FC, useContext } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import UserContext from '@/context/UserContext';
-import TestTokenImg from '@/../public/assets/banner/banner.jpg';
+import TestTokenImg from '@/../public/assets/images/banner.jpg';
 import { motion } from 'framer-motion';
 
 const TopToken: FC = () => {
@@ -21,7 +21,7 @@ const TopToken: FC = () => {
           <Image
             src={TestTokenImg}
             alt="TestTokenImg"
-            className="h-[160px] xs:h-[250px] rounded-lg animate-hero-zoom"
+            className="h-[160px] w-full object-full xs:h-[250px] rounded-lg animate-hero-zoom"
           />
           <div className="absolute inset-0 z-10 w-[calc(200%)] pointer-events-none">
             <div
@@ -43,7 +43,7 @@ const TopToken: FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleToRouter('/create-coin')}
-            className="px-14 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg cursor-pointer mx-auto xs:mx-0 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden"
+            className="px-14 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg cursor-pointer mx-auto xs:mx-20 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden"
           >
             <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine"></div>
             <span className="relative z-10">Create a Token</span>

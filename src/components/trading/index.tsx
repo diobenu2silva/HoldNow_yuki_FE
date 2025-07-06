@@ -72,21 +72,37 @@ export default function TradingPage() {
     setCoinId(parameter);
     setCoin({} as coinInfo);
     setIsLoading(true);
+    
+    // Immediately fetch coin data to avoid waiting for ClaimContext
+    const fetchInitialData = async () => {
+      try {
+        const coinData = await getCoinInfo(parameter);
+        setCoin(coinData);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching initial coin data:', error);
+        setIsLoading(false);
+      }
+    };
+    
+    fetchInitialData();
   }, [parameter]);
 
   const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] =
     claimAmount;
   // console.log("__yuki__ claimInUSD:", claimInUSD, " claimHodl:", claimHodl, "currentClaim:", currentClaim, "solPrice:", solPrice, "coinData:", coinData);
   const fetchData = async () => {
-    console.log('__yuki__ fetchData called with coinData:', {
-      name: coinData.name,
-      movedToRaydium: coinData.movedToRaydium,
-      moveRaydiumFailed: coinData.moveRaydiumFailed,
-      moveRaydiumFailureReason: coinData.moveRaydiumFailureReason
-    });
-    
-    setCoin(coinData);
-    setIsLoading(false);
+    // Only update if we have new coin data and it's different from current
+    if (coinData && coinData._id && coinData._id !== coin._id) {
+      console.log('__yuki__ fetchData called with coinData:', {
+        name: coinData.name,
+        movedToRaydium: coinData.movedToRaydium,
+        moveRaydiumFailed: coinData.moveRaydiumFailed,
+        moveRaydiumFailureReason: coinData.moveRaydiumFailureReason
+      });
+      
+      setCoin(coinData);
+    }
     if (!coinData.bondingCurve) {
       const millisecondsInADay = 120 * 1000;
       // const millisecondsInADay = 24 * 60 * 60 * 1000;
@@ -144,7 +160,7 @@ export default function TradingPage() {
 
   useEffect(() => {
     fetchData();
-  }, [publicKey, web3Tx, , claimInUSD, claimHodl, solPrice, coinData]);
+  }, [publicKey, web3Tx, claimInUSD, claimHodl, solPrice, coinData]);
 
   // Handle Raydium status changes and trigger notifications
   useEffect(() => {
