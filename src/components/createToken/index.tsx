@@ -148,15 +148,19 @@ export default function CreateToken() {
       // Process CSV file for direct airdrop
       let csvAllocators: any[] = [];
       if (csvFileUrl) {
+        console.log("__yuki__ csvFileUrl", csvFileUrl);
         try {
-          // Read CSV file directly from the file URL
+          console.log("__yuki__ reading csv file", csvFileUrl);
+          // Read CSV
+          //  file directly from the file URL
           const response = await fetch(csvFileUrl);
           const csvText = await response.text();
           csvAllocators = await parseCSV(csvText);
+          console.log("__yuki__ csvAllocators", csvAllocators); 
         } catch (error) {
-          console.error('Error reading CSV file:', error);
+          console.error('__yuki__ Error reading CSV file:', error);
           errorAlert('Failed to read CSV file. Please check the format.');
-          setIsLoading(false);
+          setIsLoading(false);  
           return;
         }
       }
@@ -192,6 +196,7 @@ export default function CreateToken() {
       };
 
       const result = await createToken(wallet, coinData);
+      console.log("__yuki__ token created", result);
       if (result === 'WalletError' || !result) {
         errorAlert('Payment failed or was rejected.');
         setIsLoading(false);
@@ -211,6 +216,8 @@ export default function CreateToken() {
             errorAlert('Failed to get coin information for airdrop.');
             return;
           }
+          
+          console.log('__yuki__ csvAllocators', csvAllocators);
 
           for (const allocator of csvAllocators) {
             try {

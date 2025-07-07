@@ -53,11 +53,11 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
       initial="hidden"
       animate="visible"
       whileHover="hover"
-      className="card card-hover card-glow overflow-hidden group cursor-pointer bg-card border-border flex flex-col justify-between h-70 gap-2"
+      className="card card-hover card-glow overflow-hidden group cursor-pointer bg-card border-border flex flex-col justify-between gap-2"
     >
       {(() => { console.log("_yuki__coin_frontBanner", coin.frontBanner); return null; })()}
       <div
-        className="relative w-full h-full overflow-hidden rounded-t-xl"
+        className="relative w-full overflow-hidden rounded-t-xl"
         style={coin.frontBanner ? {
           backgroundImage: `url(${coin.frontBanner})`,
           backgroundSize: 'cover',
@@ -65,39 +65,43 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
         } : { background: 'var(--card)' }}
       >
       {/* Image and Info Row */}
-      <div className="flex flex-row px-4 pt-3 gap-4 items-start">
-        <img
-          src={coin?.url}
-          alt={coin?.name}
-          className="w-20 h-20 object-cover rounded-lg border-4 border-card bg-card shadow-lg mt-0"
-          style={{ marginTop: 0 }}
-        />
-        <div className="flex flex-col flex-1 gap-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-              {coin?.name}
-            </h3>
-            <span className="badge badge-primary text-xs">{coin?.ticker}</span>
+      <div className="flex flex-col px-4 pt-3 gap-3 items-start min-h-0">
+        <div className="flex items-start gap-3 w-full">
+          <img
+            src={coin?.url}
+            alt={coin?.name}
+            className="w-16 h-16 object-cover rounded-lg border-4 border-card bg-card shadow-lg mt-0 flex-shrink-0"
+            style={{ marginTop: 0 }}
+          />
+          <div className="flex flex-col flex-1 gap-1 min-w-0">
+            <div className="flex items-center gap-2 mt-1">
+              <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                {coin?.name}
+              </h3>
+              <span className="badge badge-primary text-xs">{coin?.ticker}</span>
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground text-sm">
+              <UserIcon className="w-4 h-4" />
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  router.push(`/profile/${(coin?.creator as userInfo)?._id}`);
+                }}
+                className="text-primary hover:text-primary/80 font-medium transition-colors duration-200 ml-1"
+                >
+                {(coin?.creator as userInfo)?.name}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-muted-foreground text-sm">
-            <UserIcon className="w-4 h-4" />
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                router.push(`/profile/${(coin?.creator as userInfo)?._id}`);
-              }}
-              className="text-primary hover:text-primary/80 font-medium transition-colors duration-200 ml-1"
-              >
-              {(coin?.creator as userInfo)?.name}
-            </button>
-          </div>
-          {componentKey === 'coin' && coin?.description && (
-            <p className="text-muted-foreground text-sm line-clamp-2 flex items-center gap-1">
-              <HiOutlineInformationCircle className="w-4 h-4" />
-              {coin?.description}
-            </p>
-          )}
         </div>
+        {componentKey === 'coin' && coin?.description && (
+          <div className="w-full p-2 bg-primary/4 border border-primary/10 rounded-lg">
+            <p className="text-muted-foreground text-sm flex items-start gap-1">
+              <HiOutlineInformationCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" />
+              <span className="text-foreground/90 leading-relaxed break-words line-clamp-2">{coin?.description}</span>
+            </p>
+          </div>
+        )}
       </div>
       {/* Links below image/info row */}
       {/* <div className="flex flex-col gap-1 px-4 pb-2 pt-2">

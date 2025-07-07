@@ -66,6 +66,7 @@ export default function TradingPage() {
 
   const segments = pathname.split('/');
   const parameter = segments[segments.length - 1];
+  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] = claimAmount;
 
   useEffect(() => {
     setParam(parameter);
@@ -87,23 +88,13 @@ export default function TradingPage() {
     
     fetchInitialData();
   }, [parameter]);
-
-  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] =
-    claimAmount;
-  // console.log("__yuki__ claimInUSD:", claimInUSD, " claimHodl:", claimHodl, "currentClaim:", currentClaim, "solPrice:", solPrice, "coinData:", coinData);
+  
   const fetchData = async () => {
-    // Only update if we have new coin data and it's different from current
-    if (coinData && coinData._id && coinData._id !== coin._id) {
-      console.log('__yuki__ fetchData called with coinData:', {
-        name: coinData.name,
-        movedToRaydium: coinData.movedToRaydium,
-        moveRaydiumFailed: coinData.moveRaydiumFailed,
-        moveRaydiumFailureReason: coinData.moveRaydiumFailureReason
-      });
+    console.log('__yuki__ fetchData called');
       
-      setCoin(coinData);
-    }
+    setCoin(coinData);
     if (!coinData.bondingCurve) {
+      console.log('__yuki__ !coinData.bondingCurve');
       const millisecondsInADay = 120 * 1000;
       // const millisecondsInADay = 24 * 60 * 60 * 1000;
       const nowDate = new Date();
@@ -127,17 +118,17 @@ export default function TradingPage() {
       setStageProg(100);
 
       const fetchUpdatedData = async () => {
-
+        console.log('__yuki__ 2222nd fetchUpdatedData called');
         const segments = pathname.split('/');
         const parameter = segments[segments.length - 1];
         const coin = await getCoinInfo(parameter);
         
-        if (coin.token && wallet.publicKey) {
+        if (coin.token && publicKey) {
           console.log('__yuki__ 2nd fetchUpdatedData called');
           try {
             const response = await getClaimData(
               coin.token,
-              wallet.publicKey.toBase58()
+              publicKey.toBase58()
             );
             setManualClaimInUSD(response.claimInUSD ?? 0);
             setManualClaimHodl(response.claimHodl ?? 0);
@@ -153,7 +144,7 @@ export default function TradingPage() {
       };
       
       // Fetch once after a short delay to ensure backend has updated the data
-      setTimeout(fetchUpdatedData, 100);
+      setTimeout(fetchUpdatedData, 500);
 
     }
   };

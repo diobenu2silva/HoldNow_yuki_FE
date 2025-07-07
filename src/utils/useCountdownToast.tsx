@@ -5,10 +5,10 @@ export const useCountdownToast = (coin: any) => {
 
   const { airdropStage, atStageStarted, currentStage, bondingCurve, stagesNumber } = coin;
   useEffect(() => {
-    console.log("__yuki__ showing countdown toast for stage:", currentStage, "bondingCurve:", bondingCurve);
+    console.log("__yuki__ showing countdown toast for stage:", currentStage, "bondingCurve:", bondingCurve, "airdropStage:", airdropStage, "atStageStarted:", atStageStarted);
 
     if (!airdropStage || !atStageStarted || bondingCurve) return;
-      
+    
     // When airdrop stage begins, currentStage is the completed stage number
     console.log("showing countdown toast for stage:", currentStage, "bondingCurve:", bondingCurve);
     
@@ -56,5 +56,5 @@ export const useCountdownToast = (coin: any) => {
     return () => {
       cleanup?.(); // Dismiss toast & clear interval
     };
-  }, [coin.airdropStage]);
+  }, [coin.airdropStage,coin.atStageStarted, coin.currentStage]);
 };

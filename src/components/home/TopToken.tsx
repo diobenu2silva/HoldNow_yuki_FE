@@ -28,8 +28,6 @@ const TopToken: FC = () => {
     router.push('/create-coin');
   };
 
-
-
   return (
     <div className="w-full h-full px-2">
       <div className="w-full justify-between flex flex-col xs:flex-row items-start gap-6">
