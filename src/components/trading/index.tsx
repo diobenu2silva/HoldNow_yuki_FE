@@ -90,11 +90,8 @@ export default function TradingPage() {
   }, [parameter]);
   
   const fetchData = async () => {
-    console.log('__yuki__ fetchData called');
-      
     setCoin(coinData);
     if (!coinData.bondingCurve) {
-      console.log('__yuki__ !coinData.bondingCurve');
       const millisecondsInADay = 120 * 1000;
       // const millisecondsInADay = 24 * 60 * 60 * 1000;
       const nowDate = new Date();
@@ -151,7 +148,7 @@ export default function TradingPage() {
 
   useEffect(() => {
     fetchData();
-  }, [publicKey, web3Tx, claimInUSD, claimHodl, solPrice, coinData]);
+  }, [publicKey, web3Tx, claimInUSD, claimHodl, solPrice, coinData, coinData.bondingCurve, coinData.airdropStage, coinData.atStageStarted]);
 
   // Handle Raydium status changes and trigger notifications
   useEffect(() => {

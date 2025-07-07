@@ -6,6 +6,7 @@ interface ImageUploadProps {
   setFilePreview: (filePreview: string | null) => void;
   type: string;
   setFileUrl: (fileUrl: string) => void;
+  onFileRead?: (file: File | null, textContent: string) => void;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -13,6 +14,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   setFilePreview,
   setFileUrl,
   type,
+  onFileRead,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] =
@@ -22,12 +24,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFileName(file.name);
-      setFilePreview(URL.createObjectURL(file)); // Pass the file name or URL to the parent
+      setFilePreview(URL.createObjectURL(file));
       setFileUrl(URL.createObjectURL(file));
+      if (onFileRead) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          onFileRead(file, e.target?.result as string);
+        };
+        reader.readAsText(file);
+      }
     } else {
       setSelectedFileName('No file selected');
       setFilePreview(null);
       setFileUrl(null);
+      if (onFileRead) onFileRead(null, '');
     }
   };
 

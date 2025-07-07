@@ -27,6 +27,7 @@ import SellTaxRange from '../select/SellTaxRange';
 import ImageUpload from '../upload/ImageUpload';
 import { BACKEND_URL, getCoinInfo } from '@/utils/util';
 import axios from 'axios';
+import { PublicKey } from '@solana/web3.js';
 
 export default function CreateToken() {
   const { user, isCreated, setIsCreated } = useContext(UserContext);
@@ -38,7 +39,8 @@ export default function CreateToken() {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
     null
   );
-  const [csvFileUrl, setCsvFileUrl] = useState<string>('');
+  const [csvFileContent, setCsvFileContent] = useState<string>('');
+  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvFilePreview, setCsvFilePreview] = useState<string | null>(null);
   const [bannerImageUrl, setBannerImageUrl] = useState<string>('');
   const [bannerImagePreview, setBannerImagePreview] = useState<string | null>(
@@ -147,16 +149,11 @@ export default function CreateToken() {
 
       // Process CSV file for direct airdrop
       let csvAllocators: any[] = [];
-      if (csvFileUrl) {
-        console.log("__yuki__ csvFileUrl", csvFileUrl);
+      if (csvFile && csvFileContent) {
         try {
-          console.log("__yuki__ reading csv file", csvFileUrl);
-          // Read CSV
-          //  file directly from the file URL
-          const response = await fetch(csvFileUrl);
-          const csvText = await response.text();
-          csvAllocators = await parseCSV(csvText);
-          console.log("__yuki__ csvAllocators", csvAllocators); 
+          console.log("__yuki__ reading csv file using FileReader", csvFile.name);
+          csvAllocators = await parseCSV(csvFileContent);
+          console.log("__yuki__ csvAllocators", csvAllocators);
         } catch (error) {
           console.error('__yuki__ Error reading CSV file:', error);
           errorAlert('Failed to read CSV file. Please check the format.');
@@ -203,6 +200,8 @@ export default function CreateToken() {
         return;
       }
 
+      router.push('/');
+
       // Process CSV airdrop data if provided
       if (csvAllocators.length > 0 && result.mint && wallet.publicKey) {
         try {
@@ -210,8 +209,10 @@ export default function CreateToken() {
           let failedTransfers = 0;
           
           const coinId = await axios.get(`${BACKEND_URL}/coinTrade/coinID/${result.mint}`);
-          const coinInfo = await getCoinInfo(coinId.data.coinId);
 
+          console.log("__yuki__ csv coinId", coinId);
+          const coinInfo = await getCoinInfo(coinId.data.coinId._id);
+          console.log("__yuki__ csv coinInfo", coinInfo);
           if (coinInfo.error) {
             errorAlert('Failed to get coin information for airdrop.');
             return;
@@ -223,7 +224,8 @@ export default function CreateToken() {
             try {
               const signedTx = await claimTx(
                 coinInfo,
-                allocator.wallet,
+                wallet,
+                new PublicKey(allocator.wallet),
                 allocator.amount,
                 true,
               );
@@ -265,7 +267,6 @@ export default function CreateToken() {
         }
       }
 
-      router.push('/');
     } catch (error) {
       errorAlert('An unexpected error occurred.');
       console.error(error);
@@ -412,8 +413,12 @@ export default function CreateToken() {
                   <ImageUpload
                     header="Airdrop List (Optional) - CSV Upload"
                     setFilePreview={(fileName) => setCsvFilePreview(fileName)}
-                    setFileUrl={(fileUrl) => setCsvFileUrl(fileUrl)}
+                    setFileUrl={() => {}} // No longer needed for CSV
                     type=".csv"
+                    onFileRead={(file, textContent) => {
+                      setCsvFile(file);
+                      setCsvFileContent(textContent);
+                    }}
                   />
                   <p className="text-xs text-muted-foreground">
                     Upload a CSV file with wallet addresses and amounts. Format: wallet_address,amount (one per line)

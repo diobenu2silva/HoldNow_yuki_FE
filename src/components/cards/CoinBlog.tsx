@@ -55,7 +55,6 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
       whileHover="hover"
       className="card card-hover card-glow overflow-hidden group cursor-pointer bg-card border-border flex flex-col justify-between gap-2"
     >
-      {(() => { console.log("_yuki__coin_frontBanner", coin.frontBanner); return null; })()}
       <div
         className="relative w-full overflow-hidden rounded-t-xl"
         style={coin.frontBanner ? {

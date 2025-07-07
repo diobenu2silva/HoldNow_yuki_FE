@@ -11,7 +11,7 @@ import {
 import { Holdnow } from './holdnow';
 import idl from './holdnow.json';
 import * as anchor from '@coral-xyz/anchor';
-import { WalletContextState } from '@solana/wallet-adapter-react';
+import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 import { errorAlert } from '@/components/others/ToastGroup';
 import { Program } from '@coral-xyz/anchor';
 import { coinInfo, launchDataInfo } from '@/utils/types';
@@ -457,6 +457,7 @@ export const swapTx = async (
 export const claimTx = async (
   coin: coinInfo,
   wallet: WalletContextState,
+  pubkey: PublicKey,
   amount: number,
   free: boolean,
 ) => {
@@ -497,7 +498,7 @@ export const claimTx = async (
   );
   const associatedUserAccount = await getAssociatedTokenAddress(
     mint,
-    wallet.publicKey
+    pubkey
   );
   const info = await connection.getAccountInfo(associatedUserAccount);
   const transaction = new Transaction();
@@ -511,7 +512,7 @@ export const claimTx = async (
       createAssociatedTokenAccountInstruction(
         wallet.publicKey,
         associatedUserAccount,
-        wallet.publicKey,
+        pubkey,
         mint
       )
     );
