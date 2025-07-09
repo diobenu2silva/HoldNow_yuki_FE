@@ -328,7 +328,8 @@ export const createToken = async (
       const buyIx = await program.methods
         .buy(
           new anchor.BN(tokenAmount),
-          new anchor.BN(tokenAmount * (101 / 100))
+          new anchor.BN(20),
+          new anchor.BN(solAmount * Math.pow(10, 9)),
         )
         .accounts({
           global,
@@ -449,8 +450,8 @@ export const swapTx = async (
   wallet: WalletContextState,
   amount: number,
   type: number,
-  slipAmount: number,
-  currentClaim: number = 0,
+  slippage: number,
+  solAmount: number = 0,
 ): Promise<any> => {
   // check the connection
   if (!wallet.publicKey || !connection) {
@@ -516,10 +517,12 @@ export const swapTx = async (
     }
     if (type == 0) {
       console.log("__yuki__ swapTx buy amount: ", amount);
+
       const buyIx = await program.methods
         .buy(
           new anchor.BN(amount * Math.pow(10, 6)),
-          new anchor.BN(amount * Math.pow(10, 6) * (101 / 100))
+          new anchor.BN(Math.floor(slippage * 100)),
+          new anchor.BN(solAmount * Math.pow(10, 9)),
         )
         .accounts({
           global,
@@ -539,12 +542,12 @@ export const swapTx = async (
         .instruction();
       transaction.add(buyIx);
     } else {
+      const curClaim = solAmount * Math.pow(10, 6);
       const sellIx = await program.methods
         .sell(
           new anchor.BN(amount * Math.pow(10, 6)),
-          // new anchor.BN(slipAmount  * (80 / 100)),
-          new anchor.BN(0),
-          new anchor.BN(currentClaim * Math.pow(10, 6)),
+          new anchor.BN(Math.floor(slippage * 100)),
+          new anchor.BN(curClaim),
         )
         .accounts({
           global,
@@ -591,6 +594,7 @@ export const swapTx = async (
     }
   } catch (error) {
     console.log("__yuki__ swapTx Error: ", error);
+    errorAlert("Trade Error: " + error);
     return {};
   }
 };

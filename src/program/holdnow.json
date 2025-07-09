@@ -257,7 +257,11 @@
           "type": "u64"
         },
         {
-          "name": "maxSolCost",
+          "name": "slippage",
+          "type": "u64"
+        },
+        {
+          "name": "solAmount",
           "type": "u64"
         }
       ]
@@ -337,7 +341,7 @@
           "type": "u64"
         },
         {
-          "name": "minSolOutput",
+          "name": "slippage",
           "type": "u64"
         },
         {
@@ -1203,5 +1207,8 @@
       "name": "InvalidNoClaimAmount",
       "msg": "No Claimable Amount"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "Hmt2JQ7vQQPTC1PH8ZXumRac7CmJpYWepoqWE8jFYHtZ"
+  }
 }

@@ -9,6 +9,14 @@ import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { errorAlert } from '../others/ToastGroup';
 import { useClaim } from '@/context/ClaimContext';
 import { claim } from '@/utils/util';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 
 interface TradingFormProps {
@@ -22,6 +30,11 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const [tokenBal, setTokenBal] = useState<number>(0);
   const [tokenName, setTokenName] = useState<string>('Token');
   const [canTrade, setCanTrade] = useState<boolean>(false);
+  // Add slippage state, default 0.2 (20%)
+  const [slippage, setSlippage] = useState<number>(0.2);
+  // Add modal state for slippage input
+  const [showSlippageModal, setShowSlippageModal] = useState<boolean>(false);
+  const [slippageInput, setSlippageInput] = useState<string>('20');
   const { user, setWeb3Tx } = useContext(UserContext);
   
   const { claimAmount } = useClaim();
@@ -33,6 +46,19 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
     { id: '5', price: '5 sol' },
     { id: '10', price: '10 sol' },
   ];
+
+  const handleSlippageSubmit = () => {
+    const slippageValue = parseFloat(slippageInput);
+    if (!isNaN(slippageValue) && slippageValue > 0 && slippageValue <= 100) {
+      setSlippage(slippageValue / 100); // Convert percentage to decimal
+      setShowSlippageModal(false);
+    }
+  };
+
+  const handleSlippageCancel = () => {
+    setSlippageInput((slippage * 100).toString()); // Reset input to current value
+    setShowSlippageModal(false);
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -83,24 +109,24 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
         coin.tokenReserves -
         totalLiquidity /
           (coin.lamportReserves + parseFloat(amount) * Math.pow(10, 9));
-      const res = await swapTx(mint, wallet, tokenAmount, isSell, tokenAmount);
+      const res = await swapTx(mint, wallet, tokenAmount, isSell, slippage, parseFloat(amount));
       // if (res) {
       //   setTimeout(async () => {
       //     window.location.reload();
       //   }, 500);
       // }
     } else {
-      const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
-      const minSol =
-        coin.lamportReserves -
-        totalLiquidity /
-          (coin.tokenReserves + parseFloat(amount) * Math.pow(10, 6));
+      // const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
+      // const minSol =
+      //   coin.lamportReserves -
+      //   totalLiquidity /
+      //     (coin.tokenReserves + parseFloat(`amount`) * Math.pow(10, 6));
       const res = await swapTx(
         mint,
         wallet,
         parseFloat(amount),
         isSell,
-        minSol,
+        slippage,
         0, // claimAmount[2],
       );
       // if (res) {
@@ -152,13 +178,69 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
           Sell
         </button>
       </div>
+      <div className="flex flex-row items-center justify-center gap-2 mb-2">
+        <Dialog open={showSlippageModal} onOpenChange={setShowSlippageModal}>
+          <DialogTrigger asChild>
+            <div
+              onClick={() => {
+                setSlippageInput((slippage * 100).toString()); // Set input to current value
+                setShowSlippageModal(true);
+              }}
+              className="rounded bg-muted text-center w-[120px] p-1.5 text-sm font-medium text-foreground border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200"
+            >
+              Set Slippage
+            </div>
+          </DialogTrigger>
+          <DialogContent className="border-2 border-primary/30 bg-card">
+            <DialogHeader>
+              <DialogTitle>Set Max Slippage</DialogTitle>
+              <DialogDescription>
+                Enter your desired slippage percentage for trades.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Slippage Percentage (%)
+              </label>
+              <input
+                type="number"
+                value={slippageInput}
+                onChange={(e) => setSlippageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSlippageSubmit();
+                  }
+                }}
+                className="w-full p-2 border-2 border-primary/30 rounded-lg bg-background text-foreground outline-none focus:border-primary"
+                placeholder="20"
+                min="0.1"
+                max="100"
+                step="0.1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter a value between 0.1% and 100%
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSlippageSubmit}
+                className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Set Max Slippage
+              </button>
+              <button
+                onClick={handleSlippageCancel}
+                className="flex-1 bg-muted text-foreground py-2 px-4 rounded-lg hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <span className="text-foreground text-sm font-medium"> : {(slippage * 100).toFixed(1)}%</span>
+      </div>
       <div className="xs:px-4 flex flex-col relative">
-        <div
-          onClick={() => console.log('set max')}
-          className="rounded bg-muted text-center w-[200px] p-2 block mb-2 text-ml font-medium text-foreground mx-auto border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200"
-        >
-          Set max slippage
-        </div>
         <div className="w-full flex flex-row items-center bg-background rounded-lg border-2 border-primary/30">
           <input
             type="number"

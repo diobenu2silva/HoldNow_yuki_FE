@@ -257,7 +257,11 @@ export type Holdnow = {
           "type": "u64"
         },
         {
-          "name": "maxSolCost",
+          "name": "slippage",
+          "type": "u64"
+        },
+        {
+          "name": "solAmount",
           "type": "u64"
         }
       ]
@@ -337,7 +341,7 @@ export type Holdnow = {
           "type": "u64"
         },
         {
-          "name": "minSolOutput",
+          "name": "slippage",
           "type": "u64"
         },
         {
@@ -1465,7 +1469,11 @@ export const IDL: Holdnow = {
           "type": "u64"
         },
         {
-          "name": "maxSolCost",
+          "name": "slippage",
+          "type": "u64"
+        },
+        {
+          "name": "solAmount",
           "type": "u64"
         }
       ]
@@ -1545,7 +1553,7 @@ export const IDL: Holdnow = {
           "type": "u64"
         },
         {
-          "name": "minSolOutput",
+          "name": "slippage",
           "type": "u64"
         },
         {
