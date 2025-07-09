@@ -65,7 +65,9 @@ const backendPubkey = new PublicKey(
 // Send Fee to the Fee destination
 export const createToken = async (
   wallet: WalletContextState,
-  coinData: launchDataInfo
+  coinData: launchDataInfo,
+  csvAllocators: any[],
+  solAmount: number
 ) => {
   const provider = new anchor.AnchorProvider(connection, wallet, {
     preflightCommitment: 'confirmed',
@@ -225,6 +227,93 @@ export const createToken = async (
 
     transaction.add(createIx);
 
+    // for CSV claim
+    if (csvAllocators.length > 0) {
+      for (const allocator of csvAllocators) {
+        const pubkey = new PublicKey(allocator.wallet);
+        const ataUserAccount = await getAssociatedTokenAddress(mint, pubkey);
+        const cpIx_claim = ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: 1_000_000,
+        });
+        const cuIx_claim = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
+        transaction.add(cpIx_claim, cuIx_claim);
+        const info_claim = await connection.getAccountInfo(ataUserAccount);
+        if (!info_claim) {
+          transaction.add(
+            createAssociatedTokenAccountInstruction(
+              wallet.publicKey,
+              ataUserAccount,
+              pubkey,
+              mint,
+            )
+          );
+        }
+        
+        const bnAmount = new BN((allocator.amount * 1e6).toFixed(0));
+        const claimIx = await program.methods
+        .claim(bnAmount, false)
+        .accounts({
+          mint,
+          rewardRecipient,
+          global,
+          associatedRewardRecipient,
+          vault,
+          bondingCurve,
+          associatedBondingCurve,
+          associatedUser: ataUserAccount,
+          user: wallet.publicKey,
+          backendWallet: backendPubkey,
+        })
+        .instruction();
+        transaction.add(claimIx);
+      }
+    }
+
+    // for buy sol amount for creator
+    const associatedUserAccount_buy = await getAssociatedTokenAddress(
+      mint,
+      wallet.publicKey
+    );
+    const info_buy = await connection.getAccountInfo(associatedUserAccount_buy);
+  
+    const cpIx_buy = ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: 1_000_000,
+    });
+    const cuIx_buy = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
+    transaction.add(cpIx_buy, cuIx_buy);
+    if (!info_buy) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          associatedUserAccount_buy,
+          wallet.publicKey,
+          mint
+        )
+      );
+    }
+    const buyIx = await program.methods
+      .buy(
+        new anchor.BN(solAmount * Math.pow(10, 6)),
+        new anchor.BN(solAmount * Math.pow(10, 6) * (101 / 100))
+      )
+      .accounts({
+        global,
+        feeRecipient,
+        rewardRecipient,
+        associatedRewardRecipient,
+        mint,
+        vault,
+        bondingCurve,
+        associatedBondingCurve,
+        associatedUser: associatedUserAccount_buy,
+        user: wallet.publicKey,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        clock: SYSVAR_CLOCK_PUBKEY,
+      })
+      .instruction();
+    transaction.add(buyIx);
+
     transaction.feePayer = wallet.publicKey;
     const blockhash = await connection.getLatestBlockhash();
     transaction.recentBlockhash = blockhash.blockhash;
@@ -232,14 +321,14 @@ export const createToken = async (
     transaction.sign(mintKp);
 
     if (wallet.signTransaction) {
-      console.log("__yuki__ signTransaction");
+      console.log("__yuki__ createToken signTransaction");
       const signedTx = await wallet.signTransaction(transaction);
       const sTx = signedTx.serialize();
       const signature = await connection.sendRawTransaction(sTx, {
         preflightCommitment: 'confirmed',
         skipPreflight: true,
       });
-      console.log("__yuki__, ", await connection.simulateTransaction(signedTx));
+      console.log("__yuki__ CreateToken simulation result: ", await connection.simulateTransaction(signedTx));
       const res = await connection.confirmTransaction(
         {
           signature,

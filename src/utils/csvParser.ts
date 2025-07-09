@@ -9,7 +9,7 @@ export const parseCSV = async (csvText: string): Promise<AirdropAllocator[]> => 
     const allocators: AirdropAllocator[] = [];
     
     // Skip header row if it exists
-    const dataLines = lines.slice(1);
+    const dataLines = lines.slice(0);
     console.log("__yuki__ csv dataLines", dataLines);
     for (const line of dataLines) {
       const fields = line.split(',').map(field => field.trim());

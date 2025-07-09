@@ -28,13 +28,14 @@ import ImageUpload from '../upload/ImageUpload';
 import { BACKEND_URL, getCoinInfo } from '@/utils/util';
 import axios from 'axios';
 import { PublicKey } from '@solana/web3.js';
+import InitialBuyModal from '@/components/modals/InitialBuyModal';
 
 export default function CreateToken() {
   const { user, isCreated, setIsCreated } = useContext(UserContext);
   const { isLoading, setIsLoading } = useSocket();
   const [newCoin, setNewCoin] = useState<createCoinInfo>({} as createCoinInfo);
   const [pageLoaded, setPageLoaded] = useState(false);
-
+  const [showModal, setShowModal] = useState(false);
   const [profilImageUrl, setProfileIamgeUrl] = useState<string>('');
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
     null
@@ -117,7 +118,7 @@ export default function CreateToken() {
     return !Object.values(validationErrors).includes(true);
   };
 
-  const createCoin = async () => {
+  const createCoin = async (solAmount: number) => {
     if (!validateForm()) {
       errorAlert(`${errors}`);
       return;
@@ -157,7 +158,8 @@ export default function CreateToken() {
         } catch (error) {
           console.error('__yuki__ Error reading CSV file:', error);
           errorAlert('Failed to read CSV file. Please check the format.');
-          setIsLoading(false);  
+          setIsLoading(false);
+          router.push('/');
           return;
         }
       }
@@ -192,7 +194,7 @@ export default function CreateToken() {
         tokenPoolDestination,
       };
 
-      const result = await createToken(wallet, coinData);
+      const result = await createToken(wallet, coinData, csvAllocators, solAmount);
       console.log("__yuki__ token created", result);
       if (result === 'WalletError' || !result) {
         errorAlert('Payment failed or was rejected.');
@@ -200,10 +202,8 @@ export default function CreateToken() {
         return;
       }
 
-      router.push('/');
-
       // Process CSV airdrop data if provided
-      if (csvAllocators.length > 0 && result.mint && wallet.publicKey) {
+      /*if (csvAllocators.length > 0 && result.mint && wallet.publicKey) {
         try {
           let successfulTransfers = 0;
           let failedTransfers = 0;
@@ -215,7 +215,6 @@ export default function CreateToken() {
           console.log("__yuki__ csv coinInfo", coinInfo);
           if (coinInfo.error) {
             errorAlert('Failed to get coin information for airdrop.');
-            return;
           }
           
           console.log('__yuki__ csvAllocators', csvAllocators);
@@ -236,23 +235,27 @@ export default function CreateToken() {
                 continue;
               }
 
-              // Send the serialized transaction to backend for processing
-              const response = await axios.post(`${BACKEND_URL}/user/claim/`, {
+              const data = {
                 signedTxBase64: Buffer.from(signedTx).toString('base64'),
                 token: coinInfo.token,
-                user: allocator.wallet,
-                amount: allocator.amount
-              });
+                user: wallet.publicKey.toString(),
+              };
+             
+              const response = await axios.post(
+                `${BACKEND_URL}/user/claim/`,
+                data,
+                config
+              );
+              if (response.data.error) {
+                console.log('__yuki__ Claim axios error: ', response.data.error);
+              }
 
               if (response.data === 'success') {
                 successfulTransfers++;
-              } else {
-                failedTransfers++;
-                console.error(`Failed to process airdrop for ${allocator.wallet}:`, response.data);
               }
             } catch (error) {
               failedTransfers++;
-              console.error(`Error processing airdrop for ${allocator.wallet}:`, error);
+              console.error(`__yuki__ Error processing airdrop for ${allocator.wallet}:`, error);
             }
           }
           
@@ -262,17 +265,19 @@ export default function CreateToken() {
             errorAlert('All airdrop transfers failed. Please check the CSV format and try again.');
           }
         } catch (error) {
-          console.error('Error processing airdrop:', error);
-          errorAlert('Failed to process airdrop. Please check the CSV format.');
+          console.error('__yuki__ Error processing airdrop:', error);
+          errorAlert('Failed to process Airdrop.');
         }
-      }
+      }*/
 
     } catch (error) {
       errorAlert('An unexpected error occurred.');
       console.error(error);
     } finally {
       setIsLoading(false);
+      router.push('/');
     }
+
   };
 
   const formValid =
@@ -478,7 +483,7 @@ export default function CreateToken() {
           </div>
           <div className="flex justify-center mt-16 mb-10">
             <button
-              onClick={createCoin}
+              onClick={() => setShowModal(true)}
               disabled={!formValid || isLoading}
               className={`px-8 py-3 rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 transform hover:scale-105 relative overflow-hidden ${
                 !formValid || isLoading
@@ -491,6 +496,15 @@ export default function CreateToken() {
                 {isLoading ? 'Creating...' : 'Create Token'}
               </span>
             </button>
+            <InitialBuyModal
+              open={showModal}
+              onOpenChange={setShowModal}
+              onConfirm={(solAmount) => {
+                createCoin(solAmount);
+              }}
+              tokenName={newCoin.name}
+              deployCost={0.02}
+            />
           </div>
         </>
       )}
