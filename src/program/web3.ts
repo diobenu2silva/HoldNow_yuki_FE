@@ -7,6 +7,7 @@ import {
   SystemProgram,
   Transaction,
   clusterApiUrl,
+  TransactionInstruction,
 } from '@solana/web3.js';
 import { Holdnow } from './holdnow';
 import idl from './holdnow.json';
@@ -85,6 +86,7 @@ export const createToken = async (
     return 'WalletError';
   }
   try {
+    let transactions: Transaction[] = [];
     const mintKp = Keypair.generate();
     const mint = mintKp.publicKey;
     const tokenAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
@@ -226,20 +228,28 @@ export const createToken = async (
       .instruction();
 
     transaction.add(createIx);
+    transaction.feePayer = wallet.publicKey;
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    transactions.push(transaction);
 
+    console.log("__yuki__ createToken 1");
     // for CSV claim
+    let totalClaimAmount = 0;
     if (csvAllocators.length > 0) {
+      // 1. Build all claim instructions
+      const claimInstructions = [];
       for (const allocator of csvAllocators) {
         const pubkey = new PublicKey(allocator.wallet);
+        console.log("__yuki__ createToken 1.1, pubkey: ", pubkey.toBase58());
         const ataUserAccount = await getAssociatedTokenAddress(mint, pubkey);
         const cpIx_claim = ComputeBudgetProgram.setComputeUnitPrice({
           microLamports: 1_000_000,
         });
         const cuIx_claim = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
-        transaction.add(cpIx_claim, cuIx_claim);
         const info_claim = await connection.getAccountInfo(ataUserAccount);
-        if (!info_claim) {
-          transaction.add(
+        const claimBatch: TransactionInstruction[] = [cpIx_claim, cuIx_claim];
+        if (!info_claim && pubkey.toBase58() !== wallet.publicKey.toBase58()) {
+          claimBatch.push(
             createAssociatedTokenAccountInstruction(
               wallet.publicKey,
               ataUserAccount,
@@ -248,100 +258,142 @@ export const createToken = async (
             )
           );
         }
-        
         const bnAmount = new BN((allocator.amount * 1e6).toFixed(0));
         const claimIx = await program.methods
-        .claim(bnAmount, false)
-        .accounts({
-          mint,
-          rewardRecipient,
-          global,
-          associatedRewardRecipient,
-          vault,
-          bondingCurve,
-          associatedBondingCurve,
-          associatedUser: ataUserAccount,
-          user: wallet.publicKey,
-          backendWallet: backendPubkey,
-        })
-        .instruction();
-        transaction.add(claimIx);
+          .claim(bnAmount, true)
+          .accounts({
+            mint,
+            rewardRecipient,
+            global,
+            associatedRewardRecipient,
+            vault,
+            bondingCurve,
+            associatedBondingCurve,
+            associatedUser: ataUserAccount,
+            user: wallet.publicKey,
+            backendWallet: backendPubkey,
+          })
+          .instruction();
+        claimBatch.push(claimIx);
+        claimInstructions.push(claimBatch);
+        totalClaimAmount += allocator.amount;
+      }
+      // 2. Batch instructions into transactions
+      const MAX_INSTRUCTIONS_PER_TX = 3; // adjust as needed
+      let batch: TransactionInstruction[] = [];
+      for (const claimBatch of claimInstructions) {
+        if (batch.length + claimBatch.length > MAX_INSTRUCTIONS_PER_TX) {
+          const tx = new Transaction();
+          batch.forEach(ix => tx.add(ix));
+          tx.feePayer = wallet.publicKey;
+          tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+          transactions.push(tx);
+          batch = [];
+        }
+        batch.push(...claimBatch);
+      }
+      if (batch.length > 0) {
+        const tx = new Transaction();
+        batch.forEach(ix => tx.add(ix));
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        transactions.push(tx);
       }
     }
 
+    console.log("__yuki__ createToken 2");
     // for buy sol amount for creator
-    const associatedUserAccount_buy = await getAssociatedTokenAddress(
-      mint,
-      wallet.publicKey
-    );
-    const info_buy = await connection.getAccountInfo(associatedUserAccount_buy);
-  
-    const cpIx_buy = ComputeBudgetProgram.setComputeUnitPrice({
-      microLamports: 1_000_000,
-    });
-    const cuIx_buy = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
-    transaction.add(cpIx_buy, cuIx_buy);
-    if (!info_buy) {
-      transaction.add(
-        createAssociatedTokenAccountInstruction(
-          wallet.publicKey,
-          associatedUserAccount_buy,
-          wallet.publicKey,
-          mint
-        )
-      );
-    }
-    const buyIx = await program.methods
-      .buy(
-        new anchor.BN(solAmount * Math.pow(10, 6)),
-        new anchor.BN(solAmount * Math.pow(10, 6) * (101 / 100))
-      )
-      .accounts({
-        global,
-        feeRecipient,
-        rewardRecipient,
-        associatedRewardRecipient,
+    if (solAmount > 0) {
+      let transaction_buy = new Transaction();
+      const associatedUserAccount_buy = await getAssociatedTokenAddress(
         mint,
-        vault,
-        bondingCurve,
-        associatedBondingCurve,
-        associatedUser: associatedUserAccount_buy,
-        user: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        clock: SYSVAR_CLOCK_PUBKEY,
-      })
-      .instruction();
-    transaction.add(buyIx);
+        wallet.publicKey
+      );
+      const info_buy = await connection.getAccountInfo(associatedUserAccount_buy);
+    
+      const cpIx_buy = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: 1_000_000,
+      });
+      const cuIx_buy = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
+      transaction_buy.add(cpIx_buy, cuIx_buy);
+  
+      const tokenReserves = Math.pow(10, 15);
+      const lamportReserves = 30 * Math.pow(10, 9);
+      const totalLiquidity = (tokenReserves - totalClaimAmount) * lamportReserves;
+      const tokenAmount =
+        tokenReserves -
+        totalLiquidity /
+          (lamportReserves + solAmount * Math.pow(10, 9));
+      console.log("__yuki__ createToken 2.2, tokenAmount: ", tokenAmount);
+      const buyIx = await program.methods
+        .buy(
+          new anchor.BN(tokenAmount),
+          new anchor.BN(tokenAmount * (101 / 100))
+        )
+        .accounts({
+          global,
+          feeRecipient,
+          rewardRecipient,
+          associatedRewardRecipient,
+          mint,
+          vault,
+          bondingCurve,
+          associatedBondingCurve,
+          associatedUser: associatedUserAccount_buy,
+          user: wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          clock: SYSVAR_CLOCK_PUBKEY,
+        })
+        .instruction();
+      transaction_buy.add(buyIx);
+      transaction_buy.feePayer = wallet.publicKey;
+      const blockhash = await connection.getLatestBlockhash();
+      transaction_buy.recentBlockhash = blockhash.blockhash;
+      
+      console.log("__yuki__ createToken 2.1");
+      transactions.push(transaction_buy);
+    }
 
-    transaction.feePayer = wallet.publicKey;
-    const blockhash = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash.blockhash;
+    // Sign the mint-creation transaction with mintKp
+    transactions[0].sign(mintKp);
+    console.log("__yuki__ createToken 3");
 
-    transaction.sign(mintKp);
+    // Sign all transactions with the wallet
+    const signedTxs = await wallet.signAllTransactions(transactions);
+    console.log("__yuki__ createToken 4");
 
-    if (wallet.signTransaction) {
-      console.log("__yuki__ createToken signTransaction");
-      const signedTx = await wallet.signTransaction(transaction);
+    // Send each signed transaction
+    const signatures = [];
+    const confirmations = [];
+    for (const signedTx of signedTxs) {
+      console.log("__yuki__ createToken 5");
       const sTx = signedTx.serialize();
       const signature = await connection.sendRawTransaction(sTx, {
         preflightCommitment: 'confirmed',
         skipPreflight: true,
       });
-      console.log("__yuki__ CreateToken simulation result: ", await connection.simulateTransaction(signedTx));
-      const res = await connection.confirmTransaction(
+      // Confirm the transaction
+      const blockhash = signedTx.recentBlockhash;
+      const { lastValidBlockHeight } = await connection.getLatestBlockhash();
+      const confirmation = await connection.confirmTransaction(
         {
           signature,
-          blockhash: blockhash.blockhash,
-          lastValidBlockHeight: blockhash.lastValidBlockHeight,
+          blockhash,
+          lastValidBlockHeight,
         },
         'confirmed'
       );
-      await sleep(500);
-      await sendTx(signature, mint, wallet.publicKey);
-      return { res, mint: mint.toString() };
+      confirmations.push(confirmation);
+      signatures.push(signature);
     }
+    console.log("__yuki__ createToken 6");
+    await sendTx(signatures[0], mint, wallet.publicKey);
+    console.log("__yuki__ createToken 7");
+
+    return { signatures, confirmations, mint: mint.toString() };
   } catch (error) {
+    console.log("__yuki__ createToken Error: ", error);
     return false;
   }
 };
@@ -463,6 +515,7 @@ export const swapTx = async (
       );
     }
     if (type == 0) {
+      console.log("__yuki__ swapTx buy amount: ", amount);
       const buyIx = await program.methods
         .buy(
           new anchor.BN(amount * Math.pow(10, 6)),
