@@ -10,9 +10,18 @@ import { useEffect, useState, useContext } from 'react';
 import { LuFileEdit } from 'react-icons/lu';
 import { MdContentCopy } from 'react-icons/md';
 import { ProfileMenuList } from '@/config/TextData';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import ImageUpload from '@/components/upload/ImageUpload';
+import { uploadImage } from '@/utils/fileUpload';
 
 export default function ProfilePage() {
-  const { user, setProfileEditModal, profileEditModal } =
+  const { user, setProfileEditModal, profileEditModal, setUser } =
     useContext(UserContext);
   const pathname = usePathname();
   const [param, setParam] = useState<string | null>(null);
@@ -20,6 +29,9 @@ export default function ProfilePage() {
   const [option, setOption] = useState<number>(1);
   const [coins, setCoins] = useState<coinInfo[]>([]);
   const [copySuccess, setCopySuccess] = useState<string>('');
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
   const router = useRouter();
 
   const handleToRouter = (id: string) => {
@@ -74,15 +86,80 @@ export default function ProfilePage() {
     }
   };
 
+  // Avatar upload logic
+  const handleAvatarUpload = async (fileUrl: string) => {
+    setAvatarLoading(true);
+    try {
+      const uploadedUrl = await uploadImage(fileUrl);
+      if (!uploadedUrl) {
+        errorAlert('Failed to upload avatar to IPFS.');
+        return;
+      }
+      const updatedUser = { ...userData, avatar: uploadedUrl };
+      // Remove _id before sending to backend
+      const { _id, ...userUpdatePayload } = updatedUser;
+      if (userData._id) {
+        const backendResult = await import('@/utils/util').then(({ updateUser }) =>
+          updateUser(userData._id, userUpdatePayload)
+        );
+        if (backendResult?.error) {
+          errorAlert('Failed to update avatar in backend.');
+          return;
+        }
+      }
+      setUserData(updatedUser);
+      setUser(updatedUser);
+      successAlert('Avatar updated!');
+      setAvatarDialogOpen(false);
+    } catch (err) {
+      errorAlert('Failed to upload avatar.');
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
   return (
     <div className="w-full h-full flex flex-col gap-8 px-2">
       <div className="grid gap-6 justify-center">
         <div className="flex flex-col xs:flex-row gap-6 m-auto justify-center">
-          <img
-            src={userData.avatar || '/placeholder-avatar.png'}
-            alt="Avatar"
-            className="object-cover w-28 h-28 rounded-full mx-auto"
-          />
+          {/* Avatar with RadixUI Dialog for upload */}
+          <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
+            <DialogTrigger asChild>
+              <img
+                src={userData.avatar || '/placeholder-avatar.png'}
+                alt="Avatar"
+                className="object-cover w-28 h-28 rounded-full mx-auto cursor-pointer border-2 border-primary hover:opacity-80 transition"
+                onClick={() => setAvatarDialogOpen(true)}
+              />
+            </DialogTrigger>
+            <DialogContent className="border-2 border-primary/30 bg-card max-w-xs w-full">
+              <DialogHeader>
+                <DialogTitle>Change Avatar</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4 items-center">
+                <ImageUpload
+                  header="Select a new avatar image"
+                  setFilePreview={setAvatarPreview}
+                  setFileUrl={setAvatarPreview}
+                  type="image/*"
+                />
+                {avatarPreview && (
+                  <img
+                    src={avatarPreview}
+                    alt="Preview"
+                    className="w-24 h-24 rounded-full object-cover border"
+                  />
+                )}
+                <button
+                  className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+                  disabled={avatarLoading || !avatarPreview}
+                  onClick={() => avatarPreview && handleAvatarUpload(avatarPreview)}
+                >
+                  {avatarLoading ? 'Uploading...' : 'Save Avatar'}
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <div className="w-full flex flex-col text-white font-bold gap-2">
             <div className="flex flex-row items-center text-xl gap-2 justify-center xs:justify-start">
               @{userData.name}

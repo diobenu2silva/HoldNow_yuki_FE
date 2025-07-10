@@ -374,14 +374,13 @@ export const createToken = async (
         preflightCommitment: 'confirmed',
         skipPreflight: true,
       });
-      // Confirm the transaction
-      const blockhash = signedTx.recentBlockhash;
-      const { lastValidBlockHeight } = await connection.getLatestBlockhash();
+      // Confirm the transaction with fresh blockhash
+      const blockhash = await connection.getLatestBlockhash();
       const confirmation = await connection.confirmTransaction(
         {
           signature,
-          blockhash,
-          lastValidBlockHeight,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight,
         },
         'confirmed'
       );
@@ -705,26 +704,44 @@ export const getTokenBalance = async (
   tokenMintAddress: string
 ) => {
 
-  console.log('__yuki__ getTokenBalance called');
-  const wallet = new PublicKey(walletAddress);
-  const tokenMint = new PublicKey(tokenMintAddress);
+  console.log('__yuki__ getTokenBalance called, walletAddress: ', walletAddress, 'tokenMintAddress: ', tokenMintAddress);
+  
+  try {
+    const wallet = new PublicKey(walletAddress);
+    const tokenMint = new PublicKey(tokenMintAddress);
 
-  // Fetch the token account details
-  const response = await connection.getTokenAccountsByOwner(wallet, {
-    mint: tokenMint,
-  });
+    // Fetch the token account details
+    const response = await connection.getTokenAccountsByOwner(wallet, {
+      mint: tokenMint,
+    });
 
-  if (response.value.length == 0) {
+    if (response.value.length == 0) {
+      console.log('__yuki__ No token account found for this mint');
+      return 0;
+    }
+
+    console.log('__yuki__ Token Account:', response.value[0].pubkey.toBase58());
+    
+    // Get the balance
+    const tokenAccountInfo = await connection.getTokenAccountBalance(
+      response.value[0].pubkey
+    );
+
+    console.log('__yuki__ Token account info:', tokenAccountInfo);
+
+    // Check if the response has the expected structure
+    if (!tokenAccountInfo || !tokenAccountInfo.value) {
+      console.log('__yuki__ Invalid token account info structure');
+      return 0;
+    }
+
+    // Safely access uiAmount with fallback
+    const balance = tokenAccountInfo.value.uiAmount ?? 0;
+    console.log('__yuki__ Token balance:', balance);
+
+    return balance;
+  } catch (error) {
+    console.error('__yuki__ Error in getTokenBalance:', error);
     return 0;
   }
-
-  console.log('__yuki__ Token Account:', response.value[0].pubkey.toBase58());
-  // Get the balance
-  const tokenAccountInfo = await connection.getTokenAccountBalance(
-    response.value[0].pubkey
-  );
-
-  // Convert the balance from integer to decimal format
-
-  return tokenAccountInfo.value.uiAmount;
 };

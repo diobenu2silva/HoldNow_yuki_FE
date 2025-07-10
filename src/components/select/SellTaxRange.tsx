@@ -46,17 +46,21 @@ const SellTaxRange: React.FC<SellTaxRangeProps> = ({
             </div>
           );
         }}
-        renderThumb={({ props, index }) => (
-          <div
-            {...props}
-            className="flex flex-col items-center justify-center text-[#64ffda] font-semibold gap-1 outline-none"
-          >
-            <div className="text-sm">
-              {index === 0 ? `${values[0]}%` : `${values[1]}%`}
+        renderThumb={({ props, index }) => {
+          const { key, ...restProps } = props;
+          return (
+            <div
+              key={key}
+              {...restProps}
+              className="flex flex-col items-center justify-center text-[#64ffda] font-semibold gap-1 outline-none"
+            >
+              <div className="text-sm">
+                {index === 0 ? `${values[0]}%` : `${values[1]}%`}
+              </div>
+              <BiSolidUpArrow className="text-2xl" style={{ color: '#64ffda' }} />
             </div>
-            <BiSolidUpArrow className="text-2xl" style={{ color: '#64ffda' }} />
-          </div>
-        )}
+          );
+        }}
       />
     </div>
   );
