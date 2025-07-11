@@ -14,6 +14,7 @@ import { coinInfo } from '@/utils/types';
 
 interface TradingChartProps {
   param: coinInfo;
+  tokenReserves?: number;
 }
 
 const TVChartContainer = dynamic(
@@ -24,7 +25,7 @@ const TVChartContainer = dynamic(
   { ssr: false }
 );
 
-export const TradingChart: React.FC<TradingChartProps> = ({ param }) => {
+export const TradingChart: React.FC<TradingChartProps> = ({ param, tokenReserves = 0 }) => {
   const [isScriptReady, setIsScriptReady] = useState(false);
 
   return (
@@ -48,6 +49,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({ param }) => {
           name={param.name}
           pairIndex={10}
           token={param.token}
+          tokenReserves={tokenReserves}
         />
       )}
     </>

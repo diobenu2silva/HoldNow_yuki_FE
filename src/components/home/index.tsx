@@ -13,10 +13,12 @@ import { TokenCardSkeleton } from '../loadings/Skeleton';
 import { Switch } from '@/components/ui/switch';
 import { BiSearchAlt } from 'react-icons/bi';
 import { isImageNSFW } from '@/utils/nsfwCheck';
+import { useSocket } from '@/contexts/SocketContext';
 
 const HomePage: FC = () => {
   const { isLoading, setIsLoading, isCreated, solPrice, setSolPrice } =
     useContext(UserContext);
+  const { onNewTokenCreated, onCoinInfoUpdate } = useSocket();
   const [totalStaked, setTotalStaked] = useState(0);
   const [token, setToken] = useState('');
   const [data, setData] = useState<coinInfo[]>([]);
@@ -195,6 +197,43 @@ const HomePage: FC = () => {
     };
     fetchData();
   }, []);
+
+  // Handle new token creation
+  useEffect(() => {
+    if (onNewTokenCreated) {
+      const handleNewToken = (payload: any) => {
+        console.log('__yuki__ New token created:', payload);
+        // Add the new token to the beginning of the list
+        setData(prevData => {
+          const newToken = payload.coinInfo;
+          // Check if token already exists to avoid duplicates
+          const exists = prevData.find(token => token._id === newToken._id || token.token === newToken.token);
+          if (exists) {
+            return prevData;
+          }
+          return [newToken, ...prevData];
+        });
+      };
+      
+      onNewTokenCreated(handleNewToken);
+    }
+  }, [onNewTokenCreated]);
+
+  // Handle coin info updates (market cap, stage progress, etc.)
+  useEffect(() => {
+    if (onCoinInfoUpdate) {
+      const handleCoinUpdate = (payload: any) => {
+        console.log('__yuki__ Coin info updated:', payload);
+        setData(prevData => 
+          prevData.map(coin => 
+            coin.token === payload.token ? { ...coin, ...payload.coinInfo } : coin
+          )
+        );
+      };
+      
+      onCoinInfoUpdate(handleCoinUpdate);
+    }
+  }, [onCoinInfoUpdate]);
 
   // Reset navigation state when route changes
   useEffect(() => {

@@ -13,7 +13,7 @@ import {
   getSolPriceInUSD,
 } from '@/utils/util';
 import { usePathname, useRouter } from 'next/navigation';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { IoMdArrowRoundBack } from 'react-icons/io';
 import SocialList from '../others/socialList';
 import TokenData from '../others/TokenData';
@@ -23,19 +23,24 @@ import { errorAlert, successAlert } from '../others/ToastGroup';
 import { ConnectButton } from '../buttons/ConnectButton';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { getTokenBalance } from '@/program/web3';
-import { showCountdownToast } from '@/utils/showCountdownToast';
+
 import { useQuery } from 'react-query';
-import { useClaim } from '@/context/ClaimContext';
 import { PublicKey } from '@solana/web3.js';
 import { useCountdownToast } from '@/utils/useCountdownToast';
 import { token } from '@coral-xyz/anchor/dist/cjs/utils';
 import { motion } from 'framer-motion';
+import { useSocket } from '@/contexts/SocketContext';
 
 const getBalance = async (wallet: string, token: string) => {
   try {
+    if (!wallet || !token) {
+      console.log('__yuki__ getBalance: Invalid parameters - wallet or token is undefined/null');
+      return 0;
+    }
     const balance = await getTokenBalance(wallet, token);
     return balance;
   } catch (error) {
+    console.error('__yuki__ getBalance error:', error);
     return 0;
   }
 };
@@ -47,7 +52,8 @@ const isUserInfo = (obj: any): obj is userInfo => {
 export default function TradingPage() {
   const { coinId, setCoinId, login, user, web3Tx, setWeb3Tx } =
     useContext(UserContext);
-  const { publicKey } = useWallet();
+  const wallet = useWallet();
+  const { publicKey } = wallet;
   const { visible, setVisible } = useWalletModal();
   const pathname = usePathname();
   const [param, setParam] = useState<string>('');
@@ -58,27 +64,231 @@ export default function TradingPage() {
   const [stageProg, setStageProg] = useState<number>(0);
   const [sellTax, setSellTax] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [manualClaimInUSD, setManualClaimInUSD] = useState<number | null>(null);
-  const [manualClaimHodl, setManualClaimHodl] = useState<number | null>(null);
   const [isErrorExpanded, setIsErrorExpanded] = useState<boolean>(false);
-  const { claimAmount } = useClaim();
+  const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
+  const [claimData, setClaimData] = useState<[number, number, number, number, number, number]>([0, 0, 0, 0, 0, 0]);
+  const { onClaimDataUpdate, onStageChange, onCoinInfoUpdate } = useSocket();
   const router = useRouter();
 
-  const segments = pathname.split('/');
-  const parameter = segments[segments.length - 1];
-  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, coinData] = claimAmount;
+  // Only destructure the first 6 values, use claimData[6] for coinData
+  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = claimData;
+
+  // Calculate stage progress based on current time and stage start time
+  const calculateStageProgress = useCallback((coinData: coinInfo) => {
+    if (!coinData.atStageStarted) return 0;
+    
+    const millisecondsInADay = 120 * 1000; // 2 minutes for testing
+    // const millisecondsInADay = 24 * 60 * 60 * 1000; // 24 hours
+    const nowDate = new Date();
+    const atStageStartedDate = new Date(coinData.atStageStarted);
+    const period = nowDate.getTime() - atStageStartedDate.getTime();
+    const stageProgress =
+      Math.round(
+        (period * 10000) / (millisecondsInADay * (coinData.airdropStage ? 1 : coinData.stageDuration))
+      ) / 100;
+    
+    return stageProgress > 100 ? 100 : stageProgress;
+  }, []);
+
+  // Update all derived data based on coin info
+  const updateDerivedData = useCallback((coinData: coinInfo) => {
+    if (!coinData.bondingCurve) {
+      // Only set stage progress if we're not in a stage that needs real-time updates
+      // (i.e., if atStageStarted is not set, this is initial data)
+      if (!coinData.atStageStarted) {
+        const stageProgress = calculateStageProgress(coinData);
+        setStageProg(stageProgress);
+      }
+
+      setProgress(Math.round((coinData.progressMcap * solPrice / 1e15) / 10) / 100);
+      setLiquidity(
+        Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+      );
+    } else {
+      console.log('__yuki__ bondingCurve is true, and claim requested');
+      if (coinData.movedToRaydium && !coinData.moveRaydiumFailed) {
+        setProgress(100);
+        setLiquidity(0);
+        setStageProg(100);
+      } else {
+        setProgress(Math.round((coinData.progressMcap * solPrice / 1e15) / 10) / 100);
+        setLiquidity(
+          Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+        );
+        setStageProg(100);
+      }
+    }
+  }, [calculateStageProgress, solPrice]);
+
+  // Handle real-time claim data updates
+  const handleClaimDataUpdate = useCallback((payload: any) => {
+    console.log('__yuki__ handleClaimDataUpdate called with payload:', payload);
+    console.log('__yuki__ Current coin.token:', coin.token);
+    console.log('__yuki__ Current publicKey:', publicKey?.toBase58());
+    console.log('__yuki__ Payload user:', payload.user);
+    console.log('__yuki__ Is coin loaded:', !!coin.token);
+    
+    // Only process if coin is properly loaded and has a token
+    if (!coin.token) {
+      console.log('__yuki__ Coin not loaded yet, ignoring claim data update');
+      return;
+    }
+    
+    // Compare payload.token (token address) with coin.token (token address)
+    if (payload.token === coin.token && publicKey && payload.user === publicKey.toBase58()) {
+      console.log('__yuki__ Conditions met, updating claimData');
+      
+      setClaimData([
+        payload.claimData.claimInUSD ?? 0,
+        payload.claimData.claimHodl ?? 0,
+        payload.claimData.currentClaim ?? 0,
+        payload.claimData.solPrice ?? 0,
+        payload.claimData.rewardCap ?? 0,
+        payload.claimData.tokenBalance ?? 0,
+      ]);
+      console.log('__yuki__ claimData updated with new values:', {
+        claimInUSD: payload.claimData.claimInUSD,
+        claimHodl: payload.claimData.claimHodl,
+        currentClaim: payload.claimData.currentClaim,
+        solPrice: payload.claimData.solPrice,
+        rewardCap: payload.claimData.rewardCap,
+        tokenBalance: payload.claimData.tokenBalance
+      });
+    } else {
+      console.log('__yuki__ Conditions not met:', {
+        tokenMatch: payload.token === coin.token,
+        hasPublicKey: !!publicKey,
+        userMatch: publicKey ? payload.user === publicKey.toBase58() : false
+      });
+    }
+  }, [coin.token, publicKey]);
+
+  // Handle real-time stage changes
+  const handleStageChange = useCallback((payload: any) => {
+    console.log('__yuki__ handleStageChange called with payload:', payload);
+    console.log('__yuki__ Current coin.token:', coin.token);
+    console.log('__yuki__ Payload token:', payload.token);
+    console.log('__yuki__ Token match:', payload.token === coin.token);
+    console.log('__yuki__ Is coin loaded:', !!coin.token);
+    
+    // Only process if coin is properly loaded and has a token
+    if (!coin.token) {
+      console.log('__yuki__ Coin not loaded yet, ignoring stage change');
+      return;
+    }
+    
+    // Compare payload.token (token address) with coin.token (token address)
+    if (payload.token === coin.token) {
+      console.log('__yuki__ Token match confirmed, updating stage data');
+      
+      // Update coin data with new stage information
+      setCoin(prevCoin => {
+        const updatedCoin = {
+          ...prevCoin,
+          currentStage: payload.newStage,
+          atStageStarted: new Date(payload.timestamp),
+          airdropStage: payload.isAirdropStage,
+          bondingCurve: payload.isBondingCurve,
+          stageStarted: payload.stageStarted,
+          stageEnded: payload.stageEnded
+        };
+        
+        console.log('__yuki__ Trading: Stage change updated coin data:', updatedCoin);
+        return updatedCoin;
+      });
+    } else {
+      console.log('__yuki__ Token mismatch in stage change, ignoring update');
+    }
+  }, [coin.token]);
+
+  // Handle real-time coin info updates
+  const handleCoinInfoUpdate = useCallback((payload: any) => {
+    console.log('__yuki__ handleCoinInfoUpdate called with payload:', payload);
+    console.log('__yuki__ Current coin.token:', coin.token);
+    console.log('__yuki__ Payload token:', payload.token);
+    console.log('__yuki__ Token match:', payload.token === coin.token);
+    console.log('__yuki__ Is coin loaded:', !!coin.token);
+    
+    // Only process if coin is properly loaded and has a token
+    if (!coin.token) {
+      console.log('__yuki__ Coin not loaded yet, ignoring coin info update');
+      return;
+    }
+    
+    if (payload.token === coin.token) {
+      console.log('__yuki__ Token match confirmed, updating coin data');
+      
+      // Log token reserves changes for debugging
+      if (payload.coinInfo.tokenReserves !== coin.tokenReserves) {
+        console.log('__yuki__ Token reserves changed, chart should update:', {
+          previous: coin.tokenReserves,
+          current: payload.coinInfo.tokenReserves,
+          priceChange: payload.coinInfo.lamportReserves / payload.coinInfo.tokenReserves - coin.lamportReserves / coin.tokenReserves
+        });
+      }
+      
+      // Log stage and Raydium status changes
+      if (payload.coinInfo.currentStage !== coin.currentStage) {
+        console.log('__yuki__ Stage changed:', {
+          previous: coin.currentStage,
+          current: payload.coinInfo.currentStage
+        });
+      }
+      
+      if (payload.coinInfo.movedToRaydium !== coin.movedToRaydium) {
+        console.log('__yuki__ Raydium status changed:', {
+          previous: coin.movedToRaydium,
+          current: payload.coinInfo.movedToRaydium
+        });
+      }
+      
+      if (payload.coinInfo.moveRaydiumFailed !== coin.moveRaydiumFailed) {
+        console.log('__yuki__ Raydium failure status changed:', {
+          previous: coin.moveRaydiumFailed,
+          current: payload.coinInfo.moveRaydiumFailed
+        });
+      }
+      
+      // Update coin data
+      setCoin(payload.coinInfo);
+      
+      // Update derived data (but not stage progress if we have real-time timer running)
+      updateDerivedData(payload.coinInfo);
+      
+      console.log('__yuki__ Trading: Coin info updated from socket, new coin data:', payload.coinInfo);
+      // The useCountdownToast hook will handle countdown toasts automatically
+    } else {
+      console.log('__yuki__ Token mismatch, ignoring update');
+    }
+  }, [coin.token, coin.tokenReserves, coin.currentStage, coin.movedToRaydium, coin.moveRaydiumFailed, updateDerivedData]);
+
+  // Register socket callbacks
+  useEffect(() => {
+    if (onClaimDataUpdate) {
+      onClaimDataUpdate(handleClaimDataUpdate);
+    }
+    if (onStageChange) {
+      onStageChange(handleStageChange);
+    }
+    if (onCoinInfoUpdate) {
+      onCoinInfoUpdate(handleCoinInfoUpdate);
+    }
+  }, [onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate]);
 
   useEffect(() => {
+    // Fix: Use param instead of undefined 'parameter'
+    const segments = pathname.split('/');
+    const parameter = segments[segments.length - 1];
     setParam(parameter);
     setCoinId(parameter);
     setCoin({} as coinInfo);
     setIsLoading(true);
-    
     // Immediately fetch coin data to avoid waiting for ClaimContext
     const fetchInitialData = async () => {
       try {
         const coinData = await getCoinInfo(parameter);
         setCoin(coinData);
+        updateDerivedData(coinData);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching initial coin data:', error);
@@ -87,103 +297,159 @@ export default function TradingPage() {
     };
     
     fetchInitialData();
-  }, [parameter]);
-  
-  const fetchData = async () => {
-    setCoin(coinData);
-    if (!coinData.bondingCurve) {
-      const millisecondsInADay = 120 * 1000;
-      // const millisecondsInADay = 24 * 60 * 60 * 1000;
-      const nowDate = new Date();
-      const atStageStartedDate = new Date(coinData.atStageStarted);
-      const period = nowDate.getTime() - atStageStartedDate.getTime();
-      const stageProgress =
-        Math.round(
-          (period * 10000) / (millisecondsInADay * (coinData.airdropStage ? 1 : coinData.stageDuration))
-        ) / 100;
-      setStageProg(stageProgress > 100 ? 100 : stageProgress);
+  }, [param, updateDerivedData]);
 
-      setProgress(Math.round((coinData.progressMcap * solPrice) / 10) / 100);
-      setLiquidity(
-        Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
-      );
-    } else {
-
-      console.log('__yuki__ bondingCurve is true, and claim requested');
-      setProgress(100);
-      setLiquidity(0);
-      setStageProg(100);
-
-      const fetchUpdatedData = async () => {
-        console.log('__yuki__ 2222nd fetchUpdatedData called');
-        const segments = pathname.split('/');
-        const parameter = segments[segments.length - 1];
-        const coin = await getCoinInfo(parameter);
-        
-        if (coin.token && publicKey) {
-          console.log('__yuki__ 2nd fetchUpdatedData called');
-          try {
-            const response = await getClaimData(
-              coin.token,
-              publicKey.toBase58()
-            );
-            setManualClaimInUSD(response.claimInUSD ?? 0);
-            setManualClaimHodl(response.claimHodl ?? 0);
-            console.log('__yuki__ Manual values set:', {
-              manualClaimInUSD: response.claimInUSD ?? 0,
-              manualClaimHodl: response.claimHodl ?? 0
-            });
-          } catch (error) {
-            setManualClaimInUSD(0);
-            setManualClaimHodl(0);
-          }
+  // Fetch claim data when wallet changes (for the same token)
+  useEffect(() => {
+    if (coin.token && publicKey) {
+      console.log('__yuki__ Wallet changed, fetching claim data for new wallet');
+      const fetchClaimDataForWallet = async () => {
+        try {
+          const response = await getClaimData(
+            coin.token,
+            publicKey.toBase58()
+          );
+          setClaimData([
+            response.claimInUSD ?? 0,
+            response.claimHodl ?? 0,
+            response.currentClaim ?? 0,
+            response.solPrice ?? 0,
+            response.rewardCap ?? 0,
+            response.tokenBalance ?? 0,
+          ]);
+          console.log('__yuki__ Claim data updated for new wallet:', response);
+        } catch (error) {
+          console.error('__yuki__ Error fetching claim data for new wallet:', error);
+          // Reset claim data if there's an error
+          setClaimData([0, 0, 0, 0, 0, 0]);
         }
       };
       
-      // Fetch once after a short delay to ensure backend has updated the data
-      setTimeout(fetchUpdatedData, 500);
-
+      fetchClaimDataForWallet();
+    } else if (coin.token && !publicKey) {
+      // Wallet disconnected, reset claim data
+      console.log('__yuki__ Wallet disconnected, resetting claim data');
+      setClaimData([0, 0, 0, 0, 0, 0]);
     }
+  }, [publicKey, coin.token]);
+
+  const fetchData = async () => {
+    updateDerivedData(coin);
+    
+    // Note: Claim data fetching is now handled by the dedicated useEffect above
+    // This function only handles derived data updates
   };
 
+  // Only fetch derived data when essential dependencies change (no more polling)
   useEffect(() => {
-    fetchData();
-  }, [publicKey, web3Tx, claimInUSD, claimHodl, solPrice, coinData, coinData.bondingCurve, coinData.airdropStage, coinData.atStageStarted]);
+    if (coin && coin.token) {
+      fetchData();
+    }
+  }, [web3Tx, coin?.token, coin?.bondingCurve]);
+
+  // Real-time stage progress timer
+  useEffect(() => {
+    console.log('__yuki__ Timer useEffect triggered:', {
+      hasCoin: !!coin,
+      hasToken: !!coin?.token,
+      atStageStarted: coin?.atStageStarted,
+      bondingCurve: coin?.bondingCurve,
+      currentStage: coin?.currentStage,
+      stagesNumber: coin?.stagesNumber
+    });
+
+    // Stop timer if no coin, no token, no stage started, or bonding curve is true
+    if (!coin || !coin.token || !coin.atStageStarted || coin.bondingCurve) {
+      console.log('__yuki__ Stopping timer - conditions not met');
+      setIsTimerActive(false);
+      // Set stage progress to 100 when bonding curve is true
+      if (coin?.bondingCurve) {
+        setStageProg(100);
+      }
+      return; // Exit early, don't set up interval
+    }
+
+    console.log('__yuki__ Starting timer - conditions met');
+    setIsTimerActive(true);
+
+    const updateProgress = () => {
+      const stageProgress = calculateStageProgress(coin);
+      setStageProg(stageProgress);
+      
+      // Also update other derived data that depends on time
+      if (!coin.bondingCurve) {
+        setProgress(Math.round((coin.progressMcap * solPrice / 1e15) / 10) / 100);
+        setLiquidity(
+          Math.round(((coin.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+        );
+      }
+      
+    };
+
+    // Update immediately
+    updateProgress();
+
+    // Set up interval to update every second
+    const interval = setInterval(updateProgress, 1000);
+
+    // Cleanup interval on unmount or when dependencies change
+    return () => {
+      console.log('__yuki__ Cleaning up timer interval');
+      clearInterval(interval);
+      setIsTimerActive(false);
+    };
+  }, [coin?.atStageStarted, coin?.bondingCurve, coin?.airdropStage, coin?.stagesNumber, calculateStageProgress, solPrice]);
 
   // Handle Raydium status changes and trigger notifications
   useEffect(() => {
-    console.log('__yuki__ Trading page useEffect triggered - coinData:', {
-      movedToRaydium: coinData.movedToRaydium,
-      moveRaydiumFailed: coinData.moveRaydiumFailed,
-      moveRaydiumFailureReason: coinData.moveRaydiumFailureReason,
-      raydiumUrl: coinData.raydiumUrl
+    // Only process if coin is properly loaded
+    if (!coin || !coin.token) {
+      console.log('__yuki__ Coin not loaded yet, skipping Raydium status check');
+      return;
+    }
+    
+    console.log('__yuki__ Trading page Raydium status useEffect triggered:', {
+      movedToRaydium: coin.movedToRaydium,
+      moveRaydiumFailed: coin.moveRaydiumFailed,
+      moveRaydiumFailureReason: coin.moveRaydiumFailureReason,
+      raydiumUrl: coin.raydiumUrl,
+      isLoading,
+      coinName: coin.name,
+      coinToken: coin.token
     });
     
-    if (coinData.moveRaydiumFailed) {
-      console.log('__yuki__ Move to Raydium failed:', coinData.moveRaydiumFailureReason);
+    if (coin.moveRaydiumFailed) {
+      console.log('__yuki__ Move to Raydium failed:', coin.moveRaydiumFailureReason);
       // The notification will be displayed automatically via the conditional rendering
     }
     
-    if (coinData.movedToRaydium) {
-      console.log('__yuki__ Moved to Raydium successfully:', coinData.raydiumUrl);
+    if (coin.movedToRaydium) {
+      console.log('__yuki__ Moved to Raydium successfully:', coin.raydiumUrl);
       // The notification will be displayed automatically via the conditional rendering
     }
-  }, [coinData.movedToRaydium, coinData.moveRaydiumFailed, coinData.moveRaydiumFailureReason, coinData.raydiumUrl]);
+  }, [coin?.movedToRaydium, coin?.moveRaydiumFailed, coin?.moveRaydiumFailureReason, coin?.raydiumUrl, isLoading, coin?.token]);
 
   // Debug logging for render state
   useEffect(() => {
+    // Only log if coin is properly loaded
+    if (!coin || !coin.token) {
+      return;
+    }
+    
     console.log('__yuki__ Render check - coin state:', {
       name: coin.name,
       movedToRaydium: coin.movedToRaydium,
       moveRaydiumFailed: coin.moveRaydiumFailed,
       moveRaydiumFailureReason: coin.moveRaydiumFailureReason
     });
-  }, [coin.movedToRaydium, coin.moveRaydiumFailed, coin.moveRaydiumFailureReason]);
+  }, [coin?.movedToRaydium, coin?.moveRaydiumFailed, coin?.moveRaydiumFailureReason, coin?.token]);
 
+  // Use countdown toast hook for real-time updates
   useCountdownToast(coin);
 
+  // Update sell tax based on stage progress
   useEffect(() => {
-    if (coinData.airdropStage) {
+    if (coin.airdropStage) {
       setSellTax(0);
     } else if (stageProg > coin.sellTaxDecay) {
       setSellTax(coin.sellTaxMin);
@@ -196,7 +462,7 @@ export default function TradingPage() {
         )
       );
     }
-  }, [stageProg, coin]);
+  }, [stageProg, coin, coin.airdropStage]);
 
   const copyToClipBoard = async (copyMe: string) => {
     try {
@@ -217,10 +483,10 @@ export default function TradingPage() {
       errorAlert('Failed to copy error message');
     }
   };
-  const wallet = useWallet();
+
   const handleClaim = async () => {
     const res = await claim(user, coin, wallet, Number(claimHodl));
-    fetchData();
+    // fetchData();
 
     if (res !== 'success') {
       console.log('__yuki__ claim failed');
@@ -255,7 +521,7 @@ export default function TradingPage() {
           )}
 
           {/* Raydium Move Failed Notification - Show only if failed, even if later succeeded */}
-          {!isLoading && coin.moveRaydiumFailed && (
+          {!isLoading && !coin.movedToRaydium && coin.moveRaydiumFailed && (
             <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
@@ -312,6 +578,13 @@ export default function TradingPage() {
             </div>
           )}
 
+          {/* Display token balance at the top */}
+          <div className="mb-4 flex items-center gap-2">
+            <span className="font-semibold text-primary">Your Token Balance:</span>
+            <span className="text-lg">{tokenBalance ?? 0}</span>
+            <span className="text-muted-foreground">{coin?.ticker || 'Token'}</span>
+          </div>
+
           <div className="w-full flex flex-col md3:flex-row gap-4">
             <div className="w-full px-2">
               <div className="w-full flex flex-col justify-between gap-2">
@@ -331,7 +604,7 @@ export default function TradingPage() {
                   </motion.p>
                 </div>
               </div>
-              <TradingChart param={coin} />
+              <TradingChart param={coin} tokenReserves={coin.tokenReserves} />
               <Chatting param={param} coin={coin} />
             </div>
 
@@ -349,12 +622,8 @@ export default function TradingPage() {
                 {login && publicKey ? (
                   <div className="w-full justify-center items-center flex flex-col gap-2">             
                     <p className="text-sm px-5 text-muted-foreground">You are eligible to claim:</p>
-                    <p className="text-xl font-semibold text-primary">{`${Number(
-                      (coin.bondingCurve && ( manualClaimInUSD !== null )) ? manualClaimInUSD : claimInUSD
-                    ).toPrecision(9)} USD`}</p>
-                    <p className="text-xl font-semibold text-primary">{`${Number(
-                      (coin.bondingCurve && ( manualClaimHodl !== null )) ? manualClaimHodl : claimHodl
-                    ).toPrecision(6)} HODL`}</p>
+                    <p className="text-xl font-semibold text-primary">{`${Number(claimInUSD).toPrecision(9)} USD`}</p>
+                    <p className="text-xl font-semibold text-primary">{`${Number(claimHodl).toPrecision(6)} HODL`}</p>
                   </div>
                 ) : (
                   <p className="text-sm px-5 text-muted-foreground">
@@ -413,7 +682,7 @@ export default function TradingPage() {
 
               <div className="w-full flex flex-col gap-4">
                 <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
-                  <DataCard text="MKP CAP" data={`${progress} k`} />
+                  <DataCard text="MCAP" data={`${progress} k`} />
                   <DataCard text="Liquidity" data={`${liquidity} k`} />
                 </div>
                 <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
@@ -428,13 +697,18 @@ export default function TradingPage() {
 
               <div className="flex flex-col gap-3">
                 <div className="w-full flex flex-col gap-2 px-3 py-2">
+                  <div className="flex items-center gap-2">
                   <p className="text-foreground text-base lg:text-xl">
                     {coin.bondingCurve
                       ? 'All Stages Completed'
                       : coin.airdropStage
-                        ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of 1 Day`
-                        : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Completion : ${stageProg}% of ${coin.stageDuration} Days`}
+                        ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of 1 Day`
+                        : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of ${coin.stageDuration} Days`}
                   </p>
+                    {isTimerActive && (
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Updating in real-time"></div>
+                    )}
+                  </div>
                   <div className="bg-muted rounded-full h-2 relative">
                     <div
                       className="bg-primary rounded-full h-2 transition-all duration-300"

@@ -71,7 +71,8 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
 
   const getBalance = async () => {
     try {
-      if (!user || !user.wallet) {
+      if (!user || !user.wallet || !coin || !coin.token) {
+        console.log('__yuki__ getBalance: Missing required data - user, user.wallet, coin, or coin.token is undefined');
         setTokenBal(0);
         return;
       }

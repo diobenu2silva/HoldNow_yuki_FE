@@ -23,12 +23,12 @@ import ReactLoading from 'react-loading';
 import { twMerge } from 'tailwind-merge';
 import { flare } from 'viem/chains';
 import UserContext from '@/context/UserContext';
-import { useClaim } from '@/context/ClaimContext';
 
 export type TVChartContainerProps = {
   name: string;
   pairIndex: number;
   token: string;
+  tokenReserves?: number;
   classNames?: {
     container: string;
   };
@@ -38,17 +38,19 @@ export const TVChartContainer = ({
   name,
   pairIndex,
   token,
+  tokenReserves = 0,
 }: TVChartContainerProps) => {
-  const { claimAmount } = useClaim();
-
   const chartContainerRef =
     useRef<HTMLDivElement>() as React.MutableRefObject<HTMLInputElement>;
   const tvWidgetRef = useRef<IChartingLibraryWidget | null>(null);
   const { isLoading, setIsLoading } = useContext(UserContext);
+  const prevTokenReservesRef = useRef<number>(tokenReserves);
+  const [isChartReady, setIsChartReady] = useState(false);
+  const [chartKey, setChartKey] = useState(0); // Force chart recreation
 
-  useEffect(() => {
+  const createChart = () => {
     if (!chartContainerRef.current) {
-      return () => {};
+      return;
     }
     if (tvWidgetRef.current) {
       tvWidgetRef.current.remove();
@@ -81,17 +83,38 @@ export const TVChartContainer = ({
       tvWidgetRef.current = new widget(widgetOptions);
       tvWidgetRef.current.onChartReady(function () {
         setIsLoading(false);
-        // const priceScale = tvWidgetRef.current?.activeChart().getPanes()[0].getMainSourcePriceScale();
-        // priceScale?.setAutoScale(true)
+        setIsChartReady(true);
+        console.log('__yuki__ Chart is ready');
       });
-
-      return () => {
-        if (tvWidgetRef.current) {
-          tvWidgetRef.current.remove();
-        }
-      };
     }
-  }, [name, pairIndex, claimAmount[4]]);
+  };
+
+  // Create chart when component mounts or dependencies change
+  useEffect(() => {
+    createChart();
+    return () => {
+      if (tvWidgetRef.current) {
+        tvWidgetRef.current.remove();
+      }
+      setIsChartReady(false);
+    };
+  }, [name, pairIndex, token, chartKey]);
+
+  // Refresh chart data when token reserves change (indicating price changes)
+  useEffect(() => {
+    if (isChartReady && prevTokenReservesRef.current !== tokenReserves) {
+      console.log('__yuki__ Token reserves changed, recreating chart:', {
+        previous: prevTokenReservesRef.current,
+        current: tokenReserves
+      });
+      
+      // Force chart recreation to get fresh data
+      setChartKey(prev => prev + 1);
+      
+      // Update the previous value
+      prevTokenReservesRef.current = tokenReserves;
+    }
+  }, [tokenReserves, isChartReady]);
 
   return (
     <div className="relative mb-[1px] h-[500px] w-full ">

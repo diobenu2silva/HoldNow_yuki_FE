@@ -41,7 +41,6 @@ export interface metadataInfo {
 }
 
 export interface coinInfo {
-  commit: any;
   _id?: string;
   name: string;
   creator: string | userInfo;

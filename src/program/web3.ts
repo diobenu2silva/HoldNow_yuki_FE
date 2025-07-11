@@ -240,7 +240,6 @@ export const createToken = async (
       const claimInstructions = [];
       for (const allocator of csvAllocators) {
         const pubkey = new PublicKey(allocator.wallet);
-        console.log("__yuki__ createToken 1.1, pubkey: ", pubkey.toBase58());
         const ataUserAccount = await getAssociatedTokenAddress(mint, pubkey);
         const cpIx_claim = ComputeBudgetProgram.setComputeUnitPrice({
           microLamports: 1_000_000,
@@ -706,9 +705,23 @@ export const getTokenBalance = async (
 
   console.log('__yuki__ getTokenBalance called, walletAddress: ', walletAddress, 'tokenMintAddress: ', tokenMintAddress);
   
+  // Add safety checks for undefined or null values
+  if (!walletAddress || !tokenMintAddress) {
+    console.log('__yuki__ getTokenBalance: Invalid parameters - walletAddress or tokenMintAddress is undefined/null');
+    return 0;
+  }
+  
   try {
-    const wallet = new PublicKey(walletAddress);
-    const tokenMint = new PublicKey(tokenMintAddress);
+    let wallet: PublicKey;
+    let tokenMint: PublicKey;
+    
+    try {
+      wallet = new PublicKey(walletAddress);
+      tokenMint = new PublicKey(tokenMintAddress);
+    } catch (error) {
+      console.log('__yuki__ getTokenBalance: Error creating PublicKey objects:', error);
+      return 0;
+    }
 
     // Fetch the token account details
     const response = await connection.getTokenAccountsByOwner(wallet, {
@@ -723,9 +736,15 @@ export const getTokenBalance = async (
     console.log('__yuki__ Token Account:', response.value[0].pubkey.toBase58());
     
     // Get the balance
-    const tokenAccountInfo = await connection.getTokenAccountBalance(
-      response.value[0].pubkey
-    );
+    let tokenAccountInfo;
+    try {
+      tokenAccountInfo = await connection.getTokenAccountBalance(
+        response.value[0].pubkey
+      );
+    } catch (error) {
+      console.log('__yuki__ getTokenBalance: Error getting token account balance:', error);
+      return 0;
+    }
 
     console.log('__yuki__ Token account info:', tokenAccountInfo);
 

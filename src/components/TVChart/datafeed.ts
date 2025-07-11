@@ -133,19 +133,19 @@ export function getDataFeed({
       subscriberUID,
       onResetCacheNeededCallback
     ) => {
-      // subscribeOnStream(
-      //   symbolInfo,
-      //   resolution,
-      //   onRealtimeCallback,
-      //   subscriberUID,
-      //   onResetCacheNeededCallback,
-      //   lastBarsCache.get(symbolInfo.name)!,
-      //   pairIndex,
-      // );
+      subscribeOnStream(
+        symbolInfo,
+        resolution,
+        onRealtimeCallback,
+        subscriberUID,
+        onResetCacheNeededCallback,
+        lastBarsCache.get(symbolInfo.name)!,
+        pairIndex,
+      );
     },
 
     unsubscribeBars: (subscriberUID) => {
-      // unsubscribeFromStream(subscriberUID);
+       unsubscribeFromStream(subscriberUID);
     },
   };
 }

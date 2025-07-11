@@ -143,6 +143,7 @@ export const getCoinsInfoBy = async (id: string): Promise<coinInfo[]> => {
   );
   return res.data;
 };
+
 export const getCoinInfo = async (data: string): Promise<any> => {
   try {
     const response = await axios.get(`${BACKEND_URL}/coin/${data}`, config);
