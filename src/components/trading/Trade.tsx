@@ -2,18 +2,17 @@ import { recordInfo } from '@/utils/types';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 interface TradePropsInfo {
-  key: number;
   trade: recordInfo;
 }
 
-export const Trade: React.FC<TradePropsInfo> = ({ key, trade }) => {
+export const Trade: React.FC<TradePropsInfo> = ({ trade }) => {
   const router = useRouter();
   const handleToRouter = (id: string) => {
     window.open(id, '_blank');
   };
 
   return (
-    <tr className="w-full border-b-[1px] border-b-[#0F3159] text-white">
+    <>
       <td className="flex flex-row gap-2 items-center justify-center py-2">
         <img
           src={trade.holder.avatar}
@@ -45,6 +44,6 @@ export const Trade: React.FC<TradePropsInfo> = ({ key, trade }) => {
           {trade.tx.slice(0, 4)}...{trade.tx.slice(-3)}
         </p>
       </td>
-    </tr>
+    </>
   );
 };

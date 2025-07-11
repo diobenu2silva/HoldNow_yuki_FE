@@ -1,4 +1,4 @@
-import { holderInfo, recordInfo } from '@/utils/types';
+import { holderInfo } from '@/utils/types';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { BsArrow90DegRight } from 'react-icons/bs';
@@ -13,7 +13,7 @@ export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
   };
 
   return (
-    <tr className="w-full border-b-[1px] border-b-[#0F3159] text-white">
+    <>
       <td className="flex flex-row gap-2 items-center justify-center py-2">
         <div className="text-lg">{holder.name}</div>
       </td>
@@ -32,6 +32,6 @@ export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
           <BsArrow90DegRight />
         </p>
       </td>
-    </tr>
+    </>
   );
 };
