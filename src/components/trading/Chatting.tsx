@@ -1,23 +1,28 @@
 import { coinInfo, holderInfo, tradeInfo } from '@/utils/types';
-import { MessageForm } from '../MessageForm';
-import { ChangeEvent, useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { Trade } from './Trade';
 import { findHolders, getCoinTrade, getMessageByCoin } from '@/utils/util';
 import UserContext from '@/context/UserContext';
-import ReplyModal from '../modals/ReplyModal';
-import { BiSort } from 'react-icons/bi';
 import { Holder } from './Holders';
 import { motion } from 'framer-motion';
 import * as Tabs from '@radix-ui/react-tabs';
-import { PlusCircledIcon } from '@radix-ui/react-icons';
-import { formatDistanceToNow } from 'date-fns';
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 import { userInfo } from '@/utils/types';
+import { useSocket } from '@/contexts/SocketContext';
+import { SwapDirection } from '@/utils/constants';
+import { RefreshCw, ArrowUpDown, Send } from 'lucide-react';
 
 interface ChattingProps {
   param: string | null;
   coin: coinInfo;
 }
+
+// Sort direction type
+type SortDirection = 'asc' | 'desc';
+
+// Sort field types for each table
+type ThreadSortField = 'sender' | 'time' | 'message';
+type TransactionSortField = 'account' | 'type' | 'sol' | 'date' | 'transaction';
+type HolderSortField = 'account' | 'amount';
 
 export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   const {
@@ -32,8 +37,158 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   const [holders, setHolders] = useState<holderInfo[]>([] as holderInfo[]);
   const [currentTable, setCurrentTable] = useState<string>('thread');
   const tempNewMsg = useMemo(() => newMsg, [newMsg]);
-  const [tradeSortDir, setTradeSortDir] = useState<'asc' | 'desc'>('desc');
-  const [holderSortDir, setHolderSortDir] = useState<'desc' | 'asc'>('desc');
+  
+  // Sort state for each table
+  const [threadSortField, setThreadSortField] = useState<ThreadSortField>('time');
+  const [threadSortDir, setThreadSortDir] = useState<SortDirection>('desc');
+  
+  const [transactionSortField, setTransactionSortField] = useState<TransactionSortField>('date');
+  const [transactionSortDir, setTransactionSortDir] = useState<SortDirection>('desc');
+  
+  const [holderSortField, setHolderSortField] = useState<HolderSortField>('amount');
+  const [holderSortDir, setHolderSortDir] = useState<SortDirection>('desc');
+  
+  // Loading states for refresh
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+
+  
+  const { onTransactionUpdate, onHoldersUpdate } = useSocket();
+
+  // Generic sort function
+  const sortData = <T,>(data: T[], field: string, direction: SortDirection, getValue: (item: T, field: string) => any): T[] => {
+    return [...data].sort((a, b) => {
+      const aVal = getValue(a, field);
+      const bVal = getValue(b, field);
+      
+      // Handle null/undefined values
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return direction === 'asc' ? -1 : 1;
+      if (bVal == null) return direction === 'asc' ? 1 : -1;
+      
+      // Handle different data types
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        const comparison = aVal.toLowerCase().localeCompare(bVal.toLowerCase());
+        return direction === 'asc' ? comparison : -comparison;
+      }
+      
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      if (aVal instanceof Date && bVal instanceof Date) {
+        return direction === 'asc' ? aVal.getTime() - bVal.getTime() : bVal.getTime() - aVal.getTime();
+      }
+      
+      // Convert to string for comparison
+      const aStr = String(aVal);
+      const bStr = String(bVal);
+      const comparison = aStr.toLowerCase().localeCompare(bStr.toLowerCase());
+      return direction === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  // Sort handlers
+  const handleThreadSort = (field: ThreadSortField) => {
+    if (threadSortField === field) {
+      setThreadSortDir(threadSortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setThreadSortField(field);
+      setThreadSortDir('asc');
+    }
+  };
+
+  const handleTransactionSort = (field: TransactionSortField) => {
+    if (transactionSortField === field) {
+      setTransactionSortDir(transactionSortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setTransactionSortField(field);
+      setTransactionSortDir('asc');
+    }
+  };
+
+  const handleHolderSort = (field: HolderSortField) => {
+    if (holderSortField === field) {
+      setHolderSortDir(holderSortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setHolderSortField(field);
+      setHolderSortDir('asc');
+    }
+  };
+
+  // Get sort value functions
+  const getThreadSortValue = (message: any, field: string) => {
+    switch (field) {
+      case 'sender':
+        return (message.sender as userInfo)?.name || '';
+      case 'time':
+        return message.time ? new Date(message.time) : null;
+      case 'message':
+        return message.msg || '';
+      default:
+        return '';
+    }
+  };
+
+  const getTransactionSortValue = (trade: any, field: string) => {
+    switch (field) {
+      case 'account':
+        return trade.holder?.name || '';
+      case 'type':
+        return trade.lamportAmount === 0 ? 'Create' : 
+               trade.swapDirection === SwapDirection.BUY ? 'BUY' : 
+               trade.swapDirection === SwapDirection.CLAIM ? 'CLAIM' : 
+               trade.swapDirection === SwapDirection.TOKEN_CREATE ? 'CREATE' : 
+               trade.swapDirection === SwapDirection.AIRDROP ? 'AIRDROP' : 'SELL';
+      case 'sol':
+        return trade.lamportAmount;
+      case 'date':
+        return trade.time ? new Date(trade.time) : null;
+      case 'transaction':
+        return trade.tx || '';
+      default:
+        return '';
+    }
+  };
+
+  const getHolderSortValue = (holder: any, field: string) => {
+    switch (field) {
+      case 'account':
+        return holder.name || '';
+      case 'amount':
+        return holder.amount;
+      default:
+        return '';
+    }
+  };
+
+  // Refresh function
+  const handleRefresh = async () => {
+    if (!param || isRefreshing) return;
+    
+    setIsRefreshing(true);
+    try {
+      if (currentTable === 'thread') {
+        const data = await getMessageByCoin(param);
+        setMessages(data);
+      } else if (currentTable === 'transaction') {
+        const tokenToUse = coin.token || param;
+        const data = await getCoinTrade(tokenToUse);
+        setTrades(data);
+      } else if (currentTable === 'top holders') {
+        if (coin.token) {
+          const data = await findHolders(coin.token);
+          setHolders(data);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,175 +197,272 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
           const data = await getMessageByCoin(param);
           setMessages(data);
         } else if (currentTable === 'transaction') {
-          const data = await getCoinTrade(param);
+          // Use coin.token if available, otherwise fall back to param
+          const tokenToUse = coin.token || param;
+          const data = await getCoinTrade(tokenToUse);
           setTrades(data);
         } else {
-          const data = await findHolders(coin.token);
-          setHolders(data);
+          // Only fetch holders if coin.token is available
+          if (coin.token) {
+            const data = await findHolders(coin.token);
+            setHolders(data);
+          }
         }
       }
     };
     fetchData();
-  }, [currentTable, param]);
+  }, [currentTable, param, coin.token]);
   useEffect(() => {
     if (coinId == coin._id) {
       setMessages([...messages, tempNewMsg]);
     }
   }, [tempNewMsg]);
 
-  // Sort trades by lamportAmount (SOL)
-  const sortedTrades = trades.record ? [...trades.record].sort((a, b) => {
-    const aVal = a.lamportAmount;
-    const bVal = b.lamportAmount;
-    return tradeSortDir === 'asc' ? aVal - bVal : bVal - aVal;
-  }) : [];
+  useEffect(() => {
+    if (!onTransactionUpdate || !coin.token) return;
+    const handleTransactionUpdate = async (payload) => {
+      console.log('__yuki__ Transaction update received 000:', payload);
+      if (payload.token === coin.token) {
+        console.log('__yuki__ Transaction update received:', payload);
+        const tradedata = await getCoinTrade(coin.token)
+        console.log('__yuki__ Transaction update received 111:', tradedata);
+        setTrades(tradedata);
+      }
+    };
+    onTransactionUpdate(handleTransactionUpdate);
+    // No cleanup needed as context manages callbacks
+  }, [onTransactionUpdate, coin.token]);
 
-  // Sort holders by amount
-  const sortedHolders = holders ? [...holders].sort((a, b) => {
-    const aVal = a.amount;
-    const bVal = b.amount;
-    return holderSortDir === 'asc' ? aVal - bVal : bVal - aVal;
-  }) : [];
+  useEffect(() => {
+    if (!onHoldersUpdate || !coin.token) return;
+    const handleHoldersUpdate = (payload) => {
+      console.log('__yuki__ Holders update received 000:', payload);
+      if (payload.token === coin.token) {
+        console.log('__yuki__ Holders update received:', payload);
+        setHolders(payload.holders);
+      }
+    };
+    onHoldersUpdate(handleHoldersUpdate);
+    // No cleanup needed as context manages callbacks
+  }, [onHoldersUpdate, coin.token]);
+
+  // Check if we should show loading state
+  const isLoading = !coin.token;
+
+  // Sort data using the generic sort function
+  const sortedMessages = messages ? sortData(messages, threadSortField, threadSortDir, getThreadSortValue) : [];
+  const sortedTrades = trades.record ? sortData(trades.record, transactionSortField, transactionSortDir, getTransactionSortValue) : [];
+  const sortedHolders = holders ? sortData(holders, holderSortField, holderSortDir, getHolderSortValue) : [];
 
   return (
-    <Tabs.Root defaultValue="thread" className="w-full pt-8">
-      <Tabs.List className="flex gap-2 bg-muted/30 rounded-full p-1 mb-4 w-fit mx-auto">
-        <Tabs.Trigger
-          value="thread"
-          className="px-6 py-2 rounded-full text-base font-semibold transition-all duration-200
-            data-[state=active]:bg-primary data-[state=active]:text-white
-            data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
-            shadow-none outline-none focus:ring-2 focus:ring-primary"
-        >
-          Thread
-        </Tabs.Trigger>
-        <Tabs.Trigger
-          value="transaction"
-          className="px-6 py-2 rounded-full text-base font-semibold transition-all duration-200
-            data-[state=active]:bg-primary data-[state=active]:text-white
-            data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
-            shadow-none outline-none focus:ring-2 focus:ring-primary"
-        >
-          Transaction
-        </Tabs.Trigger>
-        <Tabs.Trigger
-          value="top holders"
-          className="px-6 py-2 rounded-full text-base font-semibold transition-all duration-200
-            data-[state=active]:bg-primary data-[state=active]:text-white
-            data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
-            shadow-none outline-none focus:ring-2 focus:ring-primary"
-        >
-          Top Holders
-        </Tabs.Trigger>
-      </Tabs.List>
-      <Tabs.Content value="thread">
-        <div className="flex flex-col gap-4 px-2 py-4 max-w-2xl mx-auto">
-          {messages &&
-            messages.map((message, index) => (
-              <div
-                key={index}
-                className="flex gap-3 items-start bg-white/10 rounded-xl shadow p-4"
-              >
-                <Avatar className="w-10 h-10 rounded-full">
-                  <AvatarImage src={(message.sender as userInfo)?.avatar} alt="User" />
-                  <AvatarFallback>
-                    {(message.sender as userInfo)?.name?.[0] || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white">
-                      {(message.sender as userInfo)?.name || "Unknown"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {message.time
-                        ? formatDistanceToNow(new Date(message.time), { addSuffix: true })
-                        : ""}
-                    </span>
-                  </div>
-                  {message.img && (
-                    <img
-                      src={message.img}
-                      alt="Attachment"
-                      className="rounded-lg mt-2 max-w-xs max-h-40 object-cover border border-border"
-                    />
-                  )}
-                  <div className="mt-2 text-white/90">{message.msg}</div>
-                </div>
-              </div>
-            ))}
-          <button
-            onClick={() => setPostReplyModal(true)}
-            className="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold shadow-lg hover:scale-105 transition-all text-lg"
+    <div className="w-full pt-8">
+      <Tabs.Root defaultValue="transaction" className="w-full">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex-1"></div>
+          <Tabs.List className="flex gap-2 bg-muted/30 rounded-full p-1 w-fit">
+            <Tabs.Trigger
+              value="transaction"
+              className="px-6 py-2 rounded-full text-base font-semibold transition-all duration-300 ease-in-out
+                data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg
+                data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
+                shadow-none outline-none focus:ring-2 focus:ring-primary hover:scale-105"
+            >
+              Transaction
+            </Tabs.Trigger>
+            <Tabs.Trigger
+              value="top holders"
+              className="px-6 py-2 rounded-full text-base font-semibold transition-all duration-300 ease-in-out
+                data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg
+                data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
+                shadow-none outline-none focus:ring-2 focus:ring-primary hover:scale-105"
+            >
+              Top Holders
+            </Tabs.Trigger>
+          </Tabs.List>
+          <div className="flex-1 flex justify-end">
+            {/* Refresh Button */}
+            <motion.button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary font-medium 
+                hover:bg-primary/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+                border border-primary/30 hover:border-primary/50"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <RefreshCw 
+                className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} 
+              />
+              Refresh
+            </motion.button>
+          </div>
+        </div>
+
+        <Tabs.Content value="transaction">
+          <motion.div 
+            className="w-full max-w-3xl mx-auto py-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <PlusCircledIcon className="w-5 h-5" />
-            Post Reply
-          </button>
-          {postReplyModal && <ReplyModal data={coin} />}
-        </div>
-      </Tabs.Content>
-      <Tabs.Content value="transaction">
-        {/* Transaction content goes here */}
-        <div className="w-full max-w-3xl mx-auto py-4">
-          <div className="bg-white/10 rounded-xl shadow p-4">
-            <table className="w-full text-sm">
-              <thead className="border-b-2 border-b-border">
-                <tr className="text-base text-primary">
-                  <th className="py-2 px-2">Account</th>
-                  <th className="py-2 px-2">Type</th>
-                  <th
-                    className="py-2 px-2 flex flex-row gap-1 justify-center items-center cursor-pointer select-none"
-                    onClick={() => setTradeSortDir(tradeSortDir === 'asc' ? 'desc' : 'asc')}
-                  >
-                    SOL
-                    <span>{tradeSortDir === 'asc' ? '▲' : '▼'}</span>
-                  </th>
-                  <th className="py-2 px-2">Date</th>
-                  <th className="py-2 px-2">Transaction</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedTrades &&
-                  sortedTrades.map((trade, index) => (
-                    <tr key={index} className="hover:bg-primary/10 transition-colors duration-150 rounded-lg">
-                      <Trade trade={trade} />
+            <div className="bg-white/10 rounded-xl shadow p-4">
+              <table className="w-full text-sm">
+                <thead className="border-b-2 border-b-border">
+                  <tr className="text-base text-primary">
+                    <th 
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleTransactionSort('account')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        Account
+                        {transactionSortField === 'account' && (
+                          <span className="text-primary">{transactionSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleTransactionSort('type')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        Type
+                        {transactionSortField === 'type' && (
+                          <span className="text-primary">{transactionSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleTransactionSort('sol')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        SOL
+                        {transactionSortField === 'sol' && (
+                          <span className="text-primary">{transactionSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleTransactionSort('date')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        Date
+                        {transactionSortField === 'date' && (
+                          <span className="text-primary">{transactionSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleTransactionSort('transaction')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        Transaction
+                        {transactionSortField === 'transaction' && (
+                          <span className="text-primary">{transactionSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => { console.log('__yuki__ sortedTrades', sortedTrades); return null; })()}
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-4 text-muted-foreground">
+                        Loading transaction data...
+                      </td>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </Tabs.Content>
-      <Tabs.Content value="top holders">
-        {/* Top holders content goes here */}
-        <div className="w-full max-w-3xl mx-auto py-4">
-          <div className="bg-white/10 rounded-xl shadow p-4">
-            <table className="w-full text-sm">
-              <thead className="border-b-2 border-b-border">
-                <tr className="text-base text-primary">
-                  <th className="py-2 px-2">Account</th>
-                  <th
-                    className="py-2 px-2 flex flex-row gap-1 justify-center items-center cursor-pointer select-none"
-                    onClick={() => setHolderSortDir(holderSortDir === 'asc' ? 'desc' : 'asc')}
-                  >
-                    Amount
-                    <span>{holderSortDir === 'asc' ? '▲' : '▼'}</span>
-                  </th>
-                  <th className="py-2 px-2">solscan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedHolders &&
-                  sortedHolders.map((holder, index) => (
-                    <tr key={index} className="hover:bg-primary/10 transition-colors duration-150 rounded-lg">
-                      <Holder holder={holder} />
+                  ) : sortedTrades && sortedTrades.length > 0 ? (
+                    sortedTrades.map((trade, index) => (
+                      <tr key={index} className="hover:bg-primary/10 transition-colors duration-150 rounded-lg">
+                        <Trade trade={trade} />
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="text-center py-4 text-muted-foreground">
+                        No transactions found
+                      </td>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </Tabs.Content>
-    </Tabs.Root>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </Tabs.Content>
+        <Tabs.Content value="top holders">
+          <motion.div 
+            className="w-full max-w-3xl mx-auto py-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="bg-white/10 rounded-xl shadow p-4">
+              <table className="w-full text-sm">
+                <thead className="border-b-2 border-b-border">
+                  <tr className="text-base text-primary">
+                    <th 
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleHolderSort('account')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        Account
+                        {holderSortField === 'account' && (
+                          <span className="text-primary">{holderSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleHolderSort('amount')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        Amount
+                        {holderSortField === 'amount' && (
+                          <span className="text-primary">{holderSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="py-2 px-2">solscan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={3} className="text-center py-4 text-muted-foreground">
+                        Loading holders data...
+                      </td>
+                    </tr>
+                  ) : sortedHolders && sortedHolders.length > 0 ? (
+                    sortedHolders.map((holder, index) => (
+                      <tr key={index} className="hover:bg-primary/10 transition-colors duration-150 rounded-lg">
+                        <Holder holder={holder} />
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="text-center py-4 text-muted-foreground">
+                        No holders found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </Tabs.Content>
+      </Tabs.Root>
+    </div>
   );
 };

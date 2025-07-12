@@ -37,6 +37,21 @@ interface StageChangedPayload {
   isBondingCurve: boolean;
 }
 
+interface TransactionUpdatePayload {
+  token: string;
+  txId: string;
+  type: string;
+  amount: number;
+  user: string;
+  timestamp: number;
+}
+
+interface HoldersUpdatePayload {
+  token: string;
+  holders: { name: string; amount: number; owner: string }[];
+  timestamp: number;
+}
+
 interface Context {
   socket?: Socket;
   counter?: number;
@@ -60,6 +75,8 @@ interface Context {
   onCoinInfoUpdate?: (callback: (payload: CoinInfoUpdatedPayload) => void) => void;
   onStageChange?: (callback: (payload: StageChangedPayload) => void) => void;
   onNewTokenCreated?: (callback: (payload: CoinInfoUpdatedPayload) => void) => void;
+  onTransactionUpdate?: (callback: (payload: TransactionUpdatePayload) => void) => void;
+  onHoldersUpdate?: (callback: (payload: HoldersUpdatePayload) => void) => void;
 }
 
 const context = createContext<Context>({});
@@ -88,6 +105,8 @@ const SocketProvider = (props: { children: any }) => {
   const [coinInfoCallbacks, setCoinInfoCallbacks] = useState<((payload: CoinInfoUpdatedPayload) => void)[]>([]);
   const [stageChangeCallbacks, setStageChangeCallbacks] = useState<((payload: StageChangedPayload) => void)[]>([]);
   const [newTokenCreatedCallbacks, setNewTokenCreatedCallbacks] = useState<((payload: CoinInfoUpdatedPayload) => void)[]>([]);
+  const [transactionUpdateCallbacks, setTransactionUpdateCallbacks] = useState<((payload: TransactionUpdatePayload) => void)[]>([]);
+  const [holdersUpdateCallbacks, setHoldersUpdateCallbacks] = useState<((payload: HoldersUpdatePayload) => void)[]>([]);
 
   const router = useRouter();
   // const router = useRouter();
@@ -110,6 +129,14 @@ const SocketProvider = (props: { children: any }) => {
 
   const onNewTokenCreated = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void) => {
     setNewTokenCreatedCallbacks(prev => [...prev, callback]);
+  }, []);
+
+  const onTransactionUpdate = useCallback((callback: (payload: TransactionUpdatePayload) => void) => {
+    setTransactionUpdateCallbacks(prev => [...prev, callback]);
+  }, []);
+
+  const onHoldersUpdate = useCallback((callback: (payload: HoldersUpdatePayload) => void) => {
+    setHoldersUpdateCallbacks(prev => [...prev, callback]);
   }, []);
 
   const connectionUpdatedHandler = (data: number) => {
@@ -165,6 +192,18 @@ const SocketProvider = (props: { children: any }) => {
     newTokenCreatedCallbacks.forEach(callback => callback(payload));
   };
 
+  const transactionUpdateHandler = (payload: TransactionUpdatePayload, ack?: (msg: string) => void) => {
+    console.log('__yuki__ Socket: Transaction update:', payload);
+    transactionUpdateCallbacks.forEach(callback => callback(payload));
+    if (ack) ack('ok');
+  };
+
+  const holdersUpdateHandler = (payload: HoldersUpdatePayload, ack?: (msg: string) => void) => {
+    console.log('__yuki__ Socket: Holders update:', payload);
+    holdersUpdateCallbacks.forEach(callback => callback(payload));
+    if (ack) ack('ok');
+  };
+
   // init socket client object
   useEffect(() => {
     const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
@@ -201,6 +240,8 @@ const SocketProvider = (props: { children: any }) => {
     socket.on('claimDataUpdated', claimDataUpdatedHandler);
     socket.on('stageChanged', stageChangedHandler);
     socket.on('newTokenCreated', newTokenCreatedHandler);
+    socket.on('transactionUpdate', transactionUpdateHandler);
+    socket.on('holdersUpdate', holdersUpdateHandler);
 
     return () => {
       socket.off('connectionUpdated', connectionUpdatedHandler);
@@ -214,8 +255,10 @@ const SocketProvider = (props: { children: any }) => {
       socket.off('claimDataUpdated', claimDataUpdatedHandler);
       socket.off('stageChanged', stageChangedHandler);
       socket.off('newTokenCreated', newTokenCreatedHandler);
+      socket.off('transactionUpdate', transactionUpdateHandler);
+      socket.off('holdersUpdate', holdersUpdateHandler);
     };
-  }, [socket, claimDataCallbacks, coinInfoCallbacks, stageChangeCallbacks, newTokenCreatedCallbacks]);
+  }, [socket, claimDataCallbacks, coinInfoCallbacks, stageChangeCallbacks, newTokenCreatedCallbacks, transactionUpdateCallbacks, holdersUpdateCallbacks]);
 
   return (
     <context.Provider
@@ -242,6 +285,8 @@ const SocketProvider = (props: { children: any }) => {
         onCoinInfoUpdate,
         onStageChange,
         onNewTokenCreated,
+        onTransactionUpdate,
+        onHoldersUpdate,
       }}
     >
       {props.children}

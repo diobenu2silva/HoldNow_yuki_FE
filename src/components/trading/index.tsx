@@ -1,6 +1,7 @@
 'use client';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Chatting } from '@/components/trading/Chatting';
+import { ChatPanel } from '@/components/trading/ChatPanel';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { TradingChart } from '@/components/TVChart/TradingChart';
 import UserContext from '@/context/UserContext';
@@ -30,6 +31,7 @@ import { useCountdownToast } from '@/utils/useCountdownToast';
 import { token } from '@coral-xyz/anchor/dist/cjs/utils';
 import { motion } from 'framer-motion';
 import { useSocket } from '@/contexts/SocketContext';
+import { Send } from 'lucide-react';
 
 const getBalance = async (wallet: string, token: string) => {
   try {
@@ -69,6 +71,12 @@ export default function TradingPage() {
   const [claimData, setClaimData] = useState<[number, number, number, number, number, number]>([0, 0, 0, 0, 0, 0]);
   const { onClaimDataUpdate, onStageChange, onCoinInfoUpdate } = useSocket();
   const router = useRouter();
+  
+  // Chat panel state
+  const [isChatPanelOpen, setIsChatPanelOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
+  const [chatPosition, setChatPosition] = useState({ x: window.innerWidth - 380, y: window.innerHeight - 540 });
+  const [chatSize, setChatSize] = useState({ width: 350, height: 500 });
 
   // Only destructure the first 6 values, use claimData[6] for coinData
   const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = claimData;
@@ -276,30 +284,33 @@ export default function TradingPage() {
   }, [onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate]);
 
   useEffect(() => {
-    // Fix: Use param instead of undefined 'parameter'
     const segments = pathname.split('/');
     const parameter = segments[segments.length - 1];
-    setParam(parameter);
-    setCoinId(parameter);
-    setCoin({} as coinInfo);
-    setIsLoading(true);
-    // Immediately fetch coin data to avoid waiting for ClaimContext
-    const fetchInitialData = async () => {
-      try {
-        const coinData = await getCoinInfo(parameter);
-        setCoin(coinData);
-        updateDerivedData(coinData);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching initial coin data:', error);
-        setIsLoading(false);
-      }
-    };
     
-    fetchInitialData();
-  }, [param, updateDerivedData]);
+    // Only update if the parameter actually changed
+    if (param !== parameter) {
+      setParam(parameter);
+      setCoinId(parameter);
+      setCoin({} as coinInfo);
+      setIsLoading(true);
+      
+      // Immediately fetch coin data to avoid waiting for ClaimContext
+      const fetchInitialData = async () => {
+        try {
+          const coinData = await getCoinInfo(parameter);
+          setCoin(coinData);
+          updateDerivedData(coinData);
+          setIsLoading(false);
+        } catch (error) {
+          console.error('Error fetching initial coin data:', error);
+          setIsLoading(false);
+        }
+      };
+      
+      fetchInitialData();
+    }
+  }, [pathname, updateDerivedData]);
 
-  // Fetch claim data when wallet changes (for the same token)
   useEffect(() => {
     if (coin.token && publicKey) {
       console.log('__yuki__ Wallet changed, fetching claim data for new wallet');
@@ -320,15 +331,12 @@ export default function TradingPage() {
           console.log('__yuki__ Claim data updated for new wallet:', response);
         } catch (error) {
           console.error('__yuki__ Error fetching claim data for new wallet:', error);
-          // Reset claim data if there's an error
           setClaimData([0, 0, 0, 0, 0, 0]);
         }
       };
-      
       fetchClaimDataForWallet();
     } else if (coin.token && !publicKey) {
       // Wallet disconnected, reset claim data
-      console.log('__yuki__ Wallet disconnected, resetting claim data');
       setClaimData([0, 0, 0, 0, 0, 0]);
     }
   }, [publicKey, coin.token]);
@@ -586,7 +594,7 @@ export default function TradingPage() {
           </div>
 
           <div className="w-full flex flex-col md3:flex-row gap-4">
-            <div className="w-full px-2">
+            <div className={`flex-1 px-2 transition-all duration-300 ease-in-out ${isChatPanelOpen ? 'mr-4' : ''}`}>
               <div className="w-full flex flex-col justify-between gap-2">
                 <div className="flex flex-row gap-2 items-center justify-between">
                   <p className="font-semibold text-foreground">Token Name - {coin?.name}</p>
@@ -607,6 +615,20 @@ export default function TradingPage() {
               <TradingChart param={coin} tokenReserves={coin.tokenReserves} />
               <Chatting param={param} coin={coin} />
             </div>
+            
+            {/* Chat Panel */}
+            <ChatPanel 
+              param={param}
+              coin={coin}
+              isOpen={isChatPanelOpen}
+              onClose={() => setIsChatPanelOpen(false)}
+              onMinimize={() => setIsChatMinimized(!isChatMinimized)}
+              isMinimized={isChatMinimized}
+              position={chatPosition}
+              onPositionChange={setChatPosition}
+              size={chatSize}
+              onSizeChange={setChatSize}
+            />
 
             <div className="w-full max-w-[300px] 2xs:max-w-[420px] px-2 gap-4 flex flex-col mx-auto">
               <TradeForm coin={coin} progress={progress} />
@@ -723,6 +745,19 @@ export default function TradingPage() {
           </div>
         </div>
       </div>
+      
+      {/* Reply Button - Fixed in bottom right corner */}
+      <motion.button
+        onClick={() => setIsChatPanelOpen(!isChatPanelOpen)}
+        className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-10 h-10 rounded-full text-blue-500 border border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-all p-0 bg-transparent shadow-none"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <Send className="w-5 h-5" />
+      </motion.button>
     </div>
   );
 }

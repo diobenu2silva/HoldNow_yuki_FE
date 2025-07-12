@@ -18,7 +18,7 @@ export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
         <div className="text-lg">{holder.name}</div>
       </td>
       <td className="text-center py-2">
-        {Math.ceil(holder.amount / Math.pow(10, 6))}
+        {holder.amount}
       </td>
       <td className="text-center py-2">
         <p

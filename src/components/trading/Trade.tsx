@@ -1,6 +1,7 @@
 import { recordInfo } from '@/utils/types';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { SwapDirection } from '@/utils/constants';
 interface TradePropsInfo {
   trade: recordInfo;
 }
@@ -27,7 +28,10 @@ export const Trade: React.FC<TradePropsInfo> = ({ trade }) => {
         <td className="text-center py-2">Create</td>
       ) : (
         <td className="text-center py-2">
-          {trade.swapDirection == 1 ? 'BUY' : 'SELL'}
+          {trade.swapDirection === SwapDirection.BUY ? 'BUY' : 
+           trade.swapDirection === SwapDirection.CLAIM ? 'CLAIM' : 
+           trade.swapDirection === SwapDirection.TOKEN_CREATE ? 'CREATE' : 
+           trade.swapDirection === SwapDirection.AIRDROP ? 'AIRDROP' : 'SELL'}
         </td>
       )}
       <td className="text-center py-2">

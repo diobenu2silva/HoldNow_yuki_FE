@@ -68,3 +68,12 @@ export const enabledFeatures: ChartingLibraryFeatureset[] = [
   'study_overlay_compare_legend_option',
   'go_to_date',
 ];
+
+// Swap direction enum for transaction types
+export enum SwapDirection {
+  TOKEN_CREATE = -1,  // Token creation/launch (initial state)
+  SELL = 0,           // Sell transaction
+  BUY = 1,            // Buy transaction
+  CLAIM = 2,          // Claim transaction
+  AIRDROP = 3         // Airdrop transaction
+}

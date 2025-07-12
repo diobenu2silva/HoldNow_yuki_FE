@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
+import { SwapDirection } from './constants';
 
 export type ChartTable = {
   table: {
@@ -124,7 +125,7 @@ export interface recordInfo {
   holder: userInfo;
   lamportAmount: number;
   price: number;
-  swapDirection: number;
+  swapDirection: SwapDirection; // Using SwapDirection enum
   time: Date;
   tokenAmount: number;
   tx: string;
