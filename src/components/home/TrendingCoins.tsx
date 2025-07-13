@@ -1,13 +1,13 @@
 'use client';
-import { FC, useContext, useEffect, useState, useRef } from 'react';
+import { FC, useContext, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { coinInfo } from '@/utils/types';
-import { getCoinsInfoBySort } from '@/utils/util';
 import UserContext from '@/context/UserContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { useTrendingCoins } from '@/hooks/useTrendingCoins';
 
 interface TrendingCoinsProps {
   onCoinClick: (coinId: string) => void;
@@ -16,34 +16,11 @@ interface TrendingCoinsProps {
 const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
   const { solPrice } = useContext(UserContext);
   const { replyCounts } = useSocket();
-  const [trendingCoins, setTrendingCoins] = useState<coinInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch trending coins (top 6 by market cap)
-  useEffect(() => {
-    const fetchTrendingCoins = async () => {
-      try {
-        const response = await getCoinsInfoBySort('mcap', 0, 10);
-        // Handle the new API response structure
-        if (response && typeof response === 'object' && 'coins' in response) {
-          setTrendingCoins(response.coins);
-        } else if (Array.isArray(response)) {
-          setTrendingCoins(response);
-        } else {
-          setTrendingCoins([]);
-        }
-      } catch (error) {
-        console.error('Error fetching trending coins:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTrendingCoins();
-  }, []);
-
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Use React Query hook for trending coins
+  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: 10 });
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -80,6 +57,17 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="w-full">
+        <h2 className="text-2xl font-bold text-foreground mb-4">Trending Coins</h2>
+        <div className="text-center py-8 text-red-500">
+          Error loading trending coins
+        </div>
+      </div>
+    );
+  }
+
   if (trendingCoins.length === 0) {
     return (
       <div className="w-full">
@@ -94,24 +82,26 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold text-foreground mb-4">Trending Coins</h2>
-      <div className="relative group">
-        {/* Left Arrow */}
-        <button
-          onClick={scrollLeft}
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 bg-background/90 hover:bg-background border border-border rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto"
-        >
-          ‹
-        </button>
+      <div className="relative">
+        {/* Navigation arrows */}
+        {trendingCoins.length > 4 && (
+          <>
+            <button
+              onClick={scrollLeft}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-2 z-10 w-8 h-8 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
+            >
+              ‹
+            </button>
+            <button
+              onClick={scrollRight}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-2 z-10 w-8 h-8 bg-background/80 hover:bg-background border border-border rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
+            >
+              ›
+            </button>
+          </>
+        )}
 
-        {/* Right Arrow */}
-        <button
-          onClick={scrollRight}
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 bg-background/90 hover:bg-background border border-border rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto"
-        >
-          ›
-        </button>
-
-        {/* Scrollable Container */}
+        {/* Scrollable container */}
         <div 
           ref={scrollContainerRef}
           className="flex gap-4 overflow-x-auto scrollbar-hide px-2"
@@ -138,7 +128,6 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
                   backgroundPosition: 'center',
                 }}
                 onError={(e) => {
-                  // Fallback to default background if banner image fails to load
                   const target = e.target as HTMLDivElement;
                   target.style.backgroundImage = 'none';
                   target.style.backgroundColor = 'var(--card)';
@@ -148,7 +137,7 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
                 
                 {/* Content overlay */}
-                <div className="relative z-10 flex flex-col h-full justify-between p-3">
+                <div className="relative z-10 p-3 flex flex-col h-full">
                   {/* Header Section */}
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-border">
@@ -159,7 +148,6 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
                         height={40}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          // Fallback to default token image if image fails to load
                           const target = e.target as HTMLImageElement;
                           target.src = '/assets/images/user-avatar.png';
                         }}
@@ -173,39 +161,28 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
 
                   {/* Market Cap and Replies */}
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <CurrencyDollarIcon className="w-4 h-4 text-white" />
-                      <div>
-                        <div className="text-xs text-white/80 drop-shadow-lg">Market Cap</div>
-                        <div className="font-semibold text-white text-sm drop-shadow-lg">
-                          ${marketCapUSD.toLocaleString()}K
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <CurrencyDollarIcon className="w-4 h-4 text-white/80" />
+                      <span className="text-xs text-white/90 font-medium drop-shadow-lg">
+                        ${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                      </span>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-white" />
-                      <div>
-                        <div className="text-xs text-white/80 drop-shadow-lg">Replies</div>
-                        <div className="font-semibold text-white text-sm drop-shadow-lg">
-                          {replyCount}
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-white/80" />
+                      <span className="text-xs text-white/90 font-medium drop-shadow-lg">{replyCount}</span>
                     </div>
                   </div>
 
-                  {/* Stage Progress - Now at the bottom */}
+                  {/* Stage Progress */}
                   <div className="mt-auto">
-                    <div className="flex items-center justify-between text-xs text-white/80 mb-1">
-                      <span className="text-xs font-medium drop-shadow-lg">Stage {coin.currentStage}</span>
-                      <span className="text-xs font-medium drop-shadow-lg">{Math.round(stageProgress)}%</span>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-white/80">Stage</span>
+                      <span className="text-white/90 font-medium">{stageProgress.toFixed(0)}%</span>
                     </div>
-                    <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
-                      <motion.div 
-                        className="h-1.5 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stageProgress}%` }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
+                    <div className="w-full bg-white/20 rounded-full h-1.5">
+                      <div
+                        className="bg-gradient-to-r from-primary to-accent h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${stageProgress}%` }}
                       />
                     </div>
                   </div>

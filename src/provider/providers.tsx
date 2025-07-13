@@ -12,8 +12,19 @@ import LoginContext from '@/context/CoinContex';
 import { useWallet } from '@solana/wallet-adapter-react';
 import SocketProvider from '@/contexts/SocketContext';
 import { ClaimProvider } from '@/context/ClaimContext';
+import ReactQueryDevTools from '@/components/ReactQueryDevTools';
 
-export const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+  },
+});
 
 export default function Providers({ children }: { children: ReactNode }) {
   const wallet = useWallet();
@@ -70,6 +81,7 @@ export default function Providers({ children }: { children: ReactNode }) {
             </UserContext.Provider>
           </PageProvider>
         </ModalProvider>
+        <ReactQueryDevTools />
       </QueryClientProvider>
     </SolanaWalletProvider>
   );
