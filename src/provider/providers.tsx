@@ -12,7 +12,7 @@ import LoginContext from '@/context/CoinContex';
 import { useWallet } from '@solana/wallet-adapter-react';
 import SocketProvider from '@/contexts/SocketContext';
 import { ClaimProvider } from '@/context/ClaimContext';
-import ReactQueryDevTools from '@/components/ReactQueryDevTools';
+
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,7 +81,7 @@ export default function Providers({ children }: { children: ReactNode }) {
             </UserContext.Provider>
           </PageProvider>
         </ModalProvider>
-        <ReactQueryDevTools />
+
       </QueryClientProvider>
     </SolanaWalletProvider>
   );
