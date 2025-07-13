@@ -17,38 +17,31 @@ const CreateTokenButton: FC = () => {
       errorAlert('Please connect your wallet first to create a token.');
       return;
     }
-    
     setIsNavigating(true);
-    
-    // Add a small delay for smooth transition
     await new Promise(resolve => setTimeout(resolve, 300));
-    
     router.push('/create-coin');
   };
 
   return (
-    <div className="w-full flex justify-center py-8">
-      <motion.div
-        whileHover={!isNavigating ? { scale: 1.05 } : {}}
-        whileTap={!isNavigating ? { scale: 0.95 } : {}}
-        onClick={handleCreateToken}
-        className={`px-14 py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg cursor-pointer font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden ${
-          isNavigating ? 'opacity-75 cursor-not-allowed' : ''
-        }`}
-      >
-        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine"></div>
-        <span className="relative z-10 flex items-center gap-2">
-          {isNavigating && (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
-            />
-          )}
-          {isNavigating ? 'Creating...' : 'Create a Token'}
-        </span>
-      </motion.div>
-    </div>
+    <motion.div
+      whileHover={!isNavigating ? { scale: 1.05 } : {}}
+      whileTap={!isNavigating ? { scale: 0.95 } : {}}
+      onClick={handleCreateToken}
+      className={`px-3 py-2 w-28 text-primary flex flex-col justify-center items-center border-2 border-primary/30 rounded-full cursor-pointer bg-card hover:bg-accent transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm text-sm font-semibold relative overflow-hidden text-center ${
+        isNavigating ? 'opacity-75 cursor-not-allowed' : ''
+      }`}
+      title="Create a Coin"
+    >
+      {isNavigating ? (
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full mx-auto"
+        />
+      ) : (
+        <span className="select-none w-full text-center">Create</span>
+      )}
+    </motion.div>
   );
 };
 
