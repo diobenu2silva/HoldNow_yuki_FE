@@ -68,8 +68,8 @@ export const useCoinsWithSocket = ({
       refetchOnWindowFocus: false,
       retry: 3,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      // Add refetch on mount to ensure data consistency
-      refetchOnMount: true,
+      // Disable refetch on mount to prevent double fetching
+      refetchOnMount: false,
     }
   );
 

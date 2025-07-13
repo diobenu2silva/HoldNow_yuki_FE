@@ -12,26 +12,79 @@ import { useTrendingCoins } from '@/hooks/useTrendingCoins';
 
 interface TrendingBannerProps {
   onCoinClick: (coinId: string) => void;
+  maxCount?: number; // Optional prop to set maximum king of coin count
 }
 
-const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
+const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) => {
   const { solPrice } = useContext(UserContext);
-  const { replyCounts } = useSocket();
+  const { replyCounts, onCoinInfoUpdate } = useSocket();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [trendingCoinsState, setTrendingCoinsState] = useState<coinInfo[]>([]);
+  const [stageProgressMap, setStageProgressMap] = useState<{[key: string]: number}>({});
 
   // Use React Query hook for trending coins
-  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: 3 });
+  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: maxCount });
+
+  // Update local state when trending coins change
+  useEffect(() => {
+    setTrendingCoinsState(trendingCoins);
+  }, [trendingCoins]);
+
+  // Real-time coin info updates
+  useEffect(() => {
+    if (onCoinInfoUpdate) {
+      const handleCoinUpdate = (payload: any) => {
+        setTrendingCoinsState(prevCoins => 
+          prevCoins.map(coin => 
+            coin.token === payload.token ? { ...coin, ...payload.coinInfo } : coin
+          )
+        );
+      };
+      
+      onCoinInfoUpdate(handleCoinUpdate);
+    }
+  }, [onCoinInfoUpdate]);
+
+  // Real-time progress calculation for all coins
+  useEffect(() => {
+    const updateProgress = () => {
+      const newProgressMap: {[key: string]: number} = {};
+      
+      trendingCoinsState.forEach(coin => {
+        if (coin.bondingCurve || !coin.atStageStarted || !coin.stageDuration) {
+          newProgressMap[coin._id] = 100;
+          return;
+        }
+
+        const nowDate = new Date();
+        const atStageStartedDate = new Date(coin.atStageStarted);
+        const period = nowDate.getTime() - atStageStartedDate.getTime();
+        const millisecondsInADay = 120 * 1000; // match trading page logic
+        const progress = Math.round((period * 10000) / (millisecondsInADay * coin.stageDuration)) / 100;
+        newProgressMap[coin._id] = progress > 100 ? 100 : progress;
+      });
+      
+      setStageProgressMap(newProgressMap);
+    };
+
+    updateProgress(); // initial call
+    const intervalId = setInterval(updateProgress, 1000);
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [trendingCoinsState]);
 
   // Auto-rotate slides every 5 seconds
   useEffect(() => {
-    if (trendingCoins.length <= 1) return;
+    if (trendingCoinsState.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % trendingCoins.length);
+      setCurrentSlide((prev) => (prev + 1) % trendingCoinsState.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [trendingCoins.length]);
+  }, [trendingCoinsState.length]);
 
   if (isLoading) {
     return (
@@ -49,7 +102,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
     );
   }
 
-  if (trendingCoins.length === 0) {
+  if (trendingCoinsState.length === 0) {
     return (
       <div className="w-full h-[250px] bg-muted rounded-lg flex items-center justify-center">
         <div className="text-muted-foreground">No trending coins available</div>
@@ -57,15 +110,92 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
     );
   }
 
-  const currentCoin = trendingCoins[currentSlide];
+  const currentCoin = trendingCoinsState[currentSlide];
   const replyCount = replyCounts[currentCoin._id] || 0;
   const marketCapUSD = (currentCoin.progressMcap * (solPrice || 0) / 1e18 || 0);
-  const stageProgress = Math.min(((currentCoin.currentStage - 1) / currentCoin.stagesNumber) * 100, 100);
+  const currentStageProgress = stageProgressMap[currentCoin._id] || 0;
 
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold text-foreground mb-4">King of Coin</h2>
-      <div className="relative h-[250px] rounded-lg overflow-hidden">
+      <div className="flex gap-4 h-[250px]">
+        {/* Left Side Banner */}
+        {trendingCoinsState.length > 1 && (
+          <div className="w-1/5 h-[200px] relative rounded-lg overflow-hidden self-end">
+            <div
+              onClick={() => onCoinClick(`/trading/${trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id}`)}
+              className="w-full h-full cursor-pointer relative overflow-hidden"
+              style={{
+                backgroundImage: trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].frontBanner 
+                  ? `url(${trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].frontBanner})` 
+                  : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
+                {/* Header Section */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+                    <Image
+                      src={trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].url}
+                      alt={trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].name}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/assets/images/user-avatar.png';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold drop-shadow-lg truncate">
+                      {trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].name}
+                    </h3>
+                    <p className="text-sm text-white/80 drop-shadow-lg truncate">
+                      {trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].ticker}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Market Cap and Replies */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <CurrencyDollarIcon className="w-4 h-4" />
+                    <span className="text-sm font-semibold drop-shadow-lg">
+                      ${((trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
+                    <span className="text-sm font-semibold drop-shadow-lg">
+                      {replyCounts[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stage Progress */}
+                <div className="mb-2">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Stage Progress</span>
+                    <span>{(stageProgressMap[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-1.5">
+                    <div
+                      className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${stageProgressMap[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Center Banner */}
+        <div className="w-3/5 relative rounded-lg overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentCoin._id}
@@ -130,12 +260,12 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
               <div className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
                   <span>Stage Progress</span>
-                  <span>{stageProgress.toFixed(1)}%</span>
+                  <span>{currentStageProgress.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-2">
                   <div
-                    className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${stageProgress}%` }}
+                    className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${currentStageProgress}%` }}
                   />
                 </div>
               </div>
@@ -144,16 +274,16 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
         </AnimatePresence>
 
         {/* Navigation arrows */}
-        {trendingCoins.length > 1 && (
+        {trendingCoinsState.length > 1 && (
           <>
             <button
-              onClick={() => setCurrentSlide((prev) => (prev - 1 + trendingCoins.length) % trendingCoins.length)}
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + trendingCoinsState.length) % trendingCoinsState.length)}
               className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200"
             >
               ←
             </button>
             <button
-              onClick={() => setCurrentSlide((prev) => (prev + 1) % trendingCoins.length)}
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % trendingCoinsState.length)}
               className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200"
             >
               →
@@ -162,9 +292,9 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
         )}
 
         {/* Slide indicators */}
-        {trendingCoins.length > 1 && (
+        {trendingCoinsState.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-            {trendingCoins.map((_, index) => (
+            {trendingCoinsState.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
@@ -173,6 +303,82 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
                 }`}
               />
             ))}
+          </div>
+        )}
+        </div>
+
+        {/* Right Side Banner */}
+        {trendingCoinsState.length > 1 && (
+          <div className="w-1/5 h-[200px] relative rounded-lg overflow-hidden self-end">
+            <div
+              onClick={() => onCoinClick(`/trading/${trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id}`)}
+              className="w-full h-full cursor-pointer relative overflow-hidden"
+              style={{
+                backgroundImage: trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].frontBanner 
+                  ? `url(${trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].frontBanner})` 
+                  : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
+                {/* Header Section */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+                    <Image
+                      src={trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].url}
+                      alt={trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].name}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/assets/images/user-avatar.png';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold drop-shadow-lg truncate">
+                      {trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].name}
+                    </h3>
+                    <p className="text-sm text-white/80 drop-shadow-lg truncate">
+                      {trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].ticker}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Market Cap and Replies */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <CurrencyDollarIcon className="w-4 h-4" />
+                    <span className="text-sm font-semibold drop-shadow-lg">
+                      ${((trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
+                    <span className="text-sm font-semibold drop-shadow-lg">
+                      {replyCounts[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stage Progress */}
+                <div className="mb-2">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Stage Progress</span>
+                    <span>{(stageProgressMap[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-1.5">
+                    <div
+                      className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${stageProgressMap[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

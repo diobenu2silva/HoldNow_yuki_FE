@@ -36,6 +36,8 @@ const ReactQueryHomePage: FC = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigatingTo, setNavigatingTo] = useState<string>('');
   const [nsfwMap, setNsfwMap] = useState<{[url: string]: boolean}>({});
+  const [isPageTransitioning, setIsPageTransitioning] = useState(false);
+  const [lastPageChange, setLastPageChange] = useState(0);
   
   const router = useRouter();
   const pathname = usePathname();
@@ -192,9 +194,70 @@ const ReactQueryHomePage: FC = () => {
   }, [currentData, nsfwMap]);
 
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+    const now = Date.now();
+    if (page !== currentPage && page >= 1 && page <= totalPages && (now - lastPageChange) > 300) {
+      console.log('Page change triggered:', page); // Debug log
+      setLastPageChange(now);
+      setIsPageTransitioning(true);
+      setCurrentPage(page);
+      
+      // Reset transition state after animation completes
+      setTimeout(() => {
+        setIsPageTransitioning(false);
+      }, 200);
+    }
+  }, [currentPage, totalPages, lastPageChange]);
+
+  // Memoize pagination props to prevent unnecessary re-renders
+  const paginationProps = useMemo(() => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+
+    return {
+      currentPage,
+      totalPages,
+      onPageChange: handlePageChange,
+      itemsPerPage,
+      totalItems: totalCoins,
+      pageNumbers
+    };
+  }, [currentPage, totalPages, handlePageChange, itemsPerPage, totalCoins]);
+
+  // Create stable callback for pagination - prevent double calls
+  const stableHandlePageChange = useCallback((page: number) => {
+    // Prevent double calls by checking if we're already transitioning
+    if (!isPageTransitioning) {
+      handlePageChange(page);
+    }
+  }, [handlePageChange, isPageTransitioning]);
 
   const handleItemsPerPageChange = useCallback((newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
@@ -230,6 +293,27 @@ const ReactQueryHomePage: FC = () => {
     }
   };
 
+  const pageTransitionVariants = {
+    enter: {
+      x: 50,
+      transition: {
+        duration: 0.15
+      }
+    },
+    center: {
+      x: 0,
+      transition: {
+        duration: 0.2
+      }
+    },
+    exit: {
+      x: -50,
+      transition: {
+        duration: 0.15
+      }
+    }
+  };
+
   return (
     <div className="w-full min-h-screen relative">
       {/* Navigation Loading Overlay */}
@@ -245,7 +329,7 @@ const ReactQueryHomePage: FC = () => {
         </div>
       )}
       
-      <div className="container py-0">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-0">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -263,7 +347,7 @@ const ReactQueryHomePage: FC = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-8"
         >
-          <TrendingBanner onCoinClick={handleToRouter} />
+          <TrendingBanner onCoinClick={handleToRouter} maxCount={3} />
         </motion.div>
 
         {/* Trending Coins Section */}
@@ -273,7 +357,7 @@ const ReactQueryHomePage: FC = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-8"
         >
-          <TrendingCoins onCoinClick={handleToRouter} />
+          <TrendingCoins onCoinClick={handleToRouter} maxCount={20} />
         </motion.div>
 
         {/* Filter and View Controls */}
@@ -388,7 +472,7 @@ const ReactQueryHomePage: FC = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handlePageChange(currentPage - 1)}
+                  onClick={() => stableHandlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="btn-outline p-1.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -397,66 +481,33 @@ const ReactQueryHomePage: FC = () => {
 
                 {/* Page numbers */}
                 <div className="flex items-center gap-0.5">
-                  {(() => {
-                    const pages = [];
-                    const maxVisiblePages = 5;
-                    
-                    if (totalPages <= maxVisiblePages) {
-                      for (let i = 1; i <= totalPages; i++) {
-                        pages.push(i);
-                      }
-                    } else {
-                      if (currentPage <= 3) {
-                        for (let i = 1; i <= 4; i++) {
-                          pages.push(i);
+                  {paginationProps.pageNumbers?.map((page, index) => (
+                    <motion.button
+                      key={`upper-${page}-${index}`}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => typeof page === 'number' && stableHandlePageChange(page)}
+                      disabled={page === '...'}
+                      className={`
+                        min-w-[28px] h-7 px-2 rounded-md text-xs font-medium transition-all duration-200
+                        ${page === currentPage
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : page === '...'
+                          ? 'text-muted-foreground cursor-default'
+                          : 'btn-outline hover:bg-accent'
                         }
-                        pages.push('...');
-                        pages.push(totalPages);
-                      } else if (currentPage >= totalPages - 2) {
-                        pages.push(1);
-                        pages.push('...');
-                        for (let i = totalPages - 3; i <= totalPages; i++) {
-                          pages.push(i);
-                        }
-                      } else {
-                        pages.push(1);
-                        pages.push('...');
-                        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-                          pages.push(i);
-                        }
-                        pages.push('...');
-                        pages.push(totalPages);
-                      }
-                    }
-                    
-                    return pages.map((page, index) => (
-                      <motion.button
-                        key={index}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => typeof page === 'number' && handlePageChange(page)}
-                        disabled={page === '...'}
-                        className={`
-                          min-w-[28px] h-7 px-2 rounded-md text-xs font-medium transition-all duration-200
-                          ${page === currentPage
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : page === '...'
-                            ? 'text-muted-foreground cursor-default'
-                            : 'btn-outline hover:bg-accent'
-                          }
-                        `}
-                      >
-                        {page}
-                      </motion.button>
-                    ));
-                  })()}
+                      `}
+                    >
+                      {page}
+                    </motion.button>
+                  ))}
                 </div>
 
                 {/* Next button */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handlePageChange(currentPage + 1)}
+                  onClick={() => stableHandlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className="btn-outline p-1.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -505,39 +556,43 @@ const ReactQueryHomePage: FC = () => {
         )}
 
         {/* Coins Grid/List */}
-        {isDataLoading ? (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className={`w-full ${
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                : 'flex flex-col gap-4'
-            }`}
-          >
-            {Array.from({ length: itemsPerPage }).map((_, index) => (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                className={viewMode === 'list' ? 'w-full' : ''}
-              >
-                <TokenCardSkeleton />
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : currentData && currentData.length > 0 ? (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className={`w-full ${
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                : 'flex flex-col gap-4'
-            }`}
-          >
-            <AnimatePresence>
+        <AnimatePresence mode="wait">
+          {isDataLoading ? (
+            <motion.div
+              key="loading"
+              variants={pageTransitionVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className={`w-full ${
+                viewMode === 'grid'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6'
+                  : 'flex flex-col gap-4'
+              }`}
+            >
+              {Array.from({ length: itemsPerPage }).map((_, index) => (
+                <motion.div
+                  key={index}
+                  variants={itemVariants}
+                  className={viewMode === 'list' ? 'w-full' : ''}
+                >
+                  <TokenCardSkeleton />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : currentData && currentData.length > 0 ? (
+            <motion.div
+              key={`page-${currentPage}-${isPageTransitioning}`}
+              variants={pageTransitionVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className={`w-full ${
+                viewMode === 'grid'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6'
+                  : 'flex flex-col gap-4'
+              }`}
+            >
               {currentData.map((temp, index) => (
                 <motion.div
                   key={`${temp._id}-${index}`}
@@ -553,22 +608,25 @@ const ReactQueryHomePage: FC = () => {
                   </div>
                 </motion.div>
               ))}
-            </AnimatePresence>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <div className="text-muted-foreground text-lg">
-              {searchToken.trim() 
-                ? `No tokens found matching "${searchToken}"`
-                : "No tokens found"
-              }
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              variants={pageTransitionVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="text-center py-12"
+            >
+              <div className="text-muted-foreground text-lg">
+                {searchToken.trim() 
+                  ? `No tokens found matching "${searchToken}"`
+                  : "No tokens found"
+                }
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Bottom Pagination */}
         {totalPages > 1 && (
@@ -578,13 +636,7 @@ const ReactQueryHomePage: FC = () => {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="mt-8"
           >
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              itemsPerPage={itemsPerPage}
-              totalItems={totalCoins}
-            />
+            <Pagination {...paginationProps} />
           </motion.div>
         )}
       </div>

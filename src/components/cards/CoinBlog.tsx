@@ -236,7 +236,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
               variants={progressVariants}
               initial="hidden"
               animate="visible"
-              className="h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-full relative"
+              className="h-full bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-full relative"
             />
           </div>
         </div>

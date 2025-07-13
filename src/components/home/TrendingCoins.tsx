@@ -11,16 +11,17 @@ import { useTrendingCoins } from '@/hooks/useTrendingCoins';
 
 interface TrendingCoinsProps {
   onCoinClick: (coinId: string) => void;
+  maxCount?: number; // Optional prop to set maximum trending coins count
 }
 
-const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
+const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) => {
   const { solPrice } = useContext(UserContext);
   const { replyCounts } = useSocket();
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Use React Query hook for trending coins
-  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: 10 });
+  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: maxCount });
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -181,7 +182,7 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick }) => {
                     </div>
                     <div className="w-full bg-white/20 rounded-full h-1.5">
                       <div
-                        className="bg-gradient-to-r from-primary to-accent h-1.5 rounded-full transition-all duration-300"
+                        className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 shadow-lg shadow-yellow-400/50 h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${stageProgress}%` }}
                       />
                     </div>

@@ -1,5 +1,5 @@
 'use client';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 
@@ -21,7 +21,7 @@ const Pagination: FC<PaginationProps> = ({
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  const getPageNumbers = () => {
+  const pageNumbers = useMemo(() => {
     const pages = [];
     const maxVisiblePages = 5;
     
@@ -54,6 +54,13 @@ const Pagination: FC<PaginationProps> = ({
     }
     
     return pages;
+  }, [currentPage, totalPages]);
+
+  const handlePageClick = (page: number | string) => {
+    if (typeof page === 'number' && page >= 1 && page <= totalPages) {
+      console.log('Pagination click:', page); // Debug log
+      onPageChange(page);
+    }
   };
 
   return (
@@ -69,7 +76,7 @@ const Pagination: FC<PaginationProps> = ({
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={() => handlePageClick(currentPage - 1)}
           disabled={currentPage === 1}
           className="btn-outline p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -78,12 +85,12 @@ const Pagination: FC<PaginationProps> = ({
 
         {/* Page numbers */}
         <div className="flex items-center gap-1">
-          {getPageNumbers().map((page, index) => (
+          {pageNumbers.map((page, index) => (
             <motion.button
-              key={index}
+              key={`${page}-${index}`}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => typeof page === 'number' && onPageChange(page)}
+              onClick={() => handlePageClick(page)}
               disabled={page === '...'}
               className={`
                 min-w-[40px] h-10 px-3 rounded-lg font-medium transition-all duration-200
@@ -104,7 +111,7 @@ const Pagination: FC<PaginationProps> = ({
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => handlePageClick(currentPage + 1)}
           disabled={currentPage === totalPages}
           className="btn-outline p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
