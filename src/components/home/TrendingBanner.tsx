@@ -122,17 +122,23 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
         {/* Left Side Banner */}
         {trendingCoinsState.length > 1 && (
           <div className="w-1/5 h-[200px] relative rounded-lg overflow-hidden self-end">
-            <div
-              onClick={() => onCoinClick(`/trading/${trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id}`)}
-              className="w-full h-full cursor-pointer relative overflow-hidden"
-              style={{
-                backgroundImage: trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].frontBanner 
-                  ? `url(${trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].frontBanner})` 
-                  : 'none',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`left-${trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id}`}
+                initial={{ x: 50 }}
+                animate={{ x: 0 }}
+                exit={{ x: -50 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                onClick={() => onCoinClick(`/trading/${trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id}`)}
+                className="w-full h-full cursor-pointer relative overflow-hidden"
+                style={{
+                  backgroundImage: trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].frontBanner 
+                    ? `url(${trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].frontBanner})` 
+                    : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              >
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
               <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
                 {/* Header Section */}
@@ -190,7 +196,8 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
                   </div>
                 </div>
               </div>
-            </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         )}
 
@@ -199,10 +206,10 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
         <AnimatePresence mode="wait">
           <motion.div
             key={currentCoin._id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            initial={{ x: 100 }}
+            animate={{ x: 0 }}
+            exit={{ x: -100 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             onClick={() => onCoinClick(`/trading/${currentCoin._id}`)}
             className="w-full h-full cursor-pointer relative overflow-hidden"
             style={{
@@ -310,17 +317,23 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
         {/* Right Side Banner */}
         {trendingCoinsState.length > 1 && (
           <div className="w-1/5 h-[200px] relative rounded-lg overflow-hidden self-end">
-            <div
-              onClick={() => onCoinClick(`/trading/${trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id}`)}
-              className="w-full h-full cursor-pointer relative overflow-hidden"
-              style={{
-                backgroundImage: trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].frontBanner 
-                  ? `url(${trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].frontBanner})` 
-                  : 'none',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`right-${trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id}`}
+                initial={{ x: 50 }}
+                animate={{ x: 0 }}
+                exit={{ x: -50 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                onClick={() => onCoinClick(`/trading/${trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id}`)}
+                className="w-full h-full cursor-pointer relative overflow-hidden"
+                style={{
+                  backgroundImage: trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].frontBanner 
+                    ? `url(${trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].frontBanner})` 
+                    : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              >
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
               <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
                 {/* Header Section */}
@@ -378,7 +391,8 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
                   </div>
                 </div>
               </div>
-            </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         )}
       </div>
