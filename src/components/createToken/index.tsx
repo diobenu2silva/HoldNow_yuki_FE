@@ -49,7 +49,7 @@ export default function CreateToken() {
   );
   const [tokenNumberStages, setTokenNumberStages] = useState<number>(1);
   const [tokenStageDuration, setTokenStageDuration] = useState<number>(1);
-  const [tokenSellTaxDecay, setTokenSellTaxDecay] = useState<number>(10);
+  const [tokenSellTaxDecay, setTokenSellTaxDecay] = useState<number>(100);
   const [tokenSellTaxRange, setTokenSellTaxRange] = useState<number[]>([
     0, 100,
   ]);
@@ -375,7 +375,7 @@ export default function CreateToken() {
                   type="image/*"
                 />
                 <SelectInput
-                  header="Number fo Stages"
+                  header="Number of Stages"
                   data={StagesData}
                   setSelectData={(inputData) => setTokenNumberStages(inputData.id)}
                   style="h-[200px] overflow-y-scroll z-10"

@@ -73,22 +73,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   };
 
   const handleScroll = () => {
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    console.log('__yuki__ handleScroll, scrollTop:', scrollTop, 'scrollHeight:', scrollHeight, 'clientHeight:', clientHeight);
     if (chatContainerRef.current) {
-      setIsAtBottom(chatContainerRef.current.scrollTop === 0);
+      // With flex-col-reverse, the bottom is at scrollTop = 0
+      setIsAtBottom(scrollTop === scrollHeight);
     }
   };
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = 0;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   };
 
   useEffect(() => {
-    if (isAtBottom) {
-      scrollToBottom();
-    }
+    // Always scroll to bottom when new messages arrive
+    scrollToBottom();
   }, [messages]);
 
   // Drag functionality

@@ -3,7 +3,7 @@ import { FC, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import UserContext from '@/context/UserContext';
 import { coinInfo } from '@/utils/types';
-import { getCoinsInfo, getSolPriceInUSD, getLatestReplies } from '@/utils/util';
+import { getCoinsInfo, getSolPriceInUSD, getLatestReplies, getReplyCounts } from '@/utils/util';
 import { CoinBlog } from '../cards/CoinBlog';
 import TopToken from './TopToken';
 import FilterList from './FilterList';
@@ -36,6 +36,7 @@ const HomePage: FC = () => {
   const [navigatingTo, setNavigatingTo] = useState<string>('');
   const router = useRouter();
   const pathname = usePathname();
+  const { replyCounts, setReplyCounts } = useSocket();
 
   const handleToRouter = (id: string) => {
     setIsNavigating(true);
@@ -176,27 +177,37 @@ const HomePage: FC = () => {
     const fetchData = async () => {
       setIsDataLoading(true);
       try {
-        const [coins, price, replies] = await Promise.all([
+        const [coins, price, replies, replyCounts] = await Promise.all([
           getCoinsInfo(),
           getSolPriceInUSD(),
-          getLatestReplies()
+          getLatestReplies(),
+          getReplyCounts() // Add initial reply counts fetch
         ]);
+      
+      if (coins !== null) {
+        setData(coins);
+        setLatestReplies(replies);
         
-        if (coins !== null) {
-          setData(coins);
-          setLatestReplies(replies);
-          setIsLoading(true);
-          setKing(coins[0]);
-          setSolPrice(price);
-        }
-      } catch (error) {
-        console.error('__yuki__ Error fetching data:', error);
-      } finally {
-        setIsDataLoading(false);
+        // Initialize reply counts from the fetched data
+        const replyCountsMap: { [coinId: string]: number } = {};
+        replyCounts.forEach((item: { coinId: string; replyCount: number }) => {
+          replyCountsMap[item.coinId] = item.replyCount;
+        });
+        setReplyCounts(replyCountsMap);
+        
+        setIsLoading(true);
+        setKing(coins[0]);
+        setSolPrice(price);
       }
-    };
-    fetchData();
-  }, []);
+    } catch (error) {
+      console.error('__yuki__ Error fetching data:', error);
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
+
+  fetchData();
+}, [setReplyCounts]); // Add setReplyCounts to dependencies
 
   // Handle new token creation
   useEffect(() => {

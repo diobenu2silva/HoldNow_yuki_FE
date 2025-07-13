@@ -14,23 +14,25 @@ export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
 
   return (
     <>
-      <td className="flex flex-row gap-2 items-center justify-center py-2">
-        <div className="text-lg">{holder.name}</div>
+      <td className="flex flex-row gap-2 items-center justify-center py-2 w-3/10">
+        <div className="text-lg">
+          {holder.name}
+        </div>
       </td>
-      <td className="text-center py-2">
-        {holder.amount}
-      </td>
-      <td className="text-center py-2">
-        <p
+      <td className="text-center py-2 w-1/2">
+        <div 
+          className="text-sm hover:cursor-pointer hover:text-white transition-colors duration-200"
           onClick={() =>
             handleToRouter(
               `https://solscan.io/accounts/${holder.owner}?cluster=devnet`
             )
           }
-          className="text-lg leading-10 hover:cursor-pointer hover:text-white"
         >
-          <BsArrow90DegRight />
-        </p>
+          {holder.owner.slice(0, 4)}...{holder.owner.slice(-4)}
+        </div>
+      </td>
+      <td className="text-center py-2 w-1/5">
+        {holder.amount}
       </td>
     </>
   );

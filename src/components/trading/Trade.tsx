@@ -14,6 +14,7 @@ export const Trade: React.FC<TradePropsInfo> = ({ trade }) => {
 
   return (
     <>
+      <td className="text-center py-2">{trade.time.toString()}</td>
       <td className="flex flex-row gap-2 items-center justify-center py-2">
         <img
           src={trade.holder.avatar}
@@ -37,7 +38,6 @@ export const Trade: React.FC<TradePropsInfo> = ({ trade }) => {
       <td className="text-center py-2">
         {Math.round(trade.lamportAmount / Math.pow(10, 6)) / 1000}
       </td>
-      <td className="text-center py-2">{trade.time.toString()}</td>
       <td className="text-center py-2">
         <p
           onClick={() =>

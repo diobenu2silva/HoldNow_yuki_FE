@@ -55,9 +55,9 @@ export default function TradingPage() {
   const { coinId, setCoinId, login, user, web3Tx, setWeb3Tx } =
     useContext(UserContext);
   const wallet = useWallet();
-  const { publicKey } = wallet;
   const { visible, setVisible } = useWalletModal();
   const pathname = usePathname();
+  const [publicKey, setPublicKey] = useState<PublicKey | null>(wallet.publicKey);
   const [param, setParam] = useState<string>('');
   const [progress, setProgress] = useState<number>(0);
   const [coin, setCoin] = useState<coinInfo>({} as coinInfo);
@@ -353,7 +353,7 @@ export default function TradingPage() {
     if (coin && coin.token) {
       fetchData();
     }
-  }, [web3Tx, coin?.token, coin?.bondingCurve]);
+  }, [publicKey, coin?.token, coin?.bondingCurve]);
 
   // Real-time stage progress timer
   useEffect(() => {

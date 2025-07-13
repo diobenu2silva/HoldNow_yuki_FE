@@ -77,6 +77,8 @@ interface Context {
   onNewTokenCreated?: (callback: (payload: CoinInfoUpdatedPayload) => void) => void;
   onTransactionUpdate?: (callback: (payload: TransactionUpdatePayload) => void) => void;
   onHoldersUpdate?: (callback: (payload: HoldersUpdatePayload) => void) => void;
+  replyCounts?: { [coinId: string]: number };
+  setReplyCounts?: Function;
 }
 
 const context = createContext<Context>({});
@@ -99,6 +101,9 @@ const SocketProvider = (props: { children: any }) => {
     message: '',
     severity: undefined,
   });
+
+  // Add reply counts state
+  const [replyCounts, setReplyCounts] = useState<{ [coinId: string]: number }>({});
 
   // Callback storage for real-time updates
   const [claimDataCallbacks, setClaimDataCallbacks] = useState<((payload: ClaimDataUpdatedPayload) => void)[]>([]);
@@ -233,7 +238,16 @@ const SocketProvider = (props: { children: any }) => {
     });
     socket.on('TokenCreated', createSuccessHandler);
     socket.on('TokenNotCreated', createFailedHandler);
-    socket.on('MessageUpdated', createMessageHandler);
+    socket.on('MessageUpdated', (coinId: string, message: any, replyCount: number) => {
+      // Handle the existing message update logic
+      createMessageHandler(coinId, message);
+      
+      // Also update the reply count
+      setReplyCounts(prev => ({
+        ...prev,
+        [coinId]: replyCount
+      }));
+    });
 
     // Add new real-time event listeners
     socket.on('coinInfoUpdated', coinInfoUpdatedHandler);
@@ -248,7 +262,7 @@ const SocketProvider = (props: { children: any }) => {
       socket.off('Creation');
       socket.off('TokenCreated', createSuccessHandler);
       socket.off('TokenNotCreated', createFailedHandler);
-      socket.off('MessageUpdated', createMessageHandler);
+      socket.off('MessageUpdated');
       
       // Remove new real-time event listeners
       socket.off('coinInfoUpdated', coinInfoUpdatedHandler);
@@ -287,6 +301,8 @@ const SocketProvider = (props: { children: any }) => {
         onNewTokenCreated,
         onTransactionUpdate,
         onHoldersUpdate,
+        replyCounts,
+        setReplyCounts,
       }}
     >
       {props.children}
