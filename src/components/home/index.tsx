@@ -293,7 +293,7 @@ const HomePage: FC = () => {
         </div>
       )}
       
-      <div className="container py-8">
+      <div className="container py-0">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
