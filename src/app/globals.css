@@ -245,6 +245,15 @@
   scrollbar-width: none;
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Number input styling */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -336,4 +345,20 @@ input[type='number'] {
 .animate-shimmer {
   pointer-events: none;
   animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes hero-zoom {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-hero-zoom {
+  animation: hero-zoom 20s ease-in-out infinite;
 }

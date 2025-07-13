@@ -6,6 +6,9 @@ import { coinInfo } from '@/utils/types';
 import { getCoinsInfo, getSolPriceInUSD, getLatestReplies, getReplyCounts } from '@/utils/util';
 import { CoinBlog } from '../cards/CoinBlog';
 import TopToken from './TopToken';
+import TrendingBanner from './TrendingBanner';
+import TrendingCoins from './TrendingCoins';
+import CreateTokenButton from './CreateTokenButton';
 import FilterList from './FilterList';
 import Pagination from './Pagination';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -302,11 +305,41 @@ const HomePage: FC = () => {
           <TopToken />
         </motion.div>
 
-        {/* Filter and View Controls */}
+        {/* Trending Banner Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-8"
+        >
+          <TrendingBanner onCoinClick={handleToRouter} />
+        </motion.div>
+
+        {/* Trending Coins Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8"
+        >
+          <TrendingCoins onCoinClick={handleToRouter} />
+        </motion.div>
+
+        {/* Create Token Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mb-8"
+        >
+          <CreateTokenButton />
+        </motion.div>
+
+        {/* Filter and View Controls */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
           className="mb-6"
         >
           <FilterList
@@ -320,7 +353,7 @@ const HomePage: FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
           className="flex w-full items-center gap-x-6 mb-6 h-10"
         >
           {/* Left side - View Mode */}
@@ -381,7 +414,7 @@ const HomePage: FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
           className="flex justify-end items-center mb-6"
         >
           <div className="flex items-center gap-2 whitespace-nowrap">
@@ -471,7 +504,7 @@ const HomePage: FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
             className="mt-8"
           >
             <Pagination

@@ -5,7 +5,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['violet-fierce-impala-900.mypinata.cloud'],
+    domains: ['violet-fierce-impala-900.mypinata.cloud', 'ipfs.io'],
   },
 };
 
