@@ -605,15 +605,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   onClick={handleSendMessage}
                   onMouseDown={(e) => e.stopPropagation()}
                   disabled={(!chatMessage.trim() && !selectedImage) || isSending}
-                  className="h-7 w-7 flex items-center justify-center rounded-full text-blue-500 border border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all p-0 bg-transparent shadow-none"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  className="h-9 w-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground hover:from-primary/95 hover:via-primary/90 hover:to-primary/85 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-400 shadow-[0_3px_12px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] border border-white/25 hover:border-white/40 backdrop-blur-sm"
+                  whileHover={{ scale: 1.08, y: -1, rotate: 2 }}
+                  whileTap={{ scale: 0.92 }}
                 >
-                  {isSending ? (
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent rounded-xl"></div>
+                    {isSending ? (
+                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin relative z-10" />
+                    ) : (
+                      <svg className="w-4 h-4 drop-shadow-md relative z-10" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                      </svg>
+                    )}
+                  </div>
                 </motion.button>
               </div>
             </div>

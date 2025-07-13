@@ -14,7 +14,7 @@ import {
   getSolPriceInUSD,
 } from '@/utils/util';
 import { usePathname, useRouter } from 'next/navigation';
-import { useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { useContext, useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { IoMdArrowRoundBack } from 'react-icons/io';
 import SocialList from '../others/socialList';
 import TokenData from '../others/TokenData';
@@ -25,13 +25,17 @@ import { ConnectButton } from '../buttons/ConnectButton';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { getTokenBalance } from '@/program/web3';
 
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { PublicKey } from '@solana/web3.js';
 import { useCountdownToast } from '@/utils/useCountdownToast';
 import { token } from '@coral-xyz/anchor/dist/cjs/utils';
 import { motion } from 'framer-motion';
 import { useSocket } from '@/contexts/SocketContext';
 import { Send } from 'lucide-react';
+
+// Lazy load heavy components
+const LazyTradingChart = lazy(() => import('@/components/TVChart/TradingChart').then(module => ({ default: module.TradingChart })));
+const LazyChatting = lazy(() => import('@/components/trading/Chatting').then(module => ({ default: module.Chatting })));
 
 const getBalance = async (wallet: string, token: string) => {
   try {
@@ -57,6 +61,7 @@ export default function TradingPage() {
   const wallet = useWallet();
   const { visible, setVisible } = useWalletModal();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const [publicKey, setPublicKey] = useState<PublicKey | null>(wallet.publicKey);
   const [param, setParam] = useState<string>('');
   const [progress, setProgress] = useState<number>(0);
@@ -75,11 +80,126 @@ export default function TradingPage() {
   // Chat panel state
   const [isChatPanelOpen, setIsChatPanelOpen] = useState(false);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
-  const [chatPosition, setChatPosition] = useState({ x: window.innerWidth - 380, y: window.innerHeight - 540 });
+  const [chatPosition, setChatPosition] = useState({ x: 0, y: 0 });
   const [chatSize, setChatSize] = useState({ width: 350, height: 500 });
 
+  // Mobile state
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chart' | 'chat' | 'trade'>('chart');
+
   // Only destructure the first 6 values, use claimData[6] for coinData
-  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = claimData;
+  // Ensure claimData is always an array to prevent destructuring errors
+  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
+
+  // Memoized calculations for performance
+  const memoizedStageProgress = useMemo(() => {
+    if (!coin.atStageStarted) return 0;
+    
+    const millisecondsInADay = 120 * 1000; // 2 minutes for testing
+    const nowDate = new Date();
+    const atStageStartedDate = new Date(coin.atStageStarted);
+    const period = nowDate.getTime() - atStageStartedDate.getTime();
+    const stageProgress =
+      Math.round(
+        (period * 10000) / (millisecondsInADay * (coin.airdropStage ? 1 : coin.stageDuration))
+      ) / 100;
+    
+    return stageProgress > 100 ? 100 : stageProgress;
+  }, [coin.atStageStarted, coin.airdropStage, coin.stageDuration]);
+
+  const memoizedDerivedData = useMemo(() => {
+    if (!coin.bondingCurve) {
+      const progress = Math.round((coin.progressMcap * solPrice / 1e15) / 10) / 100;
+      const liquidity = Math.round(((coin.lamportReserves / 1e9) * solPrice * 2) / 10) / 100;
+      return { progress, liquidity, stageProg: memoizedStageProgress };
+    } else {
+      if (coin.movedToRaydium && !coin.moveRaydiumFailed) {
+        return { progress: 100, liquidity: 0, stageProg: 100 };
+      } else {
+        const progress = Math.round((coin.progressMcap * solPrice / 1e15) / 10) / 100;
+        const liquidity = Math.round(((coin.lamportReserves / 1e9) * solPrice * 2) / 10) / 100;
+        return { progress, liquidity, stageProg: 100 };
+      }
+    }
+  }, [coin.bondingCurve, coin.progressMcap, coin.lamportReserves, coin.movedToRaydium, coin.moveRaydiumFailed, solPrice, memoizedStageProgress]);
+
+  // React Query for data fetching
+  const { data: coinData, isLoading: isCoinLoading, error: coinError } = useQuery(
+    ['coin', param],
+    () => getCoinInfo(param),
+    {
+      enabled: !!param,
+      staleTime: 30000, // 30 seconds
+      cacheTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  const { data: claimDataQuery, isLoading: isClaimLoading } = useQuery(
+    ['claimData', param, publicKey?.toBase58()],
+    async () => {
+      const data = await getClaimData(param, publicKey?.toBase58() || '');
+      // Transform the object response to array format expected by the component
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        return [
+          data.claimInUSD ?? 0,
+          data.claimHodl ?? 0,
+          data.currentClaim ?? 0,
+          data.solPrice ?? 0,
+          data.rewardCap ?? 0,
+          data.tokenBalance ?? 0,
+        ];
+      }
+      return data;
+    },
+    {
+      enabled: !!param && !!publicKey,
+      staleTime: 10000, // 10 seconds
+      cacheTime: 2 * 60 * 1000, // 2 minutes
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  // Update derived data when memoized data changes
+  useEffect(() => {
+    setProgress(memoizedDerivedData.progress);
+    setLiquidity(memoizedDerivedData.liquidity);
+    setStageProg(memoizedDerivedData.stageProg);
+  }, [memoizedDerivedData]);
+
+  // Update coin data when query data changes
+  useEffect(() => {
+    if (coinData) {
+      setCoin(coinData);
+      setIsLoading(false);
+    }
+  }, [coinData]);
+
+  // Update claim data when query data changes
+  useEffect(() => {
+    if (claimDataQuery && Array.isArray(claimDataQuery)) {
+      setClaimData(claimDataQuery as [number, number, number, number, number, number]);
+    }
+  }, [claimDataQuery]);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      // Adjust chat position for mobile
+      if (window.innerWidth < 768) {
+        setChatPosition({ x: 0, y: 0 });
+        setChatSize({ width: window.innerWidth, height: window.innerHeight * 0.6 });
+      } else {
+        setChatPosition({ x: window.innerWidth - 380, y: window.innerHeight - 540 });
+        setChatSize({ width: 350, height: 500 });
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Calculate stage progress based on current time and stage start time
   const calculateStageProgress = useCallback((coinData: coinInfo) => {
@@ -128,24 +248,26 @@ export default function TradingPage() {
     }
   }, [calculateStageProgress, solPrice]);
 
-  // Handle real-time claim data updates
+  // Handle real-time claim data updates with debouncing
   const handleClaimDataUpdate = useCallback((payload: any) => {
-    console.log('__yuki__ handleClaimDataUpdate called with payload:', payload);
-    console.log('__yuki__ Current coin.token:', coin.token);
-    console.log('__yuki__ Current publicKey:', publicKey?.toBase58());
-    console.log('__yuki__ Payload user:', payload.user);
-    console.log('__yuki__ Is coin loaded:', !!coin.token);
-    
     // Only process if coin is properly loaded and has a token
     if (!coin.token) {
-      console.log('__yuki__ Coin not loaded yet, ignoring claim data update');
       return;
     }
     
     // Compare payload.token (token address) with coin.token (token address)
     if (payload.token === coin.token && publicKey && payload.user === publicKey.toBase58()) {
-      console.log('__yuki__ Conditions met, updating claimData');
+      // Update React Query cache directly for better performance
+      queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
+        payload.claimData.claimInUSD ?? 0,
+        payload.claimData.claimHodl ?? 0,
+        payload.claimData.currentClaim ?? 0,
+        payload.claimData.solPrice ?? 0,
+        payload.claimData.rewardCap ?? 0,
+        payload.claimData.tokenBalance ?? 0,
+      ]);
       
+      // Also update local state for immediate UI updates
       setClaimData([
         payload.claimData.claimInUSD ?? 0,
         payload.claimData.claimHodl ?? 0,
@@ -154,45 +276,23 @@ export default function TradingPage() {
         payload.claimData.rewardCap ?? 0,
         payload.claimData.tokenBalance ?? 0,
       ]);
-      console.log('__yuki__ claimData updated with new values:', {
-        claimInUSD: payload.claimData.claimInUSD,
-        claimHodl: payload.claimData.claimHodl,
-        currentClaim: payload.claimData.currentClaim,
-        solPrice: payload.claimData.solPrice,
-        rewardCap: payload.claimData.rewardCap,
-        tokenBalance: payload.claimData.tokenBalance
-      });
-    } else {
-      console.log('__yuki__ Conditions not met:', {
-        tokenMatch: payload.token === coin.token,
-        hasPublicKey: !!publicKey,
-        userMatch: publicKey ? payload.user === publicKey.toBase58() : false
-      });
     }
-  }, [coin.token, publicKey]);
+  }, [coin.token, publicKey, param, queryClient]);
 
-  // Handle real-time stage changes
+  // Handle real-time stage changes with optimized updates
   const handleStageChange = useCallback((payload: any) => {
-    console.log('__yuki__ handleStageChange called with payload:', payload);
-    console.log('__yuki__ Current coin.token:', coin.token);
-    console.log('__yuki__ Payload token:', payload.token);
-    console.log('__yuki__ Token match:', payload.token === coin.token);
-    console.log('__yuki__ Is coin loaded:', !!coin.token);
-    
     // Only process if coin is properly loaded and has a token
     if (!coin.token) {
-      console.log('__yuki__ Coin not loaded yet, ignoring stage change');
       return;
     }
     
     // Compare payload.token (token address) with coin.token (token address)
     if (payload.token === coin.token) {
-      console.log('__yuki__ Token match confirmed, updating stage data');
-      
-      // Update coin data with new stage information
-      setCoin(prevCoin => {
+      // Update React Query cache directly for better performance
+      queryClient.setQueryData(['coin', param], (oldData: any) => {
+        if (!oldData) return oldData;
         const updatedCoin = {
-          ...prevCoin,
+          ...oldData,
           currentStage: payload.newStage,
           atStageStarted: new Date(payload.timestamp),
           airdropStage: payload.isAirdropStage,
@@ -204,71 +304,38 @@ export default function TradingPage() {
         console.log('__yuki__ Trading: Stage change updated coin data:', updatedCoin);
         return updatedCoin;
       });
-    } else {
-      console.log('__yuki__ Token mismatch in stage change, ignoring update');
+      
+      // Also update local state for immediate UI updates
+      setCoin(prevCoin => ({
+        ...prevCoin,
+        currentStage: payload.newStage,
+        atStageStarted: new Date(payload.timestamp),
+        airdropStage: payload.isAirdropStage,
+        bondingCurve: payload.isBondingCurve,
+        stageStarted: payload.stageStarted,
+        stageEnded: payload.stageEnded
+      }));
     }
-  }, [coin.token]);
+  }, [coin.token, param, queryClient]);
 
-  // Handle real-time coin info updates
+  // Handle real-time coin info updates with optimized caching
   const handleCoinInfoUpdate = useCallback((payload: any) => {
-    console.log('__yuki__ handleCoinInfoUpdate called with payload:', payload);
-    console.log('__yuki__ Current coin.token:', coin.token);
-    console.log('__yuki__ Payload token:', payload.token);
-    console.log('__yuki__ Token match:', payload.token === coin.token);
-    console.log('__yuki__ Is coin loaded:', !!coin.token);
-    
     // Only process if coin is properly loaded and has a token
     if (!coin.token) {
-      console.log('__yuki__ Coin not loaded yet, ignoring coin info update');
       return;
     }
     
     if (payload.token === coin.token) {
-      console.log('__yuki__ Token match confirmed, updating coin data');
+      // Update React Query cache directly for better performance
+      queryClient.setQueryData(['coin', param], payload.coinInfo);
       
-      // Log token reserves changes for debugging
-      if (payload.coinInfo.tokenReserves !== coin.tokenReserves) {
-        console.log('__yuki__ Token reserves changed, chart should update:', {
-          previous: coin.tokenReserves,
-          current: payload.coinInfo.tokenReserves,
-          priceChange: payload.coinInfo.lamportReserves / payload.coinInfo.tokenReserves - coin.lamportReserves / coin.tokenReserves
-        });
-      }
-      
-      // Log stage and Raydium status changes
-      if (payload.coinInfo.currentStage !== coin.currentStage) {
-        console.log('__yuki__ Stage changed:', {
-          previous: coin.currentStage,
-          current: payload.coinInfo.currentStage
-        });
-      }
-      
-      if (payload.coinInfo.movedToRaydium !== coin.movedToRaydium) {
-        console.log('__yuki__ Raydium status changed:', {
-          previous: coin.movedToRaydium,
-          current: payload.coinInfo.movedToRaydium
-        });
-      }
-      
-      if (payload.coinInfo.moveRaydiumFailed !== coin.moveRaydiumFailed) {
-        console.log('__yuki__ Raydium failure status changed:', {
-          previous: coin.moveRaydiumFailed,
-          current: payload.coinInfo.moveRaydiumFailed
-        });
-      }
-      
-      // Update coin data
+      // Also update local state for immediate UI updates
       setCoin(payload.coinInfo);
       
       // Update derived data (but not stage progress if we have real-time timer running)
       updateDerivedData(payload.coinInfo);
-      
-      console.log('__yuki__ Trading: Coin info updated from socket, new coin data:', payload.coinInfo);
-      // The useCountdownToast hook will handle countdown toasts automatically
-    } else {
-      console.log('__yuki__ Token mismatch, ignoring update');
     }
-  }, [coin.token, coin.tokenReserves, coin.currentStage, coin.movedToRaydium, coin.moveRaydiumFailed, updateDerivedData]);
+  }, [coin.token, param, queryClient, updateDerivedData]);
 
   // Register socket callbacks
   useEffect(() => {
@@ -521,10 +588,48 @@ export default function TradingPage() {
           </div>
 
           {/* Loading Indicator */}
-          {isLoading && (
-            <div className="w-full flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-3 text-foreground">Loading token data...</span>
+          {(isLoading || isCoinLoading) && (
+            <div className="w-full space-y-6">
+              {/* Header Skeleton */}
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-muted rounded-lg animate-pulse"></div>
+                <div className="flex-1">
+                  <div className="h-6 bg-muted rounded animate-pulse mb-2"></div>
+                  <div className="h-4 bg-muted rounded animate-pulse w-1/2"></div>
+                </div>
+              </div>
+
+              {/* Token Balance Skeleton */}
+              <div className="flex items-center gap-2">
+                <div className="h-6 bg-muted rounded animate-pulse w-32"></div>
+                <div className="h-6 bg-muted rounded animate-pulse w-16"></div>
+              </div>
+
+              {/* Mobile Tab Skeleton */}
+              <div className="flex bg-card border border-border rounded-lg p-1">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex-1 py-2 px-4">
+                    <div className="h-4 bg-muted rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Content Skeleton */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Main Content */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="h-8 bg-muted rounded animate-pulse"></div>
+                  <div className="h-64 bg-muted rounded animate-pulse"></div>
+                  <div className="h-64 bg-muted rounded animate-pulse"></div>
+                </div>
+                
+                {/* Sidebar */}
+                <div className="space-y-4">
+                  <div className="h-32 bg-muted rounded animate-pulse"></div>
+                  <div className="h-32 bg-muted rounded animate-pulse"></div>
+                  <div className="h-32 bg-muted rounded animate-pulse"></div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -593,44 +698,111 @@ export default function TradingPage() {
             <span className="text-muted-foreground">{coin?.ticker || 'Token'}</span>
           </div>
 
-          <div className="w-full flex flex-col md3:flex-row gap-4">
-            <div className={`flex-1 px-2 transition-all duration-300 ease-in-out ${isChatPanelOpen ? 'mr-4' : ''}`}>
-              <div className="w-full flex flex-col justify-between gap-2">
-                <div className="flex flex-row gap-2 items-center justify-between">
-                  <p className="font-semibold text-foreground">Token Name - {coin?.name}</p>
-                  <p className="font-semibold text-foreground">Ticker: {coin?.ticker}</p>
+          {/* Mobile Tab Navigation */}
+          {isMobile && (
+            <div className="flex bg-card border border-border rounded-lg p-1 mb-4">
+              <button
+                onClick={() => setActiveTab('chart')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'chart'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Chart
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'chat'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Chat
+              </button>
+              <button
+                onClick={() => setActiveTab('trade')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'trade'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Trade
+              </button>
+            </div>
+          )}
+
+          <div className={`w-full flex flex-col ${isMobile ? '' : 'md3:flex-row'} gap-4`}>
+            {/* Main Content Area */}
+            <div className={`${isMobile ? 'w-full' : 'flex-1'} px-2 transition-all duration-300 ease-in-out ${isChatPanelOpen && !isMobile ? 'mr-4' : ''}`}>
+              {/* Token Info Header */}
+              <div className="w-full flex flex-col justify-between gap-2 mb-4">
+                <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2 items-center justify-between`}>
+                  <p className="font-semibold text-foreground text-sm sm:text-base">Token Name - {coin?.name}</p>
+                  <p className="font-semibold text-foreground text-sm sm:text-base">Ticker: {coin?.ticker}</p>
                 </div>
                 <div className="flex flex-row justify-end items-center gap-2 pb-2">
-                  <p className="font-semibold text-foreground">CA: {coin?.token}</p>
+                  <p className="font-semibold text-foreground text-xs sm:text-sm truncate">CA: {coin?.token}</p>
                   <motion.p
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => copyToClipBoard(coin?.token)}
-                    className="cursor-pointer text-xl text-primary hover:text-primary/80 transition-colors duration-200"
+                    className="cursor-pointer text-lg sm:text-xl text-primary hover:text-primary/80 transition-colors duration-200 flex-shrink-0"
                   >
                     <FaCopy />
                   </motion.p>
                 </div>
               </div>
-              <TradingChart param={coin} tokenReserves={coin.tokenReserves} />
-              <Chatting param={param} coin={coin} />
+
+              {/* Chart Section */}
+              {(!isMobile || activeTab === 'chart') && (
+                <div className={`${isMobile ? 'w-full' : ''} mb-4`}>
+                  <Suspense fallback={
+                    <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <span className="ml-3 text-foreground">Loading Chart...</span>
+                    </div>
+                  }>
+                    <LazyTradingChart param={coin} tokenReserves={coin.tokenReserves} />
+                  </Suspense>
+                </div>
+              )}
+
+              {/* Chat Section */}
+              {(!isMobile || activeTab === 'chat') && (
+                <div className={`${isMobile ? 'w-full' : ''}`}>
+                  <Suspense fallback={
+                    <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <span className="ml-3 text-foreground">Loading Chat...</span>
+                    </div>
+                  }>
+                    <LazyChatting param={param} coin={coin} />
+                  </Suspense>
+                </div>
+              )}
             </div>
             
-            {/* Chat Panel */}
-            <ChatPanel 
-              param={param}
-              coin={coin}
-              isOpen={isChatPanelOpen}
-              onClose={() => setIsChatPanelOpen(false)}
-              onMinimize={() => setIsChatMinimized(!isChatMinimized)}
-              isMinimized={isChatMinimized}
-              position={chatPosition}
-              onPositionChange={setChatPosition}
-              size={chatSize}
-              onSizeChange={setChatSize}
-            />
+            {/* Chat Panel - Desktop Only */}
+            {!isMobile && (
+              <ChatPanel 
+                param={param}
+                coin={coin}
+                isOpen={isChatPanelOpen}
+                onClose={() => setIsChatPanelOpen(false)}
+                onMinimize={() => setIsChatMinimized(!isChatMinimized)}
+                isMinimized={isChatMinimized}
+                position={chatPosition}
+                onPositionChange={setChatPosition}
+                size={chatSize}
+                onSizeChange={setChatSize}
+              />
+            )}
 
-            <div className="w-full max-w-[300px] 2xs:max-w-[420px] px-2 gap-4 flex flex-col mx-auto">
+            {/* Trade Panel */}
+            <div className={`${isMobile ? 'w-full' : 'w-full max-w-[300px] 2xs:max-w-[420px]'} px-2 gap-4 flex flex-col mx-auto ${(!isMobile || activeTab === 'trade') ? 'block' : 'hidden'}`}>
               <TradeForm coin={coin} progress={progress} />
 
               <div className="w-full flex flex-col text-center gap-4 py-4 border-2 border-primary/30 rounded-lg px-3 bg-card shadow-lg">
@@ -703,32 +875,31 @@ export default function TradingPage() {
               <SocialList coin={coin} />
 
               <div className="w-full flex flex-col gap-4">
-                <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
+                <div className="w-full grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-4">
                   <DataCard text="MCAP" data={`${progress} k`} />
                   <DataCard text="Liquidity" data={`${liquidity} k`} />
                 </div>
-                <div className="w-full flex flex-col 2xs:flex-row gap-4 items-center justify-between">
+                <div className="w-full grid grid-cols-2 gap-2 sm:gap-4">
                   <DataCard
                     text="Stage"
                     data={`${Math.min(coin.currentStage, coin.stagesNumber)} of ${coin.stagesNumber}`}
                   />
                   <DataCard text="Sell Tax" data={`${sellTax} %`} />
-                  <DataCard text="Redistribution" data="$ 15.2K" />
                 </div>
               </div>
 
               <div className="flex flex-col gap-3">
                 <div className="w-full flex flex-col gap-2 px-3 py-2">
                   <div className="flex items-center gap-2">
-                  <p className="text-foreground text-base lg:text-xl">
-                    {coin.bondingCurve
-                      ? 'All Stages Completed'
-                      : coin.airdropStage
-                        ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of 1 Day`
-                        : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of ${coin.stageDuration} Days`}
-                  </p>
+                    <p className="text-foreground text-sm sm:text-base lg:text-xl">
+                      {coin.bondingCurve
+                        ? 'All Stages Completed'
+                        : coin.airdropStage
+                          ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of 1 Day`
+                          : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of ${coin.stageDuration} Days`}
+                    </p>
                     {isTimerActive && (
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Updating in real-time"></div>
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0" title="Updating in real-time"></div>
                     )}
                   </div>
                   <div className="bg-muted rounded-full h-2 relative">
@@ -746,17 +917,23 @@ export default function TradingPage() {
         </div>
       </div>
       
-      {/* Reply Button - Fixed in bottom right corner */}
+      {/* Chat Button - Fixed in bottom right corner */}
       <motion.button
         onClick={() => setIsChatPanelOpen(!isChatPanelOpen)}
-        className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-10 h-10 rounded-full text-blue-500 border border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 transition-all p-0 bg-transparent shadow-none"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary/95 to-primary/85 text-primary-foreground hover:from-primary/95 hover:via-primary/90 hover:to-primary/80 transition-all duration-500 shadow-[0_6px_24px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl border border-white/20 hover:border-white/30"
+        whileHover={{ scale: 1.1, y: -2, rotate: 3 }}
+        whileTap={{ scale: 0.92 }}
+        initial={{ opacity: 0, y: 20, scale: 0.7, rotate: -5 }}
+        animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
+        transition={{ delay: 0.6, type: "spring", stiffness: 150, damping: 15 }}
       >
-        <Send className="w-5 h-5" />
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
+          <svg className="w-6 h-6 drop-shadow-lg relative z-10" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+          </svg>
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-red-400 to-red-600 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
+        </div>
       </motion.button>
     </div>
   );

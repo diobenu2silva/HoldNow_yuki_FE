@@ -334,7 +334,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
 
         <Tabs.Content value="transaction">
           <motion.div 
-            className="w-full max-w-3xl mx-auto py-4"
+            className="w-full py-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -434,7 +434,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
         </Tabs.Content>
         <Tabs.Content value="top holders">
           <motion.div 
-            className="w-full max-w-3xl mx-auto py-4"
+            className="w-full py-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}

@@ -117,7 +117,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-foreground mb-4">King of Coin</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-4">King of Coin</h2>
       <div className="flex gap-4 h-[250px]">
         {/* Left Side Banner */}
         {trendingCoinsState.length > 1 && (
@@ -139,63 +139,63 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
                   backgroundPosition: 'center',
                 }}
               >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
-                {/* Header Section */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
-                    <Image
-                      src={trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].url}
-                      alt={trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].name}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/assets/images/user-avatar.png';
-                      }}
-                    />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
+                  {/* Header Section */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+                      <Image
+                        src={trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].url}
+                        alt={trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/assets/images/user-avatar.png';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold drop-shadow-lg truncate">
+                        {trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].name}
+                      </h3>
+                      <p className="text-sm text-white/80 drop-shadow-lg truncate">
+                        {trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].ticker}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold drop-shadow-lg truncate">
-                      {trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].name}
-                    </h3>
-                    <p className="text-sm text-white/80 drop-shadow-lg truncate">
-                      {trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].ticker}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Market Cap and Replies */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <CurrencyDollarIcon className="w-4 h-4" />
-                    <span className="text-sm font-semibold drop-shadow-lg">
-                      ${((trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </span>
+                  {/* Market Cap and Replies */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <CurrencyDollarIcon className="w-4 h-4" />
+                      <span className="text-sm font-semibold drop-shadow-lg">
+                        ${((trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
+                      <span className="text-sm font-semibold drop-shadow-lg">
+                        {replyCounts[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
-                    <span className="text-sm font-semibold drop-shadow-lg">
-                      {replyCounts[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Stage Progress */}
-                <div className="mb-2">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Stage Progress</span>
-                    <span>{(stageProgressMap[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-1.5">
-                    <div
-                      className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${stageProgressMap[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0}%` }}
-                    />
+                  {/* Stage Progress */}
+                  <div className="mb-2">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Stage Progress</span>
+                      <span>{(stageProgressMap[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-white/20 rounded-full h-1.5">
+                      <div
+                        className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${stageProgressMap[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -334,63 +334,63 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
                   backgroundPosition: 'center',
                 }}
               >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
-                {/* Header Section */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
-                    <Image
-                      src={trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].url}
-                      alt={trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].name}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/assets/images/user-avatar.png';
-                      }}
-                    />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
+                  {/* Header Section */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+                      <Image
+                        src={trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].url}
+                        alt={trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/assets/images/user-avatar.png';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold drop-shadow-lg truncate">
+                        {trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].name}
+                      </h3>
+                      <p className="text-sm text-white/80 drop-shadow-lg truncate">
+                        {trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].ticker}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold drop-shadow-lg truncate">
-                      {trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].name}
-                    </h3>
-                    <p className="text-sm text-white/80 drop-shadow-lg truncate">
-                      {trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].ticker}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Market Cap and Replies */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <CurrencyDollarIcon className="w-4 h-4" />
-                    <span className="text-sm font-semibold drop-shadow-lg">
-                      ${((trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </span>
+                  {/* Market Cap and Replies */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <CurrencyDollarIcon className="w-4 h-4" />
+                      <span className="text-sm font-semibold drop-shadow-lg">
+                        ${((trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
+                      <span className="text-sm font-semibold drop-shadow-lg">
+                        {replyCounts[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
-                    <span className="text-sm font-semibold drop-shadow-lg">
-                      {replyCounts[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Stage Progress */}
-                <div className="mb-2">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Stage Progress</span>
-                    <span>{(stageProgressMap[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-1.5">
-                    <div
-                      className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${stageProgressMap[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0}%` }}
-                    />
+                  {/* Stage Progress */}
+                  <div className="mb-2">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Stage Progress</span>
+                      <span>{(stageProgressMap[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-white/20 rounded-full h-1.5">
+                      <div
+                        className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${stageProgressMap[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
               </motion.div>
             </AnimatePresence>
           </div>

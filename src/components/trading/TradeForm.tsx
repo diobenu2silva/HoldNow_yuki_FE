@@ -157,9 +157,9 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
 
   return (
     <div className="p-3 rounded-lg bg-card border-2 border-primary/30 shadow-sm">
-      <div className="flex flex-row justify-center px-3 py-2">
+      <div className="flex flex-row justify-center px-2 sm:px-3 py-2">
         <button
-          className={`rounded-l-lg py-3 w-full transition-all duration-200 ${
+          className={`rounded-l-lg py-2 sm:py-3 w-full transition-all duration-200 text-sm sm:text-base ${
             isSell === 0 
               ? 'bg-primary text-primary-foreground shadow-sm' 
               : 'bg-muted hover:bg-accent text-foreground'
@@ -169,7 +169,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
           Buy
         </button>
         <button
-          className={`rounded-r-lg py-3 w-full transition-all duration-200 ${
+          className={`rounded-r-lg py-2 sm:py-3 w-full transition-all duration-200 text-sm sm:text-base ${
             isSell === 1 
               ? 'bg-primary text-primary-foreground shadow-sm' 
               : 'bg-muted hover:bg-accent text-foreground'
@@ -187,7 +187,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
                 setSlippageInput((slippage * 100).toString()); // Set input to current value
                 setShowSlippageModal(true);
               }}
-              className="rounded bg-muted text-center w-[120px] p-1.5 text-sm font-medium text-foreground border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200"
+              className="rounded bg-muted text-center w-[100px] sm:w-[120px] p-1.5 text-xs sm:text-sm font-medium text-foreground border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200"
             >
               Set Slippage
             </div>
