@@ -128,12 +128,48 @@ export const getCoinsInfoBySort = async (
   sort: string,
   page: number,
   number: number
-): Promise<coinInfo[]> => {
-  const res = await axios.get(
-    `${BACKEND_URL}/coin/${sort}/${page}/${number}`,
-    config
-  );
-  return res.data;
+): Promise<{ coins: coinInfo[]; total: number; page: number; numberOfCoins: number }> => {
+  try {
+    const res = await axios.get(
+      `${BACKEND_URL}/coin/${sort}/${page}/${number}`,
+      config
+    );
+    return res.data;
+  } catch (err) {
+    console.log('__yuki__ getCoinsInfoBySort Error:', err);
+    return { coins: [], total: 0, page, numberOfCoins: number };
+  }
+};
+
+// New function for lazy loading with better error handling
+export const getCoinsInfoLazy = async (
+  sort: string = 'latest',
+  page: number = 0,
+  limit: number = 12,
+  filters?: {
+    search?: string;
+    nsfw?: boolean;
+  }
+): Promise<{ coins: coinInfo[]; total: number; hasMore: boolean; page: number }> => {
+  try {
+    const res = await axios.get(
+      `${BACKEND_URL}/coin/${sort}/${page}/${limit}`,
+      config
+    );
+    
+    const { coins, total, page: currentPage } = res.data;
+    const hasMore = (currentPage + 1) * limit < total;
+    
+    return {
+      coins: coins || [],
+      total: total || 0,
+      hasMore,
+      page: currentPage
+    };
+  } catch (err) {
+    console.log('__yuki__ getCoinsInfoLazy Error:', err);
+    return { coins: [], total: 0, hasMore: false, page };
+  }
 };
 
 export const getCoinsInfoBy = async (id: string): Promise<coinInfo[]> => {

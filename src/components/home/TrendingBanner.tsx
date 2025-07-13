@@ -26,12 +26,11 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick }) => {
     const fetchTrendingCoins = async () => {
       try {
         const response = await getCoinsInfoBySort('mcap', 0, 3);
-        // The API returns an object with coins property, but the function type says coinInfo[]
-        // We need to handle both cases
-        if (Array.isArray(response)) {
+        // Handle the new API response structure
+        if (response && typeof response === 'object' && 'coins' in response) {
+          setTrendingCoins(response.coins);
+        } else if (Array.isArray(response)) {
           setTrendingCoins(response);
-        } else if (response && typeof response === 'object' && 'coins' in response) {
-          setTrendingCoins((response as any).coins);
         } else {
           setTrendingCoins([]);
         }
