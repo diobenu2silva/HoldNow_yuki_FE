@@ -6,7 +6,6 @@ export default function Home() {
   return (
     <div className="w-full h-full min-h-[calc(100vh-100px)] flex flex-col">
       <div className=" mx-auto w-full relative">
-        {/* Top right button inside container for alignment */}
         <HomePage />
       </div>
     </div>

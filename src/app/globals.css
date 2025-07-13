@@ -87,7 +87,7 @@
 
 @layer components {
   .container {
-    @apply w-full mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8;
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
   }
   
   /* Modern Card Styles */
