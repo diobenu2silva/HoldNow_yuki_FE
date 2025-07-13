@@ -18,6 +18,7 @@ import { useSocket } from '@/contexts/SocketContext';
 import { useCoinsWithSocket } from '@/hooks/useCoinsWithSocket';
 import { useEssentialData } from '@/hooks/useCoins';
 import { useQueryClient } from 'react-query';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const ReactQueryHomePage: FC = () => {
   const { setIsLoading } = useContext(UserContext);
@@ -355,27 +356,135 @@ const ReactQueryHomePage: FC = () => {
           </div>
         </motion.div>
 
-        {/* Items per page selector */}
+        {/* Items per page selector and Pagination */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="flex justify-end items-center mb-6"
+          className="mb-6"
         >
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="text-muted-foreground text-sm">Items per page:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-              className="input bg-background border-border text-foreground text-sm px-3 py-1"
-            >
-              <option value={6}>6</option>
-              <option value={12}>12</option>
-              <option value={24}>24</option>
-              <option value={36}>36</option>
-              <option value={1000}>All</option>
-            </select>
-          </div>
+          {/* Full-width pagination with items per page on the left */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-1.5 bg-card border border-border rounded-lg">
+              {/* Left side - Items per page selector */}
+              <div className="flex items-center gap-2 whitespace-nowrap pl-3">
+                <span className="text-muted-foreground text-sm">Items per page:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="px-2 py-1 bg-background border border-border text-foreground text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={36}>36</option>
+                  <option value={48}>48</option>
+                  <option value={1000}>All</option>
+                </select>
+              </div>
+              
+              {/* Right side - Pagination controls */}
+              <div className="flex items-center gap-1">
+                {/* Previous button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="btn-outline p-1.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeftIcon className="w-3 h-3" />
+                </motion.button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-0.5">
+                  {(() => {
+                    const pages = [];
+                    const maxVisiblePages = 5;
+                    
+                    if (totalPages <= maxVisiblePages) {
+                      for (let i = 1; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      if (currentPage <= 3) {
+                        for (let i = 1; i <= 4; i++) {
+                          pages.push(i);
+                        }
+                        pages.push('...');
+                        pages.push(totalPages);
+                      } else if (currentPage >= totalPages - 2) {
+                        pages.push(1);
+                        pages.push('...');
+                        for (let i = totalPages - 3; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else {
+                        pages.push(1);
+                        pages.push('...');
+                        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                          pages.push(i);
+                        }
+                        pages.push('...');
+                        pages.push(totalPages);
+                      }
+                    }
+                    
+                    return pages.map((page, index) => (
+                      <motion.button
+                        key={index}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => typeof page === 'number' && handlePageChange(page)}
+                        disabled={page === '...'}
+                        className={`
+                          min-w-[28px] h-7 px-2 rounded-md text-xs font-medium transition-all duration-200
+                          ${page === currentPage
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : page === '...'
+                            ? 'text-muted-foreground cursor-default'
+                            : 'btn-outline hover:bg-accent'
+                          }
+                        `}
+                      >
+                        {page}
+                      </motion.button>
+                    ));
+                  })()}
+                </div>
+
+                {/* Next button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="btn-outline p-1.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRightIcon className="w-3 h-3" />
+                </motion.button>
+              </div>
+            </div>
+          )}
+          
+          {/* Items per page only (when no pagination needed) */}
+          {totalPages <= 1 && (
+            <div className="flex justify-end">
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <span className="text-muted-foreground text-sm">Items per page:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="px-3 py-1.5 bg-background border border-border text-foreground text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value={6}>6</option>
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={36}>36</option>
+                  <option value={1000}>All</option>
+                </select>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Error State */}
@@ -461,7 +570,7 @@ const ReactQueryHomePage: FC = () => {
           </motion.div>
         )}
 
-        {/* Pagination */}
+        {/* Bottom Pagination */}
         {totalPages > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}

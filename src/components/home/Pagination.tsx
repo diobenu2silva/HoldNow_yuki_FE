@@ -57,9 +57,9 @@ const Pagination: FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-card border border-border rounded-xl">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-2 bg-card border border-border rounded-xl">
       {/* Items info */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground pl-4">
         Showing {startItem} to {endItem} of {totalItems} results
       </div>
 

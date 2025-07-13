@@ -49,6 +49,11 @@ export const useCoinsWithSocket = ({
         actualLimit
       );
       
+      // Validate response data
+      if (!response || !response.coins) {
+        throw new Error('Invalid response from server');
+      }
+      
       return {
         coins: response.coins || [],
         total: response.total || 0,
@@ -63,6 +68,8 @@ export const useCoinsWithSocket = ({
       refetchOnWindowFocus: false,
       retry: 3,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Add refetch on mount to ensure data consistency
+      refetchOnMount: true,
     }
   );
 
@@ -72,27 +79,60 @@ export const useCoinsWithSocket = ({
       const handleNewToken = (payload: any) => {
         console.log('__yuki__ New token created:', payload);
         
-        // Update the cache with the new token
-        queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
+        // Only add new token to the first page (page 1)
+        if (page === 1) {
+          queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
+            if (!oldData) return oldData;
+            
+            const newToken = payload.coinInfo;
+            const existingCoins = oldData.coins || [];
+            
+            // Check if token already exists to avoid duplicates
+            const exists = existingCoins.find((token: coinInfo) => 
+              token._id === newToken._id || token.token === newToken.token
+            );
+            
+            if (exists) return oldData;
+            
+            // Add new token to the beginning and maintain exactly itemsPerPage tokens
+            const updatedCoins = [newToken, ...existingCoins];
+            
+            // Always keep exactly itemsPerPage tokens on the first page
+            // The last token gets pushed to the next page
+            const finalCoins = updatedCoins.slice(0, itemsPerPage);
+            
+            return {
+              ...oldData,
+              coins: finalCoins,
+              total: oldData.total + 1
+            };
+          });
+        } else {
+          // For other pages, just update the total count
+          queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
+            if (!oldData) return oldData;
+            
+            return {
+              ...oldData,
+              total: oldData.total + 1
+            };
+          });
+        }
+        
+        // Update all other pages' total count
+        queryClient.setQueriesData(['coins', sortType], (oldData: any) => {
           if (!oldData) return oldData;
           
-          const newToken = payload.coinInfo;
-          const existingCoins = oldData.coins || [];
-          
-          // Check if token already exists to avoid duplicates
-          const exists = existingCoins.find((token: coinInfo) => 
-            token._id === newToken._id || token.token === newToken.token
-          );
-          
-          if (exists) return oldData;
-          
-          // Add new token to the beginning of the list
           return {
             ...oldData,
-            coins: [newToken, ...existingCoins],
             total: oldData.total + 1
           };
         });
+        
+        // Invalidate the next page to ensure it has the correct data
+        // This is important when a new token pushes existing tokens to the next page
+        const nextPage = page + 1;
+        queryClient.invalidateQueries(['coins', sortType, nextPage, itemsPerPage]);
       };
       
       onNewTokenCreated(handleNewToken);
@@ -129,6 +169,9 @@ export const useCoinsWithSocket = ({
     total: data?.total || 0,
     isLoading,
     error,
-    refetch
+    refetch: () => {
+      console.log('__yuki__ Refetching coins for page:', page, 'itemsPerPage:', itemsPerPage);
+      refetch();
+    }
   };
 }; 
