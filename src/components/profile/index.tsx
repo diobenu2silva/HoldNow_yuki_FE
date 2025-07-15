@@ -21,7 +21,7 @@ import ImageUpload from '@/components/upload/ImageUpload';
 import { uploadImage } from '@/utils/fileUpload';
 
 export default function ProfilePage() {
-  const { user, setProfileEditModal, profileEditModal, setUser } =
+  const { user, setProfileEditModal, profileEditModal, setUser, setSolPrice } =
     useContext(UserContext);
   const pathname = usePathname();
   const [param, setParam] = useState<string | null>(null);
@@ -74,6 +74,23 @@ export default function ProfilePage() {
       fetchCoinsData(param);
     }
   }, [option, param]);
+
+  // Fetch solPrice for CoinBlog components
+  useEffect(() => {
+    const fetchSolPrice = async () => {
+      try {
+        const { getSolPriceInUSD } = await import('@/utils/util');
+        const price = await getSolPriceInUSD();
+        if (price > 0) {
+          setSolPrice(price);
+        }
+      } catch (error) {
+        console.error('__yuki__ Error fetching solPrice in profile page:', error);
+      }
+    };
+
+    fetchSolPrice();
+  }, [setSolPrice]);
 
   const copyToClipboard = async (text: string) => {
     try {

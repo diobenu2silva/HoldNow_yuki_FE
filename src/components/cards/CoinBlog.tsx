@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { HiOutlineGlobeAlt, HiOutlineChatBubbleLeftRight, HiOutlineInformationCircle } from 'react-icons/hi2';
 import { FaTwitter, FaTelegramPlane } from 'react-icons/fa';
 import { CurrencyDollarIcon, ArrowTrendingUpIcon, UserIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSocket } from '@/contexts/SocketContext';
 import { getUserInfo } from '@/utils/util';
 
@@ -13,12 +14,18 @@ interface CoinBlogProps {
   coin: coinInfo;
   componentKey: string;
   isNSFW?: boolean; // new prop for future use
+  solPrice?: number; // new prop for solPrice
 }
 
-export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }) => {
+export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, solPrice: propSolPrice }) => {
   const router = useRouter();
   const { onCoinInfoUpdate } = useSocket();
-  const { solPrice } = useContext(UserContext);
+  const { solPrice: contextSolPrice } = useContext(UserContext);
+  
+  // Use prop solPrice if provided, otherwise fall back to context solPrice
+  const solPrice = propSolPrice ?? contextSolPrice ?? 0;
+  
+
 
   // Calculate current stage progress (percentage)
   const [stageProg, setStageProg] = useState(0);
@@ -240,6 +247,9 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
         </div>
       
       </div>  
+      
+
+      
       {/* Stage Progress Section */}
       <div className="p-2 bg-white/10 dark:bg-black/40 backdrop-blur-sm border-t border-gray-200 dark:border-white/20">
         <div className="flex items-center justify-between mb-1">
@@ -252,7 +262,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
               {stageProg}%
             </div>
             <div className="text-gray-600 dark:text-white/70 text-xs">
-              Stage {Math.min(currentCoin.currentStage, currentCoin.stagesNumber)} of {currentCoin.stagesNumber} ({currentCoin.bondingCurve ? ((currentCoin.movedToRaydium && !currentCoin.moveRaydiumFailed) ? "Completed" : "Failed") : (currentCoin.airdropStage ? "Airdrop Stage" : "Trading Stage1")})
+              Stage {Math.min(currentCoin.currentStage, currentCoin.stagesNumber)} of {currentCoin.stagesNumber} ({currentCoin.bondingCurve ? ((currentCoin.movedToRaydium) ? "On Dex" : "Failed") : (currentCoin.airdropStage ? "Airdrop Stage" : "Trading Stage1")})
             </div>
           </div>
         </div>
@@ -268,30 +278,56 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
           </div>
         </div>
         
-        {/* Market Cap Display */}
-        <div className="mt-1 pt-1 border-t border-gray-200 dark:border-white/20">
-          <div className="flex items-center justify-between">
-            <div className="flex-col items-center gap-1">
-              <div className="flex items-center gap-1">
-                <CurrencyDollarIcon className="w-4 h-4 text-gray-900 dark:text-white" />
-                <span className="text-gray-700 dark:text-white/80 text-sm">Market Cap</span>
+        {/* Market Cap Display - Only show if not moved to Raydium */}
+        {!currentCoin.movedToRaydium && (
+          <div className="mt-1 pt-1 border-t border-gray-200 dark:border-white/20">
+            <div className="flex items-center justify-between">
+              <div className="flex-col items-center gap-1">
+                <div className="flex items-center gap-1">
+                  <CurrencyDollarIcon className="w-4 h-4 text-gray-900 dark:text-white" />
+                  <span className="text-gray-700 dark:text-white/80 text-sm">Market Cap</span>
+                </div>
+                <div className="text-gray-600 dark:text-white/70 text-xs flex items-center gap-1">
+                  <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-gray-900 dark:text-white" />
+                  <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
+                </div>
               </div>
-              <div className="text-gray-600 dark:text-white/70 text-xs flex items-center gap-1">
-                <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-gray-900 dark:text-white" />
-                <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
+              <div className="text-right">
+                <div className="text-gray-900 dark:text-white font-bold text-base">
+                  ${(currentCoin.progressMcap * solPrice / 1e18 || 0).toLocaleString()} K
+                </div>
+                <div className="text-gray-900 dark:text-white font-bold text-base">
+                  {currentReplyCount}
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-gray-900 dark:text-white font-bold text-base">
-                ${(currentCoin.progressMcap * (solPrice || 0) / 1e18 || 0).toLocaleString()} K
+          </div>
+        )}
+        
+        {/* Replies Only Display - Show when moved to Raydium */}
+        {currentCoin.movedToRaydium && (
+          <div className="mt-1 pt-1 border-t border-gray-200 dark:border-white/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-gray-900 dark:text-white" />
+                <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
               </div>
               <div className="text-gray-900 dark:text-white font-bold text-base">
                 {currentReplyCount}
               </div>
             </div>
+            
+            {/* DEX Listed Stamp - Bottom Right, next row to replies */}
+            <div className="mt-1 flex justify-end">
+              <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
+                <CheckCircleIcon className="w-3 h-3" />
+                Listed on DEX
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </motion.div>
   );
 };
+

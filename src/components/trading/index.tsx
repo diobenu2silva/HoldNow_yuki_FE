@@ -56,7 +56,7 @@ const isUserInfo = (obj: any): obj is userInfo => {
 };
 
 export default function TradingPage() {
-  const { coinId, setCoinId, login, user, web3Tx, setWeb3Tx } =
+  const { coinId, setCoinId, login, user, web3Tx, setWeb3Tx, setSolPrice } =
     useContext(UserContext);
   const wallet = useWallet();
   const { visible, setVisible } = useWalletModal();
@@ -90,6 +90,8 @@ export default function TradingPage() {
   // Only destructure the first 6 values, use claimData[6] for coinData
   // Ensure claimData is always an array to prevent destructuring errors
   const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
+  
+
 
   // Memoized calculations for performance
   const memoizedStageProgress = useMemo(() => {
@@ -181,6 +183,13 @@ export default function TradingPage() {
       setClaimData(claimDataQuery as [number, number, number, number, number, number]);
     }
   }, [claimDataQuery]);
+
+  // Update UserContext solPrice when claimData changes
+  useEffect(() => {
+    if (solPrice > 0) {
+      setSolPrice(solPrice);
+    }
+  }, [solPrice, setSolPrice]);
 
   // Mobile detection
   useEffect(() => {
@@ -634,7 +643,7 @@ export default function TradingPage() {
           )}
 
           {/* Raydium Move Failed Notification - Show only if failed, even if later succeeded */}
-          {!isLoading && !coin.movedToRaydium && coin.moveRaydiumFailed && (
+          {!isLoading && !coin.movedToRaydium && (
             <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
@@ -669,7 +678,7 @@ export default function TradingPage() {
           )}
 
           {/* Raydium Success Notification - Show only if succeeded AND never failed */}
-          {!isLoading && coin.movedToRaydium && !coin.moveRaydiumFailed && (
+          {!isLoading && coin.movedToRaydium && (
             <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>

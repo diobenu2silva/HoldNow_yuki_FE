@@ -312,7 +312,7 @@ const OptimizedHomePage: FC = () => {
                       onClick={() => handleToRouter(`/trading/${temp._id}`)}
                       className={viewMode === 'list' ? 'w-full' : 'cursor-pointer'}
                     >
-                      <CoinBlog coin={temp} componentKey="coin" isNSFW={false} />
+                      <CoinBlog coin={temp} componentKey="coin" isNSFW={false} solPrice={solPrice} />
                     </div>
                   </motion.div>
                 ))}

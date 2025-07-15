@@ -23,6 +23,9 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
   // Use React Query hook for trending coins
   const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: maxCount });
 
+  // Filter out tokens that have successfully moved to Raydium
+  const filteredTrendingCoins = trendingCoins.filter(coin => !coin.movedToRaydium);
+
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
@@ -69,7 +72,7 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
     );
   }
 
-  if (trendingCoins.length === 0) {
+  if (filteredTrendingCoins.length === 0) {
     return (
       <div className="w-full">
         <h2 className="text-2xl font-bold text-foreground mb-4">Trending Coins</h2>
@@ -85,7 +88,7 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
       <h2 className="text-2xl font-bold text-foreground mb-4">Trending Coins</h2>
       <div className="relative">
         {/* Navigation arrows */}
-        {trendingCoins.length > 4 && (
+        {filteredTrendingCoins.length > 4 && (
           <>
             <button
               onClick={scrollLeft}
@@ -108,7 +111,7 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
           className="flex gap-4 overflow-x-auto scrollbar-hide px-2"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {trendingCoins.map((coin, index) => {
+          {filteredTrendingCoins.map((coin, index) => {
             const replyCount = replyCounts[coin._id] || 0;
             const marketCapUSD = (coin.progressMcap * (solPrice || 0) / 1e18 || 0);
             const stageProgress = Math.min(((coin.currentStage - 1) / coin.stagesNumber) * 100, 100);

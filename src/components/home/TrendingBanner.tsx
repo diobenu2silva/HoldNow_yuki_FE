@@ -23,27 +23,43 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
   const [stageProgressMap, setStageProgressMap] = useState<{[key: string]: number}>({});
 
   // Use React Query hook for trending coins
-  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: maxCount });
+  // Request more tokens initially to account for filtering out moved tokens
+  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: 10 });
 
-  // Update local state when trending coins change
+  // Update local state when trending coins change, filtering out tokens that moved to Raydium
   useEffect(() => {
-    setTrendingCoinsState(trendingCoins);
+    // Filter out tokens that have successfully moved to Raydium
+    // These tokens are no longer in the bonding curve phase and shouldn't be shown in the banner
+    const filteredCoins = trendingCoins.filter(coin => !coin.movedToRaydium);
+    
+    // Take exactly 3 tokens for the banner
+    // If we have less than 3 after filtering, we'll show what we have
+    // If we have more than 3, we'll take the first 3
+    const bannerCoins = filteredCoins.slice(0, 3);
+    setTrendingCoinsState(bannerCoins);
   }, [trendingCoins]);
 
   // Real-time coin info updates
   useEffect(() => {
     if (onCoinInfoUpdate) {
       const handleCoinUpdate = (payload: any) => {
-        setTrendingCoinsState(prevCoins => 
-          prevCoins.map(coin => 
+        setTrendingCoinsState(prevCoins => {
+          // Update the coin if it exists
+          const updatedCoins = prevCoins.map(coin => 
             coin.token === payload.token ? { ...coin, ...payload.coinInfo } : coin
-          )
-        );
+          );
+          
+          // Filter out tokens that have moved to Raydium after the update
+          const filteredCoins = updatedCoins.filter(coin => !coin.movedToRaydium);
+          
+          // Take exactly 3 tokens
+          return filteredCoins.slice(0, 3);
+        });
       };
       
       onCoinInfoUpdate(handleCoinUpdate);
     }
-  }, [onCoinInfoUpdate]);
+  }, [onCoinInfoUpdate, trendingCoins]);
 
   // Real-time progress calculation for all coins
   useEffect(() => {
@@ -75,9 +91,9 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
     };
   }, [trendingCoinsState]);
 
-  // Auto-rotate slides every 5 seconds
+  // Auto-rotate slides every 5 seconds (only when we have exactly 3 tokens)
   useEffect(() => {
-    if (trendingCoinsState.length <= 1) return;
+    if (trendingCoinsState.length !== 3) return;
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % trendingCoinsState.length);
@@ -105,7 +121,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
   if (trendingCoinsState.length === 0) {
     return (
       <div className="w-full h-[250px] bg-muted rounded-lg flex items-center justify-center">
-        <div className="text-muted-foreground">No trending coins available</div>
+        <div className="text-muted-foreground">Waiting for trending coins...</div>
       </div>
     );
   }
@@ -120,7 +136,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
             <h2 className="text-2xl font-bold text-foreground mb-4">King of Coin</h2>
       <div className="flex gap-4 h-[250px]">
         {/* Left Side Banner */}
-        {trendingCoinsState.length > 1 && (
+        {trendingCoinsState.length >= 3 && (
           <div className="w-1/5 h-[200px] relative rounded-lg overflow-hidden self-end">
             <AnimatePresence mode="wait">
               <motion.div
@@ -281,7 +297,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
         </AnimatePresence>
 
         {/* Navigation arrows */}
-        {trendingCoinsState.length > 1 && (
+        {trendingCoinsState.length >= 3 && (
           <>
             <button
               onClick={() => setCurrentSlide((prev) => (prev - 1 + trendingCoinsState.length) % trendingCoinsState.length)}
@@ -299,7 +315,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
         )}
 
         {/* Slide indicators */}
-        {trendingCoinsState.length > 1 && (
+        {trendingCoinsState.length >= 3 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
             {trendingCoinsState.map((_, index) => (
               <button
@@ -315,7 +331,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
         </div>
 
         {/* Right Side Banner */}
-        {trendingCoinsState.length > 1 && (
+        {trendingCoinsState.length >= 3 && (
           <div className="w-1/5 h-[200px] relative rounded-lg overflow-hidden self-end">
             <AnimatePresence mode="wait">
               <motion.div
