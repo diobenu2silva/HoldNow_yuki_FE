@@ -7,6 +7,7 @@ import { HiOutlineGlobeAlt, HiOutlineChatBubbleLeftRight, HiOutlineInformationCi
 import { FaTwitter, FaTelegramPlane } from 'react-icons/fa';
 import { CurrencyDollarIcon, ArrowTrendingUpIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useSocket } from '@/contexts/SocketContext';
+import { getUserInfo } from '@/utils/util';
 
 interface CoinBlogProps {
   coin: coinInfo;
@@ -28,6 +29,31 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
     setCurrentCoin(coin);
   }, [coin]);
 
+  // Fetch creator info if creator is a string (ObjectId)
+  useEffect(() => {
+    const fetchCreatorInfo = async () => {
+      if (typeof currentCoin?.creator === 'string' && currentCoin.creator) {
+        try {
+          console.log('__yuki__ CoinBlog: Fetching creator info for:', currentCoin.creator);
+          const creatorInfo = await getUserInfo(currentCoin.creator);
+          if (creatorInfo && !creatorInfo.error) {
+            console.log('__yuki__ CoinBlog: Creator info fetched:', creatorInfo);
+            setCurrentCoin(prevCoin => ({
+              ...prevCoin,
+              creator: creatorInfo
+            }));
+          } else {
+            console.error('__yuki__ CoinBlog: Error fetching creator info:', creatorInfo);
+          }
+        } catch (error) {
+          console.error('__yuki__ CoinBlog: Error fetching creator info:', error);
+        }
+      }
+    };
+
+    fetchCreatorInfo();
+  }, [currentCoin?.creator]);
+
   // Real-time coin info updates
   useEffect(() => {
     if (onCoinInfoUpdate) {
@@ -41,6 +67,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
             hasId: payload.coinInfo.creator?._id
           });
           setCurrentCoin(prevCoin => ({ ...prevCoin, ...payload.coinInfo }));
+          console.log('__yuki__ CoinBlog: Current coin:', currentCoin);
         }
       };
       
@@ -194,7 +221,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW }
                     }}
                     className="text-gray-900 dark:text-white hover:text-primary/80 font-medium transition-colors duration-200 drop-shadow-lg truncate min-w-0"
                     >
-                    {(currentCoin?.creator as userInfo)?.name || 'Unknown Creator'}
+                    {typeof currentCoin?.creator === 'string' ? currentCoin?.creator : (currentCoin?.creator as userInfo)?.name || 'Unknown Creator'}
                   </button>
                 </div>
               </div>
