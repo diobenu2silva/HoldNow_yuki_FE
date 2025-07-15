@@ -643,7 +643,7 @@ export default function TradingPage() {
           )}
 
           {/* Raydium Move Failed Notification - Show only if failed, even if later succeeded */}
-          {!isLoading && !coin.movedToRaydium && (
+          {!isLoading && coin.bondingCurve && !coin.movedToRaydium && (
             <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
@@ -678,7 +678,7 @@ export default function TradingPage() {
           )}
 
           {/* Raydium Success Notification - Show only if succeeded AND never failed */}
-          {!isLoading && coin.movedToRaydium && (
+          {!isLoading && coin.bondingCurve && coin.movedToRaydium && (
             <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
