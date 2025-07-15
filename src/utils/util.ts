@@ -265,10 +265,12 @@ export const getReplyCounts = async (): Promise<{ coinId: string; replyCount: nu
 
 export const getCoinTrade = async (data: string): Promise<any> => {
   try {
+    console.log('__yuki__ getCoinTrade data:', data);
     const response = await axios.get(
       `${BACKEND_URL}/cointrade/${data}`,
       config
     );
+    console.log('__yuki__ getCoinTrade response:', response.data);
     return response.data;
   } catch (err) {
     return { error: 'error setting up the request' };

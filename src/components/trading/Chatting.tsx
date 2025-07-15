@@ -1,47 +1,35 @@
 import { coinInfo, holderInfo, tradeInfo } from '@/utils/types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Trade } from './Trade';
-import { findHolders, getCoinTrade, getMessageByCoin } from '@/utils/util';
+import { findHolders, getCoinTrade } from '@/utils/util';
 import UserContext from '@/context/UserContext';
 import { Holder } from './Holders';
 import { motion } from 'framer-motion';
 import * as Tabs from '@radix-ui/react-tabs';
-import { userInfo } from '@/utils/types';
 import { useSocket } from '@/contexts/SocketContext';
 import { SwapDirection } from '@/utils/constants';
-import { RefreshCw, ArrowUpDown, Send } from 'lucide-react';
+import { RefreshCw, ArrowUpDown } from 'lucide-react';
 
 interface ChattingProps {
   param: string | null;
   coin: coinInfo;
 }
 
-// Sort direction type
 type SortDirection = 'asc' | 'desc';
-
-// Sort field types for each table
-type ThreadSortField = 'sender' | 'time' | 'message';
-type TransactionSortField = 'account' | 'type' | 'sol' | 'date' | 'transaction';
+type TransactionSortField = 'account' | 'type' | 'sol' | 'date' | 'transaction' | 'tokens';
 type HolderSortField = 'account' | 'amount' | 'address';
 
 export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   const {
-    messages,
-    setMessages,
-    newMsg,
     coinId,
     postReplyModal,
     setPostReplyModal,
   } = useContext(UserContext);
   const [trades, setTrades] = useState<tradeInfo>({} as tradeInfo);
   const [holders, setHolders] = useState<holderInfo[]>([] as holderInfo[]);
-  const [currentTable, setCurrentTable] = useState<string>('thread');
-  const tempNewMsg = useMemo(() => newMsg, [newMsg]);
+  const [currentTable, setCurrentTable] = useState<string>('transaction');
   
   // Sort state for each table
-  const [threadSortField, setThreadSortField] = useState<ThreadSortField>('time');
-  const [threadSortDir, setThreadSortDir] = useState<SortDirection>('desc');
-  
   const [transactionSortField, setTransactionSortField] = useState<TransactionSortField>('date');
   const [transactionSortDir, setTransactionSortDir] = useState<SortDirection>('desc');
   
@@ -51,6 +39,10 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   // Loading states for refresh
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  // Handler for tab changes
+  const handleTabChange = (value: string) => {
+    setCurrentTable(value);
+  };
 
   
   const { onTransactionUpdate, onHoldersUpdate } = useSocket();
@@ -89,15 +81,6 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   };
 
   // Sort handlers
-  const handleThreadSort = (field: ThreadSortField) => {
-    if (threadSortField === field) {
-      setThreadSortDir(threadSortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setThreadSortField(field);
-      setThreadSortDir('asc');
-    }
-  };
-
   const handleTransactionSort = (field: TransactionSortField) => {
     if (transactionSortField === field) {
       setTransactionSortDir(transactionSortDir === 'asc' ? 'desc' : 'asc');
@@ -117,35 +100,23 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   };
 
   // Get sort value functions
-  const getThreadSortValue = (message: any, field: string) => {
-    switch (field) {
-      case 'sender':
-        return (message.sender as userInfo)?.name || '';
-      case 'time':
-        return message.time ? new Date(message.time) : null;
-      case 'message':
-        return message.msg || '';
-      default:
-        return '';
-    }
-  };
-
   const getTransactionSortValue = (trade: any, field: string) => {
     switch (field) {
       case 'account':
         return trade.holder?.name || '';
       case 'type':
-        return trade.lamportAmount === 0 ? 'Create' : 
-               trade.swapDirection === SwapDirection.BUY ? 'BUY' : 
+        return trade.swapDirection === SwapDirection.BUY ? 'BUY' : 
                trade.swapDirection === SwapDirection.CLAIM ? 'CLAIM' : 
                trade.swapDirection === SwapDirection.TOKEN_CREATE ? 'CREATE' : 
                trade.swapDirection === SwapDirection.AIRDROP ? 'AIRDROP' : 'SELL';
       case 'sol':
-        return trade.lamportAmount;
+        return trade.lamportAmount || 0;
       case 'date':
         return trade.time ? new Date(trade.time) : null;
       case 'transaction':
         return trade.tx || '';
+      case 'tokens':
+        return trade.tokenAmount || 0;
       default:
         return '';
     }
@@ -167,13 +138,9 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   // Refresh function
   const handleRefresh = async () => {
     if (!param || isRefreshing) return;
-    
     setIsRefreshing(true);
     try {
-      if (currentTable === 'thread') {
-        const data = await getMessageByCoin(param);
-        setMessages(data);
-      } else if (currentTable === 'transaction') {
+      if (currentTable === 'transaction') {
         const tokenToUse = coin.token || param;
         const data = await getCoinTrade(tokenToUse);
         setTrades(data);
@@ -184,7 +151,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
         }
       }
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      // Error handling - could be enhanced with user notification if needed
     } finally {
       setIsRefreshing(false);
     }
@@ -193,21 +160,16 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   // Effect to handle token changes and refresh data
   useEffect(() => {
     if (coin.token) {
-      console.log('__yuki__ Token changed, refreshing data for token:', coin.token);
       setIsRefreshing(true);
       
       const refreshDataForNewToken = async () => {
         try {
           // Reset data for new token
-          setMessages([]);
           setTrades({} as tradeInfo);
           setHolders([]);
           
           // Fetch fresh data based on current table
-          if (currentTable === 'thread') {
-            const data = await getMessageByCoin(param);
-            setMessages(data);
-          } else if (currentTable === 'transaction') {
+          if (currentTable === 'transaction') {
             const data = await getCoinTrade(coin.token);
             setTrades(data);
           } else if (currentTable === 'top holders') {
@@ -215,7 +177,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
             setHolders(data);
           }
         } catch (error) {
-          console.error('__yuki__ Error refreshing data for new token:', error);
+          // Error handling - could be enhanced with user notification if needed
         } finally {
           setIsRefreshing(false);
         }
@@ -228,15 +190,12 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (param) {
-        if (currentTable === 'thread') {
-          const data = await getMessageByCoin(param);
-          setMessages(data);
-        } else if (currentTable === 'transaction') {
+        if (currentTable === 'transaction') {
           // Use coin.token if available, otherwise fall back to param
           const tokenToUse = coin.token || param;
           const data = await getCoinTrade(tokenToUse);
           setTrades(data);
-        } else {
+        } else if (currentTable === 'top holders') {
           // Only fetch holders if coin.token is available
           if (coin.token) {
             const data = await findHolders(coin.token);
@@ -247,20 +206,12 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     };
     fetchData();
   }, [currentTable, param]);
-  useEffect(() => {
-    if (coinId == coin._id) {
-      setMessages([...messages, tempNewMsg]);
-    }
-  }, [tempNewMsg]);
 
   useEffect(() => {
     if (!onTransactionUpdate || !coin.token) return;
     const handleTransactionUpdate = async (payload) => {
-      console.log('__yuki__ Transaction update received 000:', payload);
       if (payload.token === coin.token) {
-        console.log('__yuki__ Transaction update received:', payload);
         const tradedata = await getCoinTrade(coin.token)
-        console.log('__yuki__ Transaction update received 111:', tradedata);
         setTrades(tradedata);
       }
     };
@@ -271,9 +222,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   useEffect(() => {
     if (!onHoldersUpdate || !coin.token) return;
     const handleHoldersUpdate = (payload) => {
-      console.log('__yuki__ Holders update received 000:', payload);
       if (payload.token === coin.token) {
-        console.log('__yuki__ Holders update received:', payload);
         setHolders(payload.holders);
       }
     };
@@ -285,13 +234,12 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   const isLoading = !coin.token;
 
   // Sort data using the generic sort function
-  const sortedMessages = messages ? sortData(messages, threadSortField, threadSortDir, getThreadSortValue) : [];
   const sortedTrades = trades.record ? sortData(trades.record, transactionSortField, transactionSortDir, getTransactionSortValue) : [];
   const sortedHolders = holders ? sortData(holders, holderSortField, holderSortDir, getHolderSortValue) : [];
 
   return (
     <div className="w-full pt-8">
-      <Tabs.Root defaultValue="transaction" className="w-full">
+      <Tabs.Root defaultValue="transaction" value={currentTable} onValueChange={handleTabChange} className="w-full">
         <div className="flex items-center justify-between mb-6">
           <div className="flex-1"></div>
           <Tabs.List className="flex gap-2 bg-muted/30 rounded-full p-1 w-fit">
@@ -394,6 +342,18 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                     </th>
                     <th 
                       className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
+                      onClick={() => handleTransactionSort('tokens')}
+                    >
+                      <div className="flex items-center gap-2 group">
+                        <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        Tokens
+                        {transactionSortField === 'tokens' && (
+                          <span className="text-primary">{transactionSortDir === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded"
                       onClick={() => handleTransactionSort('transaction')}
                     >
                       <div className="flex items-center gap-2 group">
@@ -407,10 +367,9 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => { console.log('__yuki__ sortedTrades', sortedTrades); return null; })()}
                   {isLoading ? (
                     <tr>
-                      <td colSpan={5} className="text-center py-4 text-muted-foreground">
+                      <td colSpan={6} className="text-center py-4 text-muted-foreground">
                         Loading transaction data...
                       </td>
                     </tr>
@@ -422,7 +381,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="text-center py-4 text-muted-foreground">
+                      <td colSpan={6} className="text-center py-4 text-muted-foreground">
                         No transactions found
                       </td>
                     </tr>

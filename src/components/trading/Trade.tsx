@@ -39,6 +39,9 @@ export const Trade: React.FC<TradePropsInfo> = ({ trade }) => {
         {Math.round(trade.lamportAmount / Math.pow(10, 6)) / 1000}
       </td>
       <td className="text-center py-2">
+        {trade.tokenAmount ? trade.tokenAmount.toLocaleString() : '0'}
+      </td>
+      <td className="text-center py-2">
         <p
           onClick={() =>
             handleToRouter(`https://solscan.io/tx/${trade.tx}?cluster=devnet`)
