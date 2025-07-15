@@ -14,8 +14,8 @@ export const Trade: React.FC<TradePropsInfo> = ({ trade }) => {
 
   return (
     <>
-      <td className="text-center py-2">{trade.time.toString()}</td>
-      <td className="flex flex-row gap-2 items-center justify-center py-2">
+      <td className="py-2">{trade.time.toString()}</td>
+      <td className="flex flex-row gap-2 items-center py-2">
         <img
           src={trade.holder.avatar}
           alt="Token IMG"
@@ -25,23 +25,20 @@ export const Trade: React.FC<TradePropsInfo> = ({ trade }) => {
         />
         <div className="text-lg">{trade.holder.name}</div>
       </td>
-      {trade.lamportAmount == 0 ? (
-        <td className="text-center py-2">Create</td>
-      ) : (
-        <td className="text-center py-2">
+        <td className="py-2">
           {trade.swapDirection === SwapDirection.BUY ? 'BUY' : 
+          trade.swapDirection === SwapDirection.SELL ? 'SELL' : 
            trade.swapDirection === SwapDirection.CLAIM ? 'CLAIM' : 
            trade.swapDirection === SwapDirection.TOKEN_CREATE ? 'CREATE' : 
-           trade.swapDirection === SwapDirection.AIRDROP ? 'AIRDROP' : 'SELL'}
+           trade.swapDirection === SwapDirection.AIRDROP ? 'AIRDROP' : ''}
         </td>
-      )}
-      <td className="text-center py-2">
+      <td className="py-2">
         {Math.round(trade.lamportAmount / Math.pow(10, 6)) / 1000}
       </td>
-      <td className="text-center py-2">
+      <td className="py-2">
         {trade.tokenAmount ? trade.tokenAmount.toLocaleString() : '0'}
       </td>
-      <td className="text-center py-2">
+      <td className="py-2">
         <p
           onClick={() =>
             handleToRouter(`https://solscan.io/tx/${trade.tx}?cluster=devnet`)

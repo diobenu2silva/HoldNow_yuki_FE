@@ -48,7 +48,7 @@ interface TransactionUpdatePayload {
 
 interface HoldersUpdatePayload {
   token: string;
-  holders: { name: string; amount: number; owner: string }[];
+  holders: { name: string; amount: number; owner: string; avatar?: string }[];
   timestamp: number;
 }
 

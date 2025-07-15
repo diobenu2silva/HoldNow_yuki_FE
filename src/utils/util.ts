@@ -336,6 +336,19 @@ export const findHolders = async (mint: string) => {
   return allOwners;
 };
 
+// ================== Get Holders with User Info ===========================
+export const getHoldersWithUserInfo = async (token: string): Promise<holderInfo[]> => {
+  try {
+    console.log('__yuki__ Getting holders with user info for token:', token);
+    const response = await axios.get(`${BACKEND_URL}/coin/holders/${token}`, config);
+    console.log('__yuki__ Holders with user info response:', response.data);
+    return response.data.holders || [];
+  } catch (err) {
+    console.error('__yuki__ Error getting holders with user info:', err);
+    return [];
+  }
+};
+
 export const getSolPriceInUSD = async () => {
   try {
     // Fetch the price data from CoinGecko

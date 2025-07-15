@@ -14,12 +14,19 @@ export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
 
   return (
     <>
-      <td className="flex flex-row gap-2 items-center justify-center py-2 w-3/10">
+      <td className="flex flex-row gap-2 items-center py-2 w-3/10">
+        <img
+          src={holder.avatar || '/assets/images/user-avatar.png'}
+          alt="User Avatar"
+          className="rounded-full w-10 h-10 border-2 border-primary/30"
+          width={40}
+          height={40}
+        />
         <div className="text-lg">
           {holder.name}
         </div>
       </td>
-      <td className="text-center py-2 w-1/2">
+      <td className="py-2 w-1/2">
         <div 
           className="text-sm hover:cursor-pointer hover:text-white transition-colors duration-200"
           onClick={() =>
@@ -31,7 +38,7 @@ export const Holder: React.FC<HolderPropsInfo> = ({ holder }) => {
           {holder.owner.slice(0, 4)}...{holder.owner.slice(-4)}
         </div>
       </td>
-      <td className="text-center py-2 w-1/5">
+      <td className="py-2 w-1/5">
         {holder.amount}
       </td>
     </>

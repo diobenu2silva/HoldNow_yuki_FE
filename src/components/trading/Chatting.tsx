@@ -1,7 +1,7 @@
 import { coinInfo, holderInfo, tradeInfo } from '@/utils/types';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Trade } from './Trade';
-import { findHolders, getCoinTrade } from '@/utils/util';
+import { getHoldersWithUserInfo, getCoinTrade } from '@/utils/util';
 import UserContext from '@/context/UserContext';
 import { Holder } from './Holders';
 import { motion } from 'framer-motion';
@@ -108,7 +108,8 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
         return trade.swapDirection === SwapDirection.BUY ? 'BUY' : 
                trade.swapDirection === SwapDirection.CLAIM ? 'CLAIM' : 
                trade.swapDirection === SwapDirection.TOKEN_CREATE ? 'CREATE' : 
-               trade.swapDirection === SwapDirection.AIRDROP ? 'AIRDROP' : 'SELL';
+               trade.swapDirection === SwapDirection.AIRDROP ? 'AIRDROP' :
+               trade.swapDirection === SwapDirection.SELL ? 'SELL' : '';
       case 'sol':
         return trade.lamportAmount || 0;
       case 'date':
@@ -146,7 +147,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
         setTrades(data);
       } else if (currentTable === 'top holders') {
         if (coin.token) {
-          const data = await findHolders(coin.token);
+          const data = await getHoldersWithUserInfo(coin.token);
           setHolders(data);
         }
       }
@@ -173,7 +174,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
             const data = await getCoinTrade(coin.token);
             setTrades(data);
           } else if (currentTable === 'top holders') {
-            const data = await findHolders(coin.token);
+            const data = await getHoldersWithUserInfo(coin.token);
             setHolders(data);
           }
         } catch (error) {
@@ -198,7 +199,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
         } else if (currentTable === 'top holders') {
           // Only fetch holders if coin.token is available
           if (coin.token) {
-            const data = await findHolders(coin.token);
+            const data = await getHoldersWithUserInfo(coin.token);
             setHolders(data);
           }
         }
@@ -236,6 +237,13 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   // Sort data using the generic sort function
   const sortedTrades = trades.record ? sortData(trades.record, transactionSortField, transactionSortDir, getTransactionSortValue) : [];
   const sortedHolders = holders ? sortData(holders, holderSortField, holderSortDir, getHolderSortValue) : [];
+
+  // Filter out transactions with "txId", TOKEN_CREATE, and BUY with 0 SOL from display
+  const filteredTrades = sortedTrades.filter(trade => 
+    trade.tx !== 'txId' && 
+    trade.swapDirection !== SwapDirection.TOKEN_CREATE &&
+    !(trade.swapDirection === SwapDirection.BUY && trade.lamportAmount === 0)
+  );
 
   return (
     <div className="w-full pt-8">
@@ -373,8 +381,8 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                         Loading transaction data...
                       </td>
                     </tr>
-                  ) : sortedTrades && sortedTrades.length > 0 ? (
-                    sortedTrades.map((trade, index) => (
+                  ) : filteredTrades && filteredTrades.length > 0 ? (
+                    filteredTrades.map((trade, index) => (
                       <tr key={index} className="hover:bg-primary/10 transition-colors duration-150 rounded-lg">
                         <Trade trade={trade} />
                       </tr>
@@ -404,10 +412,10 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                 <thead className="border-b-2 border-b-border">
                   <tr className="text-base text-primary">
                     <th 
-                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded w-3/10 text-center"
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded w-3/10"
                       onClick={() => handleHolderSort('account')}
                     >
-                      <div className="flex items-center justify-center gap-2 group">
+                      <div className="flex items-center gap-2 group">
                         <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
                         Account
                         {holderSortField === 'account' && (
@@ -416,10 +424,10 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                       </div>
                     </th>
                     <th 
-                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded w-1/2 text-center"
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded w-1/2"
                       onClick={() => handleHolderSort('address')}
                     >
-                      <div className="flex items-center justify-center gap-2 group">
+                      <div className="flex items-center gap-2 group">
                         <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
                         Address
                         {holderSortField === 'address' && (
@@ -428,10 +436,10 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                       </div>
                     </th>
                     <th
-                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded w-1/5 text-center"
+                      className="py-2 px-2 cursor-pointer select-none hover:text-white transition-all duration-200 hover:bg-white/5 rounded w-1/5"
                       onClick={() => handleHolderSort('amount')}
                     >
-                      <div className="flex items-center justify-center gap-2 group">
+                      <div className="flex items-center gap-2 group">
                         <ArrowUpDown className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
                         Amount
                         {holderSortField === 'amount' && (

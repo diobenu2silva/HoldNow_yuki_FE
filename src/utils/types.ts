@@ -119,6 +119,7 @@ export interface holderInfo {
   name: string;
   owner: string;
   amount: number;
+  avatar?: string;
 }
 
 export interface recordInfo {
