@@ -58,6 +58,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   const { onTransactionUpdate, onHoldersUpdate } = useSocket();
 
+  // Listen for real-time message updates from socket
+  useEffect(() => {
+    if (newMsg && newMsg.coinId === coin._id) {
+      console.log('__yuki__ ChatPanel: New message received via socket:', newMsg);
+      // Add the new message to the existing messages
+      if (!messages) {
+        setMessages([newMsg]);
+      } else {
+        // Check if message already exists to prevent duplicates
+        // Compare by message content, sender, and time (within 5 seconds to account for slight timing differences)
+        const messageExists = messages.some(msg => {
+          const msgTime = msg.time instanceof Date ? msg.time : new Date(msg.time || 0);
+          const newMsgTime = newMsg.time instanceof Date ? newMsg.time : new Date(newMsg.time || 0);
+          const timeDiff = Math.abs(msgTime.getTime() - newMsgTime.getTime());
+          return msg.msg === newMsg.msg && 
+                 timeDiff < 5000 && // Within 5 seconds
+                 (msg.sender as any)?._id === (newMsg.sender as any)?._id;
+        });
+        if (!messageExists) {
+          setMessages([...messages, newMsg]);
+        }
+      }
+    }
+  }, [newMsg, coin._id, messages, setMessages]);
+
   // Define header height for use in edge handle positioning
   const HEADER_HEIGHT = 40; // px, adjust if your header is taller/shorter
 
@@ -478,7 +503,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto p-4" style={{ height: `calc(${size.height}px - 100px)` }} onScroll={handleScroll}>
               <div className="flex flex-col-reverse gap-3">
                 {[...sortedMessages].reverse().map((message, index) => {
-                  const isOwnMessage = (message.sender as userInfo)?._id === coinId;
+                  const isOwnMessage = (message.sender as userInfo)?._id === user._id;
                   const messageTime = message.time ? new Date(message.time) : new Date();
                   
                   return (
