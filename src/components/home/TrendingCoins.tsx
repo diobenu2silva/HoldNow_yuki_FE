@@ -50,8 +50,8 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
         <h2 className="text-2xl font-bold text-foreground mb-4">Trending Coins</h2>
         <div className="relative">
           <div className="flex gap-4 overflow-x-auto scrollbar-hide">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="bg-muted rounded-lg p-3 animate-pulse flex-shrink-0" style={{ width: '225px', height: '150px' }}>
+            {Array.from({ length: 6}).map((_, index) => (
+              <div key={index} className="bg-muted rounded-lg p-3 animate-pulse flex-shrink-0" style={{ width: '275px', height: '125px' }}>
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-8 h-8 bg-muted-foreground/20 rounded-full"></div>
                   <div className="w-full">
@@ -115,8 +115,8 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
                   onClick={() => onCoinClick(`/trading/${coin._id}`)}
                   className="bg-card border border-border rounded-lg cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 flex-shrink-0 relative overflow-hidden flex flex-col"
                   style={{ 
-                    width: '225px', 
-                    height: '150px',
+                    width: '275px', 
+                    height: '125px',
                     backgroundImage: coin.frontBanner ? `url(${coin.frontBanner})` : 'none',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
