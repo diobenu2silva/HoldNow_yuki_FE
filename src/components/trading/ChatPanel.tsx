@@ -1,5 +1,5 @@
 import { coinInfo, userInfo, replyInfo } from '@/utils/types';
-import { ChangeEvent, useContext, useEffect, useMemo, useState, useRef } from 'react';
+import { ChangeEvent, useContext, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { getMessageByCoin, postReply } from '@/utils/util';
 import UserContext from '@/context/UserContext';
 import axios from 'axios';
@@ -55,6 +55,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const animationFrameRef = useRef<number | null>(null);
 
   const { onTransactionUpdate, onHoldersUpdate } = useSocket();
 
@@ -130,81 +131,98 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging) {
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
-      
-      // Keep within viewport bounds
-      const maxX = window.innerWidth - (isMinimized ? 300 : size.width);
-      const maxY = window.innerHeight - (isMinimized ? 50 : size.height);
-      
-      onPositionChange({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY))
-      });
-    } else if (isResizing && resizeStart.resizeType) {
-      const deltaX = e.clientX - resizeStart.mouseX;
-      const deltaY = e.clientY - resizeStart.mouseY;
-      let newWidth = resizeStart.width;
-      let newHeight = resizeStart.height;
-      let newX = resizeStart.windowX;
-      let newY = resizeStart.windowY;
-      const minWidth = 300, maxWidth = 800, minHeight = 400, maxHeight = 800;
-      
-      switch (resizeStart.resizeType) {
-        case 'n':
-          newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height - deltaY));
-          newY = resizeStart.windowY + deltaY;
-          break;
-        case 's':
-          newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height + deltaY));
-          break;
-        case 'e':
-          newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width + deltaX));
-          break;
-        case 'w':
-          newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
-          newX = resizeStart.windowX + deltaX;
-          break;
-        case 'nw':
-          newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
-          newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height - deltaY));
-          newX = resizeStart.windowX + deltaX;
-          newY = resizeStart.windowY + deltaY;
-          break;
-        case 'ne':
-          newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width + deltaX));
-          newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height - deltaY));
-          newY = resizeStart.windowY + deltaY;
-          break;
-        case 'sw':
-          newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
-          newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height + deltaY));
-          newX = resizeStart.windowX + deltaX;
-          break;
-        case 'se':
-          newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width + deltaX));
-          newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height + deltaY));
-          break;
-      }
-      
-      // Keep window within viewport bounds
-      const maxX = window.innerWidth - newWidth;
-      const maxY = window.innerHeight - newHeight;
-      
-      newX = Math.max(0, Math.min(newX, maxX));
-      newY = Math.max(0, Math.min(newY, maxY));
-      
-      onSizeChange({ width: newWidth, height: newHeight });
-      onPositionChange({ x: newX, y: newY });
+  const handleMouseUp = useCallback(() => {
+    console.log('__yuki__ handleMouseUp called, isDragging:', isDragging, 'isResizing:', isResizing);
+    
+    // Cancel any pending animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
-  };
-
-  const handleMouseUp = () => {
+    
     setIsDragging(false);
     setIsResizing(false);
-  };
+  }, [isDragging, isResizing]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    // Cancel any pending animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    // Use requestAnimationFrame for smooth updates
+    animationFrameRef.current = requestAnimationFrame(() => {
+      if (isDragging) {
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
+        
+        // Keep within viewport bounds
+        const maxX = window.innerWidth - (isMinimized ? 300 : size.width);
+        const maxY = window.innerHeight - (isMinimized ? 50 : size.height);
+        
+        onPositionChange({
+          x: Math.max(0, Math.min(newX, maxX)),
+          y: Math.max(0, Math.min(newY, maxY))
+        });
+      } else if (isResizing && resizeStart.resizeType) {
+        const deltaX = e.clientX - resizeStart.mouseX;
+        const deltaY = e.clientY - resizeStart.mouseY;
+        let newWidth = resizeStart.width;
+        let newHeight = resizeStart.height;
+        let newX = resizeStart.windowX;
+        let newY = resizeStart.windowY;
+        const minWidth = 300, maxWidth = 800, minHeight = 400, maxHeight = 800;
+        
+        switch (resizeStart.resizeType) {
+          case 'n':
+            newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height - deltaY));
+            newY = resizeStart.windowY + deltaY;
+            break;
+          case 's':
+            newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height + deltaY));
+            break;
+          case 'e':
+            newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width + deltaX));
+            break;
+          case 'w':
+            newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
+            newX = resizeStart.windowX + deltaX;
+            break;
+          case 'nw':
+            newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
+            newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height - deltaY));
+            newX = resizeStart.windowX + deltaX;
+            newY = resizeStart.windowY + deltaY;
+            break;
+          case 'ne':
+            newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width + deltaX));
+            newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height - deltaY));
+            newY = resizeStart.windowY + deltaY;
+            break;
+          case 'sw':
+            newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
+            newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height + deltaY));
+            newX = resizeStart.windowX + deltaX;
+            break;
+          case 'se':
+            newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width + deltaX));
+            newHeight = Math.max(minHeight, Math.min(maxHeight, resizeStart.height + deltaY));
+            break;
+        }
+        
+        // Keep window within viewport bounds
+        const maxX = window.innerWidth - newWidth;
+        const maxY = window.innerHeight - newHeight;
+        
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+        
+        // Update size and position atomically to prevent visual glitches
+        onSizeChange({ width: newWidth, height: newHeight });
+        onPositionChange({ x: newX, y: newY });
+      }
+    });
+  }, [isDragging, isResizing, dragOffset, resizeStart, isMinimized, size, onPositionChange, onSizeChange]);
 
   // Resize functionality
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -231,7 +249,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, dragOffset, resizeStart, isMinimized, size, position]);
+  }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
+
+  // Global mouse up listener to ensure cleanup
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging || isResizing) {
+        console.log('__yuki__ Global mouse up detected, cleaning up drag/resize state');
+        setIsDragging(false);
+        setIsResizing(false);
+      }
+    };
+
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, isResizing]);
+
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   // Chat functions
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -306,12 +349,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   };
 
-  // Sort messages by timestamp
-  const sortedMessages = messages ? [...messages].sort((a, b) => {
-    const aTime = a.time ? new Date(a.time).getTime() : 0;
-    const bTime = b.time ? new Date(b.time).getTime() : 0;
-    return aTime - bTime;
-  }) : [];
+  // Sort messages by timestamp and filter out empty messages and unknown users
+  const sortedMessages = messages ? [...messages]
+    .filter(message => {
+      // Filter out empty messages
+      if (!message.msg || message.msg.trim() === '') return false;
+      
+      // Filter out messages from unknown users
+      const senderName = (message.sender as userInfo)?.name;
+      if (!senderName || senderName === 'Unknown') return false;
+      
+      return true;
+    })
+    .sort((a, b) => {
+      const aTime = a.time ? new Date(a.time).getTime() : 0;
+      const bTime = b.time ? new Date(b.time).getTime() : 0;
+      return aTime - bTime;
+    }) : [];
 
   if (!isOpen) return null;
 
@@ -378,7 +432,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-white/20 dark:hover:bg-gray-700/40 rounded transition-colors z-50 relative"
+              className="p-1 hover:bg-white/20 dark:hover:bg-gray-700/40 rounded transition-colors z-70 relative"
             >
               <X className="w-4 h-4" />
             </button>
@@ -390,25 +444,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <>
             {/* Top-left */}
             <div
-              className="absolute top-0 left-0 w-6 h-6 cursor-nw-resize z-50 pointer-events-auto"
+              className="absolute top-0 left-0 w-2 h-2 cursor-nw-resize z-50 pointer-events-auto"
               style={{ background: 'transparent' }}
               onMouseDown={(e) => handleCornerResize(e, 'nw')}
             />
             {/* Top-right */}
             <div
-              className="absolute top-0 right-0 w-6 h-6 cursor-ne-resize z-40 pointer-events-auto"
-              style={{ background: 'transparent', width: '32px', height: '32px', right: '48px' }} // Shrink width and move left so it doesn't overlap close button
+              className="absolute top-0 right-0 w-2 h-2 cursor-ne-resize z-40 pointer-events-auto"
+              style={{ background: 'transparent'}} // Shrink width and move left so it doesn't overlap close button
               onMouseDown={(e) => handleCornerResize(e, 'ne')}
             />
             {/* Bottom-left */}
             <div
-              className="absolute bottom-0 left-0 w-6 h-6 cursor-sw-resize z-50 pointer-events-auto"
+              className="absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize z-50 pointer-events-auto"
               style={{ background: 'transparent' }}
               onMouseDown={(e) => handleCornerResize(e, 'sw')}
             />
             {/* Bottom-right */}
             <div
-              className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize z-50 pointer-events-auto"
+              className="absolute bottom-0 right-0 w-2 h-2 cursor-se-resize z-50 pointer-events-auto"
               style={{ background: 'transparent' }}
               onMouseDown={handleResizeStart}
             />
@@ -420,7 +474,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <>
             {/* Right Edge */}
             <div
-              className="absolute top-0 right-0 w-10 h-full cursor-e-resize z-40 pointer-events-auto"
+              className="absolute top-0 right-0 w-2 h-full cursor-e-resize z-45 pointer-events-auto"
               style={{ background: 'transparent' }}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -439,8 +493,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             />
             {/* Bottom Edge - positioned above input area */}
             <div
-              className="absolute bottom-0 left-0 w-full h-8 cursor-s-resize z-40 pointer-events-auto"
-              style={{ background: 'transparent', bottom: '60px' }}
+              className="absolute bottom-0 left-0 w-full h-2 cursor-s-resize z-60 pointer-events-auto"
+              style={{ background: 'transparent', bottom: '0px' }}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -458,7 +512,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             />
             {/* Left Edge */}
             <div
-              className="absolute top-0 left-0 w-10 h-full cursor-w-resize z-40 pointer-events-auto"
+              className="absolute top-0 left-0 w-2 h-full cursor-w-resize z-40 pointer-events-auto"
               style={{ background: 'transparent' }}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -477,8 +531,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             />
             {/* Top Edge (starts below the header) */}
             <div
-              className="absolute left-0 w-full h-10 cursor-n-resize z-40 pointer-events-auto"
-              style={{ background: 'transparent', top: `${HEADER_HEIGHT}px` }}
+              className="absolute left-0 w-full h-2 cursor-n-resize z-60 pointer-events-auto"
+              style={{ background: 'transparent', top: '0px' }}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
