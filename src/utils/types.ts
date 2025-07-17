@@ -103,11 +103,18 @@ export interface launchDataInfo {
 }
 
 export interface msgInfo {
+  _id?: string;
   coinId: string | coinInfo;
   sender: string | userInfo;
   time: Date;
   img?: string;
+  images?: string[];
   msg: string;
+  thumbUp?: number;
+  thumbDown?: number;
+  heart?: number;
+  replyCount?: number;
+  replyTo?: any;
 }
 
 export interface tradeInfo {
@@ -157,6 +164,8 @@ export interface replyInfo {
   sender: string;
   msg: string;
   img?: string;
+  images?: string[];
+  replyTo?: string;
 }
 
 export interface PeriodParamsInfo {

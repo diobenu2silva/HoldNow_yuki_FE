@@ -1,14 +1,15 @@
-import { coinInfo, holderInfo, tradeInfo } from '@/utils/types';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { coinInfo, holderInfo, tradeInfo, msgInfo } from '@/utils/types';
+import { useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { Trade } from './Trade';
-import { getHoldersWithUserInfo, getCoinTrade } from '@/utils/util';
+import { getHoldersWithUserInfo, getCoinTrade, getMessageByCoin, addMessageFavorite } from '@/utils/util';
 import UserContext from '@/context/UserContext';
 import { Holder } from './Holders';
 import { motion } from 'framer-motion';
 import * as Tabs from '@radix-ui/react-tabs';
 import { useSocket } from '@/contexts/SocketContext';
 import { SwapDirection } from '@/utils/constants';
-import { RefreshCw, ArrowUpDown } from 'lucide-react';
+import { RefreshCw, ArrowUpDown, ThumbsUp, ThumbsDown, Heart, MessageCircle, Reply } from 'lucide-react';
+import ReplyModal from '@/components/modals/ReplyModal';
 
 interface ChattingProps {
   param: string | null;
@@ -18,16 +19,21 @@ interface ChattingProps {
 type SortDirection = 'asc' | 'desc';
 type TransactionSortField = 'account' | 'type' | 'sol' | 'date' | 'transaction' | 'tokens';
 type HolderSortField = 'account' | 'amount' | 'address';
+type ChatSortField = 'date' | 'account' | 'message';
 
 export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   const {
+    user,
     coinId,
     postReplyModal,
     setPostReplyModal,
+    messages,
+    newMsg,
+    setMessages,
   } = useContext(UserContext);
   const [trades, setTrades] = useState<tradeInfo>({} as tradeInfo);
   const [holders, setHolders] = useState<holderInfo[]>([] as holderInfo[]);
-  const [currentTable, setCurrentTable] = useState<string>('transaction');
+  const [currentTable, setCurrentTable] = useState<string>('chat');
   
   // Sort state for each table
   const [transactionSortField, setTransactionSortField] = useState<TransactionSortField>('date');
@@ -35,6 +41,11 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   
   const [holderSortField, setHolderSortField] = useState<HolderSortField>('amount');
   const [holderSortDir, setHolderSortDir] = useState<SortDirection>('desc');
+  
+  const [chatSortField, setChatSortField] = useState<ChatSortField>('date');
+  const [chatSortDir, setChatSortDir] = useState<SortDirection>('desc');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
   
   // Loading states for refresh
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -99,6 +110,38 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     }
   };
 
+  const handleChatSort = (field: ChatSortField) => {
+    if (chatSortField === field) {
+      setChatSortDir(chatSortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setChatSortField(field);
+      setChatSortDir('asc');
+    }
+  };
+
+  const handleReplyClick = (message: any) => {
+    setReplyingTo(message);
+    setPostReplyModal(true);
+  };
+
+  const handleModalClose = () => {
+    setReplyingTo(null);
+    setPostReplyModal(false);
+  };
+
+  const scrollToMessage = (targetMessage: any) => {
+    // Find the message element and scroll to it
+    const messageElement = document.querySelector(`[data-message-id="${targetMessage._id}"]`);
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight the message briefly
+      messageElement.classList.add('ring-2', 'ring-primary', 'ring-opacity-50');
+      setTimeout(() => {
+        messageElement.classList.remove('ring-2', 'ring-primary', 'ring-opacity-50');
+      }, 2000);
+    }
+  };
+
   // Get sort value functions
   const getTransactionSortValue = (trade: any, field: string) => {
     switch (field) {
@@ -136,6 +179,19 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     }
   };
 
+  const getChatSortValue = (message: any, field: string) => {
+    switch (field) {
+      case 'account':
+        return message.sender?.name || '';
+      case 'date':
+        return message.time ? new Date(message.time) : null;
+      case 'message':
+        return message.msg || '';
+      default:
+        return '';
+    }
+  };
+
   // Refresh function
   const handleRefresh = async () => {
     if (!param || isRefreshing) return;
@@ -149,6 +205,11 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
         if (coin.token) {
           const data = await getHoldersWithUserInfo(coin.token);
           setHolders(data);
+        }
+      } else if (currentTable === 'chat') {
+        if (coin.token) {
+          const data = await getMessageByCoin(coin.token);
+          setMessages(data);
         }
       }
     } catch (error) {
@@ -176,6 +237,9 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
           } else if (currentTable === 'top holders') {
             const data = await getHoldersWithUserInfo(coin.token);
             setHolders(data);
+          } else if (currentTable === 'chat') {
+            const data = await getMessageByCoin(coin._id);
+            setMessages(data);
           }
         } catch (error) {
           // Error handling - could be enhanced with user notification if needed
@@ -187,6 +251,47 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
       refreshDataForNewToken();
     }
   }, [coin.token]);
+
+  // Effect to fetch messages when chat tab is active
+  useEffect(() => {
+    if (currentTable === 'chat' && coin._id) {
+      const fetchMessages = async () => {
+        try {
+          console.log('Fetching messages for coin ID:', coin._id);
+          const data = await getMessageByCoin(coin._id);
+          console.log('Fetched messages:', data);
+          // Debug: Log message structure to see what fields are available
+          if (data && data.length > 0) {
+            console.log('First message structure:', {
+              id: data[0]._id,
+              hasImages: !!data[0].images,
+              imagesLength: data[0].images?.length,
+              hasImg: !!data[0].img,
+              imgValue: data[0].img,
+              imagesValue: data[0].images
+            });
+            
+            // Log all messages with images
+            data.forEach((msg, index) => {
+              if (msg.img || (msg.images && msg.images.length > 0)) {
+                console.log(`Message ${index} has images:`, {
+                  id: msg._id,
+                  img: msg.img,
+                  images: msg.images,
+                  msg: msg.msg?.substring(0, 50) + '...'
+                });
+              }
+            });
+          }
+          setMessages(data);
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+        }
+      };
+      
+      fetchMessages();
+    }
+  }, [currentTable, coin._id]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -201,6 +306,12 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
           if (coin.token) {
             const data = await getHoldersWithUserInfo(coin.token);
             setHolders(data);
+          }
+        } else if (currentTable === 'chat') {
+          // Only fetch messages if coin._id is available
+          if (coin._id) {
+            const data = await getMessageByCoin(coin._id);
+            setMessages(data);
           }
         }
       }
@@ -245,12 +356,33 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     !(trade.swapDirection === SwapDirection.BUY && trade.lamportAmount === 0)
   );
 
+  // Sort messages for chat
+  const sortedMessages = useMemo(() => {
+    console.log('Computing sorted messages. Messages:', messages);
+    if (!messages || !Array.isArray(messages)) {
+      console.log('No messages or not array, returning empty array');
+      return [];
+    }
+    const sorted = sortData(messages, chatSortField, chatSortDir, getChatSortValue);
+    console.log('Sorted messages:', sorted);
+    return sorted;
+  }, [messages, chatSortField, chatSortDir]);
+
   return (
     <div className="w-full pt-8">
-      <Tabs.Root defaultValue="transaction" value={currentTable} onValueChange={handleTabChange} className="w-full">
+      <Tabs.Root defaultValue="chat" value={currentTable} onValueChange={handleTabChange} className="w-full">
         <div className="flex items-center justify-between mb-6">
           <div className="flex-1"></div>
           <Tabs.List className="flex gap-2 bg-muted/30 rounded-full p-1 w-fit">
+            <Tabs.Trigger
+              value="chat"
+              className="px-6 py-2 rounded-full text-base font-semibold transition-all duration-300 ease-in-out
+                data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg
+                data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground
+                shadow-none outline-none focus:ring-2 focus:ring-primary hover:scale-105"
+            >
+              Chat
+            </Tabs.Trigger>
             <Tabs.Trigger
               value="transaction"
               className="px-6 py-2 rounded-full text-base font-semibold transition-all duration-300 ease-in-out
@@ -288,6 +420,231 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
           </div>
         </div>
 
+        <Tabs.Content value="chat">
+          <motion.div 
+            className="w-full py-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="bg-white/10 rounded-xl shadow p-4">
+              {/* Chat Header with Sort */}
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleChatSort('date')}
+                    className="flex items-center gap-2 px-3 py-1 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                    <span className="text-sm font-medium">Sort by Time</span>
+                    {chatSortField === 'date' && (
+                      <span className="text-primary">{chatSortDir === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </button>
+                </div>
+                <button
+                  onClick={() => setPostReplyModal(true)}
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors"
+                >
+                  Post Reply
+                </button>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="space-y-4 max-h-[800px] overflow-y-auto">
+                {sortedMessages && sortedMessages.length > 0 ? (
+                  sortedMessages.map((message: any, index: number) => (
+                    <div key={index} data-message-id={message._id} className="bg-card/50 rounded-lg p-4 border border-border/50 h-full min-h-[120px]">
+                      {/* Reply to Message (if exists) */}
+                      {message.replyTo && (
+                        <div 
+                          className="mb-3 p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => scrollToMessage(message.replyTo)}
+                        >
+                          <div className="text-xs text-muted-foreground">Replying to:</div>
+                          <div className="text-sm text-foreground truncate">
+                            {message.replyTo.msg || 'Original message'}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Message Content Row */}
+                      <div className="flex gap-4 h-full min-h-[120px]">
+                        {/* Main Content (75% width) */}
+                        <div className="flex-1">
+                          {/* Message Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              {/* User Avatar */}
+                              <img
+                                src={message.sender?.avatar || '/assets/images/user-avatar.png'}
+                                alt={`${message.sender?.name || 'User'} avatar`}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = '/assets/images/user-avatar.png';
+                                }}
+                              />
+                              
+                              {/* User Info */}
+                              <div>
+                                <div className="font-semibold text-foreground">
+                                  {message.sender?.name || 'Unknown User'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(message.time).toLocaleString()}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Reply Button - Fashionable Styling */}
+                            <button
+                              onClick={() => handleReplyClick(message)}
+                              className="group relative p-2 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 hover:border-primary/40 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/25 backdrop-blur-sm"
+                              title="Reply to this message"
+                            >
+                              <Reply className="w-4 h-4 text-primary group-hover:text-primary/80 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" />
+                              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                              {/* Glow effect */}
+                              <div className="absolute inset-0 rounded-full bg-primary/0 group-hover:bg-primary/5 transition-all duration-300 blur-sm"></div>
+                            </button>
+                          </div>
+
+                          {/* Message Text */}
+                          <div className="mb-3">
+                            <p className="text-foreground">{message.msg}</p>
+                          </div>
+                        </div>
+
+                        {/* Images Section - 25% width, table height */}
+                        {((message.images && message.images.length > 0) || message.img) && (
+                          <div className="w-[25%] h-full flex flex-col gap-2">
+                            {/* Handle new images array */}
+                            {message.images && message.images.length > 0 && 
+                              message.images.map((img: string, imgIndex: number) => (
+                                <img
+                                  key={imgIndex}
+                                  src={img}
+                                  alt="Message image"
+                                  className="w-full h-full object-contain rounded-lg border-2 border-border bg-card shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => setSelectedImage(img)}
+                                />
+                              ))
+                            }
+                            {/* Handle old single img field */}
+                            {message.img && !message.images && (
+                              <img
+                                src={message.img}
+                                alt="Message image"
+                                className="w-full h-full object-contain rounded-lg border-2 border-border bg-card shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => setSelectedImage(message.img)}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Message Actions - Moved to bottom */}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                        <div className="flex items-center gap-4 text-sm">
+                          {/* Only show favorite buttons if user is the message author */}
+                          {user && message.sender && user._id === message.sender._id ? (
+                            <>
+                              <button 
+                                className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                                onClick={async () => {
+                                  try {
+                                    const result = await addMessageFavorite(message._id, 'thumbUp', user._id);
+                                    if (!result.error) {
+                                      // Update the message in the local state
+                                      const updatedMessages = messages.map(msg => 
+                                        msg._id === message._id ? { ...msg, thumbUp: (msg.thumbUp || 0) + 1 } : msg
+                                      );
+                                      setMessages(updatedMessages);
+                                    }
+                                  } catch (error) {
+                                    console.error('Error adding thumb up:', error);
+                                  }
+                                }}
+                              >
+                                <ThumbsUp className="w-4 h-4" />
+                                <span>{message.thumbUp || 0}</span>
+                              </button>
+                              <button 
+                                className="flex items-center gap-1 text-muted-foreground hover:text-red-500 transition-colors"
+                                onClick={async () => {
+                                  try {
+                                    const result = await addMessageFavorite(message._id, 'thumbDown', user._id);
+                                    if (!result.error) {
+                                      // Update the message in the local state
+                                      const updatedMessages = messages.map(msg => 
+                                        msg._id === message._id ? { ...msg, thumbDown: (msg.thumbDown || 0) + 1 } : msg
+                                      );
+                                      setMessages(updatedMessages);
+                                    }
+                                  } catch (error) {
+                                    console.error('Error adding thumb down:', error);
+                                  }
+                                }}
+                              >
+                                <ThumbsDown className="w-4 h-4" />
+                                <span>{message.thumbDown || 0}</span>
+                              </button>
+                              <button 
+                                className="flex items-center gap-1 text-muted-foreground hover:text-pink-500 transition-colors"
+                                onClick={async () => {
+                                  try {
+                                    const result = await addMessageFavorite(message._id, 'heart', user._id);
+                                    if (!result.error) {
+                                      // Update the message in the local state
+                                      const updatedMessages = messages.map(msg => 
+                                        msg._id === message._id ? { ...msg, heart: (msg.heart || 0) + 1 } : msg
+                                      );
+                                      setMessages(updatedMessages);
+                                    }
+                                  } catch (error) {
+                                    console.error('Error adding heart:', error);
+                                  }
+                                }}
+                              >
+                                <Heart className="w-4 h-4" />
+                                <span>{message.heart || 0}</span>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <ThumbsUp className="w-4 h-4" />
+                                <span>{message.thumbUp || 0}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <ThumbsDown className="w-4 h-4" />
+                                <span>{message.thumbDown || 0}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Heart className="w-4 h-4" />
+                                <span>{message.heart || 0}</span>
+                              </div>
+                            </>
+                          )}
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <MessageCircle className="w-4 h-4" />
+                            <span>{message.replyCount || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No messages found
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </Tabs.Content>
         <Tabs.Content value="transaction">
           <motion.div 
             className="w-full py-4"
@@ -399,6 +756,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
             </div>
           </motion.div>
         </Tabs.Content>
+
         <Tabs.Content value="top holders">
           <motion.div 
             className="w-full py-4"
@@ -475,6 +833,37 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
           </motion.div>
         </Tabs.Content>
       </Tabs.Root>
+
+      {/* Image Zoom Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-4xl">
+            <img
+              src={selectedImage}
+              alt="Zoomed image"
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      <ReplyModal 
+        open={postReplyModal} 
+        onOpenChange={handleModalClose}
+        param={param}
+        coin={coin}
+        replyingTo={replyingTo}
+      />
     </div>
   );
 };

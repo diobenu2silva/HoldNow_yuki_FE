@@ -286,6 +286,38 @@ export const postReply = async (data: replyInfo) => {
   }
 };
 
+// Add favorite to message (only message author can increment)
+export const addMessageFavorite = async (messageId: string, type: 'thumbUp' | 'thumbDown' | 'heart', userId: string) => {
+  try {
+    const response = await axios.post(
+      `${BACKEND_URL}/feedback/${messageId}/favorite`,
+      { type, userId },
+      config
+    );
+    return response.data;
+  } catch (err) {
+    console.error('Error adding favorite:', err);
+    return { error: 'Failed to add favorite' };
+  }
+};
+
+// Remove favorite from message (only message author can decrement)
+export const removeMessageFavorite = async (messageId: string, type: 'thumbUp' | 'thumbDown' | 'heart', userId: string) => {
+  try {
+    const response = await axios.delete(
+      `${BACKEND_URL}/feedback/${messageId}/favorite`,
+      {
+        ...config,
+        data: { type, userId }
+      }
+    );
+    return response.data;
+  } catch (err) {
+    console.error('Error removing favorite:', err);
+    return { error: 'Failed to remove favorite' };
+  }
+};
+
 // ================== Get Holders ===========================
 export const findHolders = async (mint: string) => {
   // Pagination logic

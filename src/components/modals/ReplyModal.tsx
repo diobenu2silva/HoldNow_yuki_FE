@@ -1,161 +1,253 @@
 import UserContext from '@/context/UserContext';
 import { coinInfo, replyInfo, tradeInfo, userInfo } from '@/utils/types';
 import { postReply, updateUser } from '@/utils/util';
+import { uploadImage } from '@/utils/fileUpload';
 import React, {
   ChangeEvent,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { errorAlert, successAlert } from '../others/ToastGroup';
 import ImgIcon from '@/../public/assets/images/imce-logo.jpg';
-
+import { X, Upload, Image as ImageIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
 interface ModalProps {
-  data: coinInfo;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  param: string | null;
+  coin: coinInfo;
+  replyingTo?: any;
 }
 
-const ReplyModal: React.FC<ModalProps> = ({ data }) => {
-  const { postReplyModal, setPostReplyModal, user } = useContext(UserContext);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>('');
+const ReplyModal: React.FC<ModalProps> = ({ open, onOpenChange, param, coin, replyingTo }) => {
+  const { user } = useContext(UserContext);
+  const [fileNames, setFileNames] = useState<string[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [msg, setMsg] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const replyPost = async () => {
-    let reply: replyInfo;
     if (!user) {
       errorAlert('Please Connect Wallet');
       return;
     }
-    if (imageUrl) {
-      const url = await uploadImage(imageUrl);
-      if (url && user._id) {
-        reply = {
-          coinId: data._id,
-          sender: user._id,
-          msg: msg,
-          img: url,
-        };
-      }
-    } else {
-      if (user._id) {
-        reply = {
-          coinId: data._id,
-          sender: user._id,
-          msg: msg,
-        };
-      }
+    
+    if (!msg.trim()) {
+      errorAlert('Please enter a message');
+      return;
     }
-    await postReply(reply);
-    handleModalToggle();
+
+    setIsSubmitting(true);
+    try {
+      let reply: replyInfo;
+      const uploadedImages: string[] = [];
+
+      // Upload images if any
+      if (imageUrls.length > 0) {
+        for (const imageUrl of imageUrls) {
+          const url = await uploadImage(imageUrl);
+          if (url) {
+            uploadedImages.push(url);
+          }
+        }
+      }
+
+              if (user._id) {
+          reply = {
+            coinId: coin._id,
+            sender: user._id,
+            msg: msg,
+            images: uploadedImages,
+            replyTo: replyingTo?._id,
+          };
+        
+        await postReply(reply);
+        successAlert('Reply posted successfully!');
+        handleModalClose();
+      }
+    } catch (error) {
+      errorAlert('Failed to post reply');
+      console.error('Reply post error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleModalToggle = () => {
-    setPostReplyModal(!postReplyModal);
+  const handleModalClose = () => {
+    setMsg('');
+    setFileNames([]);
+    setImageUrls([]);
+    onOpenChange(false);
   };
+
+  // Clear reply state when modal closes
+  useEffect(() => {
+    if (!open) {
+      // Reset reply state in parent component
+      onOpenChange(false);
+    }
+  }, [open, onOpenChange]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        successAlert('Please select a valid image file.');
-        return;
-      }
-      const url = URL.createObjectURL(file);
-      setFileName(file.name || ''); // Ensure it's always a string
-      setImageUrl(url); // URL.createObjectURL always returns a string
+    const files = event.target.files;
+    if (files) {
+      const newFileNames: string[] = [];
+      const newImageUrls: string[] = [];
+
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith('image/')) {
+          errorAlert('Please select valid image files.');
+          return;
+        }
+        
+        const url = URL.createObjectURL(file);
+        newFileNames.push(file.name);
+        newImageUrls.push(url);
+      });
+
+      setFileNames(prev => [...prev, ...newFileNames]);
+      setImageUrls(prev => [...prev, ...newImageUrls]);
     }
   };
 
-  const uploadImage = async (image: string): Promise<string> => {
-    // Your logic here
-    const uploadSuccess = true; // Example logic
-    return uploadSuccess ? 'uploaded-image-url' : '';
+  const removeImage = (index: number) => {
+    setFileNames(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
   };
 
-  return (
-    <div className="fixed w-full inset-0 flex items-center justify-center z-50 backdrop-blur-md">
-      <div className="flex w-full max-w-[300px] sm:max-w-xl flex-col p-6 rounded-md gap-3 bg-[#140B56] border-[1px] border-white text-white relative">
-        <h2 className="text-center text-2xl font-bold">Post Reply</h2>
-        <div className=" w-full px-2 flex flex-col">
-          <label
-            htmlFor="COMMIT  py-[20px]"
-            className="block mb-2 text-sm font-medium text-white"
-          >
-            Commit :
-          </label>
-          <textarea
-            id="msg"
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-            className="rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 outline-none bg-transparent border-[1px] border-[#143F72] "
-            placeholder="Add commit ..."
-            required
-          />
-        </div>
+  // Remove the local uploadImage function since we're importing it from fileUpload
 
-        <div className="w-full flex flex-col md:flex-row justify-between gap-3 md:pr-6">
-          <div>
-            <label
-              htmlFor="fileUpload"
-              className="block text-lg font-medium mb-2 text-white"
+  if (!open) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div 
+        className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div 
+          className="fixed inset-0 bg-black/50"
+          onClick={handleModalClose}
+        />
+        
+        <motion.div
+          className="relative w-full max-w-2xl mx-4 bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-border">
+            <h2 className="text-xl font-bold text-foreground">Post Reply</h2>
+            <button
+              onClick={handleModalClose}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
             >
-              Upload Image:
-            </label>
-            <label
-              htmlFor="fileUpload"
-              className="w-full p-2 rounded-lg outline-none bg-transparent border-[1px] border-white text-center text-white cursor-pointer hover:bg-white hover:text-black transition mx-auto flex"
-            >
-              {fileName || 'Choose an Image'}
-            </label>
-            <input
-              id="fileUpload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-            />
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
           </div>
 
-          {imageUrl ? (
-            <div className="w-48 h-48 border rounded-lg overflow-hidden justify-center mx-auto">
-              <img
-                src={imageUrl as string} // Ensure it's a string
-                alt="Selected Preview"
-                className="flex object-cover w-full h-full mx-auto"
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Reply Information */}
+            {replyingTo && (
+              <div className="p-3 bg-muted/30 rounded-lg border border-border">
+                <div className="text-xs text-muted-foreground mb-1">Replying to:</div>
+                <div className="text-sm text-foreground">
+                  {replyingTo.sender?.name || 'Unknown User'}: {replyingTo.msg}
+                </div>
+              </div>
+            )}
+
+            {/* Message Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Message
+              </label>
+              <textarea
+                value={msg}
+                onChange={(e) => setMsg(e.target.value)}
+                className="w-full h-32 p-3 bg-muted/50 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground"
+                placeholder="Write your message here..."
+                required
               />
             </div>
-          ) : (
-            <div className="w-48 h-48 border rounded-lg overflow-hidden p-3">
-              <Image
-                src={ImgIcon}
-                alt="Default Avatar"
-                className="flex object-cover w-full h-full rounded-full mx-auto"
-              />
+
+            {/* Image Upload */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">
+                Images (Optional)
+              </label>
+              
+              {/* Upload Button */}
+              <label className="flex items-center justify-center w-full h-20 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Click to upload images</span>
+                </div>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                />
+              </label>
+
+              {/* Image Previews */}
+              {imageUrls.length > 0 && (
+                <div className="flex flex-wrap gap-3">
+                  {imageUrls.map((url, index) => (
+                    <div key={index} className="relative group w-[25%] h-24">
+                      <img
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-contain rounded-lg border-2 border-border bg-card shadow-sm"
+                      />
+                      <button
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div className="flex justify-around p-3">
-          <button
-            onClick={replyPost}
-            className="mt-2 px-4 py-2 bg-custom-gradient text-white rounded-md"
-          >
-            POST
-          </button>
-          <button
-            onClick={handleModalToggle}
-            className="mt-2 px-4 py-2 bg-custom-gradient text-white rounded-md"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-border bg-muted/20">
+            <button
+              onClick={handleModalClose}
+              className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={replyPost}
+              disabled={isSubmitting || !msg.trim()}
+              className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Posting...' : 'Post Reply'}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

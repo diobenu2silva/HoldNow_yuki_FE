@@ -8,6 +8,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 import { useSocket } from '@/contexts/SocketContext';
 import { Send, Image, Smile, X, Minimize2, Maximize2, Check, CheckCheck } from 'lucide-react';
+import { uploadImage } from '@/utils/fileUpload';
 
 interface ChatPanelProps {
   param: string | null;
@@ -63,6 +64,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   useEffect(() => {
     if (newMsg && newMsg.coinId === coin._id) {
       console.log('__yuki__ ChatPanel: New message received via socket:', newMsg);
+      // Debug: Log message structure to see what fields are available
+      console.log('__yuki__ ChatPanel: Message structure:', {
+        id: newMsg._id,
+        hasImages: !!newMsg.images,
+        imagesLength: newMsg.images?.length,
+        hasImg: !!newMsg.img,
+        imgValue: newMsg.img,
+        imagesValue: newMsg.images
+      });
+      
       // Add the new message to the existing messages
       if (!messages) {
         setMessages([newMsg]);
@@ -174,7 +185,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             break;
           case 'w':
             newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
-            newX = resizeStart.windowX + deltaX;
+            // newX = resizeStart.windowX + deltaX;
             break;
           case 'nw':
             newWidth = Math.max(minWidth, Math.min(maxWidth, resizeStart.width - deltaX));
@@ -299,12 +310,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         return;
       }
 
+      // Upload image to IPFS if selected
+      let uploadedImageUrl: string | undefined;
+      if (selectedImage && imagePreview) {
+        console.log('Uploading image to IPFS...');
+        const uploadResult = await uploadImage(imagePreview);
+        if (uploadResult) {
+          uploadedImageUrl = uploadResult;
+          console.log('Image uploaded successfully:', uploadedImageUrl);
+        } else {
+          console.error('Failed to upload image to IPFS');
+        }
+      }
+
       // Create message data using the correct replyInfo type
       const messageData: replyInfo = {
         coinId: coinId,
         sender: user._id,
         msg: chatMessage.trim(),
-        img: selectedImage ? imagePreview : undefined
+        img: uploadedImageUrl
       };
 
       // Send message to backend using the existing postReply function
@@ -564,7 +588,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       <div className={`flex gap-2 max-w-[80%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
                         {!isOwnMessage && (
                           <Avatar className="w-8 h-8 rounded-full flex-shrink-0">
-                            <AvatarImage src={(message.sender as userInfo)?.avatar} alt="User" />
+                            <AvatarImage 
+                              src={(message.sender as userInfo)?.avatar || '/assets/images/user-avatar.png'} 
+                              alt="User" 
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/assets/images/user-avatar.png';
+                              }}
+                            />
                             <AvatarFallback className="bg-blue-500 text-white text-xs font-semibold">
                               {(message.sender as userInfo)?.name?.[0] || "?"}
                             </AvatarFallback>
@@ -578,18 +609,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                             </span>
                           )}
                           
-                          <div className={`rounded-2xl px-4 py-2 max-w-full ${
+                          <div className={`rounded-2xl px-4 py-2 max-w-full min-h-[80px] ${
                             isOwnMessage 
                               ? 'bg-blue-500 text-white rounded-br-md' 
                               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-bl-md'
                           }`}>
-                            {message.img && (
-                              <div className="mb-2">
-                                <img
-                                  src={message.img}
-                                  alt="Attachment"
-                                  className="rounded-lg max-w-full max-h-48 object-cover"
-                                />
+                            {(message.img || (message.images && message.images.length > 0)) && (
+                              <div className="mb-2 w-[25%] h-full">
+                                {message.images && message.images.length > 0 ? (
+                                  // Handle new images array
+                                  message.images.map((img: string, imgIndex: number) => (
+                                    <img
+                                      key={imgIndex}
+                                      src={img}
+                                      alt="Attachment"
+                                      className="w-full h-full object-contain rounded-lg border-2 border-border bg-card shadow-sm"
+                                    />
+                                  ))
+                                ) : (
+                                  // Handle old single img field
+                                  <img
+                                    src={message.img}
+                                    alt="Attachment"
+                                    className="w-full h-full object-contain rounded-lg border-2 border-border bg-card shadow-sm"
+                                  />
+                                )}
                               </div>
                             )}
                             <div className="text-sm whitespace-pre-wrap break-words">
@@ -629,7 +673,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="rounded-lg max-w-full max-h-32 object-cover border border-gray-200 dark:border-gray-600"
+                    className="w-[25%] h-full object-contain rounded-lg border-2 border-border bg-card shadow-sm"
                   />
                   <button
                     onClick={() => {
