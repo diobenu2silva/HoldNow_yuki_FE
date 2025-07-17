@@ -25,13 +25,15 @@ const ReactQueryHomePage: FC = () => {
   const { onNewTokenCreated, onCoinInfoUpdate, replyCounts, setReplyCounts } = useSocket();
   const queryClient = useQueryClient();
   
+  const [isClient, setIsClient] = useState(false);
+
   // State management
   const [currentSort, setCurrentSort] = useState<string>('creation time');
   const [currentOrder, setCurrentOrder] = useState<string>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [nsfwFilterState, setNsfwFilterState] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(12); // Default value for SSR
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // Default value for SSR
+  const [nsfwFilterState, setNsfwFilterState] = useState(false); // Default value for SSR
   const [searchToken, setSearchToken] = useState('');
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigatingTo, setNavigatingTo] = useState<string>('');
@@ -41,6 +43,29 @@ const ReactQueryHomePage: FC = () => {
   
   const router = useRouter();
   const pathname = usePathname();
+
+  // Load localStorage values after component mounts (client-side only)
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Load items per page from localStorage
+    const savedItemsPerPage = localStorage.getItem('itemsPerPage');
+    if (savedItemsPerPage) {
+      setItemsPerPage(parseInt(savedItemsPerPage, 10));
+    }
+    
+    // Load view mode from localStorage
+    const savedViewMode = localStorage.getItem('viewMode');
+    if (savedViewMode === 'list' || savedViewMode === 'grid') {
+      setViewMode(savedViewMode);
+    }
+    
+    // Load NSFW filter state from localStorage
+    const savedNsfwFilter = localStorage.getItem('nsfwFilterState');
+    if (savedNsfwFilter) {
+      setNsfwFilterState(JSON.parse(savedNsfwFilter));
+    }
+  }, []);
 
   // React Query hooks
   const {
@@ -262,7 +287,11 @@ const ReactQueryHomePage: FC = () => {
   const handleItemsPerPageChange = useCallback((newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
-  }, []);
+    // Save to localStorage (client-side only)
+    if (isClient && typeof window !== 'undefined') {
+      localStorage.setItem('itemsPerPage', newItemsPerPage.toString());
+    }
+  }, [isClient]);
 
   // Reset navigation state when route changes
   useEffect(() => {
@@ -271,6 +300,20 @@ const ReactQueryHomePage: FC = () => {
       setNavigatingTo('');
     }
   }, [pathname, isNavigating]);
+
+  // Save viewMode to localStorage when it changes
+  useEffect(() => {
+    if (isClient && typeof window !== 'undefined') {
+      localStorage.setItem('viewMode', viewMode);
+    }
+  }, [viewMode, isClient]);
+
+  // Save nsfwFilterState to localStorage when it changes
+  useEffect(() => {
+    if (isClient && typeof window !== 'undefined') {
+      localStorage.setItem('nsfwFilterState', JSON.stringify(nsfwFilterState));
+    }
+  }, [nsfwFilterState, isClient]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

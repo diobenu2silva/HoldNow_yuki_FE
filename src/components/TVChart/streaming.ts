@@ -84,6 +84,7 @@ if (socket) {
     for (const [pairIndex, subscriptionItem] of channelToSubscription.entries()) {
       console.log('[socket] Checking subscription:', pairIndex, 'token:', data.token, 'target token:', subscriptionItem.token);
       
+      console.log('[socket] subscriptionItem.token:', subscriptionItem.token, 'data.token:', data.token);
       if (subscriptionItem.token === data.token) {
         console.log('[socket] Processing chart update for token:', data.token, 'pairIndex:', pairIndex);
         
@@ -177,6 +178,7 @@ if (socket) {
     // Find subscriptions for this token
     for (const [pairIndex, subscriptionItem] of channelToSubscription.entries()) {
       if (subscriptionItem.token === data.token) {
+        console.log('[socket] Processing chart update for token:', data.token, 'pairIndex:', pairIndex);
         // Option A: Fetch full chart data and redraw
         const bars = await fetchFullChartData(data.token, subscriptionItem.resolution, 100); // 100 = countBack, adjust as needed
         if (bars && bars.length) {

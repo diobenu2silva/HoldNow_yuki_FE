@@ -187,7 +187,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
                     <div className="flex items-center gap-2">
                       <CurrencyDollarIcon className="w-4 h-4" />
                       <span className="text-sm font-semibold drop-shadow-lg">
-                        ${((trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        ${((trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })} K
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
                 <div className="flex items-center gap-2">
                   <CurrencyDollarIcon className="w-5 h-5" />
                   <span className="text-lg font-semibold drop-shadow-lg">
-                    ${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    ${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} K
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -382,7 +382,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
                     <div className="flex items-center gap-2">
                       <CurrencyDollarIcon className="w-4 h-4" />
                       <span className="text-sm font-semibold drop-shadow-lg">
-                        ${((trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        ${((trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].progressMcap * (solPrice || 0) / 1e18 || 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })} K
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

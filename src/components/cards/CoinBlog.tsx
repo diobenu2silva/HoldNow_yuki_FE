@@ -8,7 +8,7 @@ import { FaTwitter, FaTelegramPlane } from 'react-icons/fa';
 import { CurrencyDollarIcon, ArrowTrendingUpIcon, UserIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSocket } from '@/contexts/SocketContext';
-import { getUserInfo } from '@/utils/util';
+import { getSolPriceInUSD, getUserInfo } from '@/utils/util';
 
 interface CoinBlogProps {
   coin: coinInfo;
@@ -20,12 +20,28 @@ interface CoinBlogProps {
 export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, solPrice: propSolPrice }) => {
   const router = useRouter();
   const { onCoinInfoUpdate } = useSocket();
-  const { solPrice: contextSolPrice } = useContext(UserContext);
+  const { setSolPrice, solPrice: contextSolPrice } = useContext(UserContext);
   
   // Use prop solPrice if provided, otherwise fall back to context solPrice
-  const solPrice = propSolPrice ?? contextSolPrice ?? 0;
-  
+  let solPrice = propSolPrice ?? contextSolPrice ?? 0;
 
+  // Fetch sol price if not available from props or context
+  useEffect(() => {
+    const fetchSolPrice = async () => {
+      if (solPrice === 0) {
+        try {
+          const price = await getSolPriceInUSD();
+          console.log('__yuki__ CoinBlog: Fetched sol price:', price);
+          setSolPrice(price);
+          solPrice = price;
+        } catch (error) {
+          console.error('__yuki__ CoinBlog: Error fetching sol price:', error);
+        }
+      }
+    };
+
+    fetchSolPrice();
+  }, [solPrice]);
 
   // Calculate current stage progress (percentage)
   const [stageProg, setStageProg] = useState(0);
@@ -212,8 +228,16 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white drop-shadow-lg group-hover:text-primary transition-colors duration-300 truncate min-w-0">
                     {currentCoin?.name}
                   </h3>
+                </div>
+                <div className="flex items-center gap-1 text-sm mt-1 w-full">
                   <span className="badge badge-primary text-xs text-white drop-shadow-lg flex-shrink-0">{currentCoin?.ticker}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+          {componentKey === 'coin' && currentCoin?.description && (
+            <div className="w-full px-1.5 max-w-[calc(100%-27px)] mb-2">
+              <div className="text-gray-900 dark:text-white drop-shadow-lg bg-white/10 dark:bg-black/20 px-2 py-1 rounded backdrop-blur-sm text-sm flex flex-col items-start gap-2 w-full overflow-hidden">
                 <div className="flex items-center gap-1 text-sm mt-1 w-full">
                   <UserIcon className="w-4 h-4 text-gray-900 dark:text-white drop-shadow-lg flex-shrink-0" />
                   <button
@@ -231,16 +255,12 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
                     {typeof currentCoin?.creator === 'string' ? currentCoin?.creator : (currentCoin?.creator as userInfo)?.name || 'Unknown Creator'}
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-          {componentKey === 'coin' && currentCoin?.description && (
-            <div className="w-full px-1.5 max-w-[calc(100%-27px)] mb-2">
-              <div className="text-gray-900 dark:text-white drop-shadow-lg bg-white/10 dark:bg-black/20 px-2 py-1 rounded backdrop-blur-sm text-sm flex items-start gap-2 w-full overflow-hidden">
-                <HiOutlineInformationCircle className="w-4 h-4 text-gray-900 dark:text-white drop-shadow-lg flex-shrink-0 mt-0.5" />
-                <span className="truncate min-w-0">
-                  {currentCoin?.description}
-                </span>
+                <div className="flex items-center gap-1">
+                  <HiOutlineInformationCircle className="w-4 h-4 text-gray-900 dark:text-white drop-shadow-lg flex-shrink-0 mt-0.5" />
+                  <span className="truncate min-w-0">
+                    {currentCoin?.description}
+                  </span>
+                </div>
               </div>
             </div>
           )}

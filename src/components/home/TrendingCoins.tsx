@@ -158,7 +158,7 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
                       <div className="flex items-center gap-1">
                         <CurrencyDollarIcon className="w-4 h-4 text-white/80" />
                         <span className="text-xs text-white/90 font-medium drop-shadow-lg">
-                          ${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                          ${marketCapUSD.toLocaleString(undefined, { maximumFractionDigits: 1 })} K
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
