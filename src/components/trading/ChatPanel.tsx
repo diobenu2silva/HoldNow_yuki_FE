@@ -99,9 +99,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   };
 
   const handleScroll = () => {
-    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-    console.log('__yuki__ handleScroll, scrollTop:', scrollTop, 'scrollHeight:', scrollHeight, 'clientHeight:', clientHeight);
     if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight } = chatContainerRef.current;
       // With flex-col-reverse, the bottom is at scrollTop = 0
       setIsAtBottom(scrollTop === scrollHeight);
     }
@@ -131,18 +130,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   };
 
-  const handleMouseUp = useCallback(() => {
-    console.log('__yuki__ handleMouseUp called, isDragging:', isDragging, 'isResizing:', isResizing);
-    
-    // Cancel any pending animation frame
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-    
-    setIsDragging(false);
-    setIsResizing(false);
-  }, [isDragging, isResizing]);
+
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     // Cancel any pending animation frame
@@ -240,32 +228,33 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     });
   };
 
+  // Single effect to manage all mouse event listeners
   useEffect(() => {
-    if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
+    if (!isDragging && !isResizing) {
+      return;
     }
-  }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
 
-  // Global mouse up listener to ensure cleanup
-  useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging || isResizing) {
-        console.log('__yuki__ Global mouse up detected, cleaning up drag/resize state');
+        // Cancel any pending animation frame
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        
         setIsDragging(false);
         setIsResizing(false);
       }
     };
 
+    document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleGlobalMouseUp);
+    
     return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isDragging, isResizing]);
+  }, [isDragging, isResizing, handleMouseMove]);
 
   // Cleanup animation frame on unmount
   useEffect(() => {
@@ -350,22 +339,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   };
 
   // Sort messages by timestamp and filter out empty messages and unknown users
-  const sortedMessages = messages ? [...messages]
-    .filter(message => {
-      // Filter out empty messages
-      if (!message.msg || message.msg.trim() === '') return false;
-      
-      // Filter out messages from unknown users
-      const senderName = (message.sender as userInfo)?.name;
-      if (!senderName || senderName === 'Unknown') return false;
-      
-      return true;
-    })
-    .sort((a, b) => {
-      const aTime = a.time ? new Date(a.time).getTime() : 0;
-      const bTime = b.time ? new Date(b.time).getTime() : 0;
-      return aTime - bTime;
-    }) : [];
+  const sortedMessages = useMemo(() => {
+    if (!messages) return [];
+    
+    return [...messages]
+      .filter(message => {
+        // Filter out empty messages
+        if (!message.msg || message.msg.trim() === '') return false;
+        
+        // Filter out messages from unknown users
+        const senderName = (message.sender as userInfo)?.name;
+        if (!senderName || senderName === 'Unknown') return false;
+        
+        return true;
+      })
+      .sort((a, b) => {
+        const aTime = a.time ? new Date(a.time).getTime() : 0;
+        const bTime = b.time ? new Date(b.time).getTime() : 0;
+        return aTime - bTime;
+      });
+  }, [messages]);
 
   if (!isOpen) return null;
 
