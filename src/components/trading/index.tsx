@@ -125,34 +125,29 @@ export default function TradingPage() {
     }
   }, [coin.bondingCurve, coin.progressMcap, coin.lamportReserves, coin.movedToRaydium, coin.moveRaydiumFailed, solPrice, memoizedStageProgress]);
 
-  // React Query for data fetching
-  const { data: coinData, isLoading: isCoinLoading, error: coinError } = useQuery(
-    ['coin', param],
-    () => getCoinInfo(param),
-    {
-      enabled: !!param,
-      staleTime: 30000, // 30 seconds
-      cacheTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-    }
-  );
-
-  const { data: claimDataQuery, isLoading: isClaimLoading } = useQuery(
+  const { data: claimDataQuery, isLoading: isCoinLoading } = useQuery(
     ['claimData', param, publicKey?.toBase58()],
     async () => {
-      const data = await getClaimData(param, publicKey?.toBase58() || '');
-      // Transform the object response to array format expected by the component
-      if (data && typeof data === 'object' && !Array.isArray(data)) {
-        return [
-          data.claimInUSD ?? 0,
-          data.claimHodl ?? 0,
-          data.currentClaim ?? 0,
-          data.solPrice ?? 0,
-          data.rewardCap ?? 0,
-          data.tokenBalance ?? 0,
-        ];
+      const coinData = await getCoinInfo(param);
+      if (coinData.token) {
+        setCoin(coinData);
+        const data = await getClaimData(coinData.token, publicKey?.toBase58() || '');
+        setIsLoading(false);
+        // Transform the object response to array format expected by the component
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          return [
+            data.claimInUSD ?? 0,
+            data.claimHodl ?? 0,
+            data.currentClaim ?? 0,
+            data.solPrice ?? 0,
+            data.rewardCap ?? 0,
+            data.tokenBalance ?? 0,
+          ];
+        }
+        return data;
+      } else {
+        return [0, 0, 0, 0, 0, 0];
       }
-      return data;
     },
     {
       enabled: !!param && !!publicKey,
@@ -169,15 +164,7 @@ export default function TradingPage() {
     setStageProg(memoizedDerivedData.stageProg);
   }, [memoizedDerivedData]);
 
-  // Update coin data when query data changes
-  useEffect(() => {
-    if (coinData) {
-      setCoin(coinData);
-      setIsLoading(false);
-    }
-  }, [coinData]);
-
-  // Update claim data when query data changes
+   // Update claim data when query data changes
   useEffect(() => {
     if (claimDataQuery && Array.isArray(claimDataQuery)) {
       setClaimData(claimDataQuery as [number, number, number, number, number, number]);

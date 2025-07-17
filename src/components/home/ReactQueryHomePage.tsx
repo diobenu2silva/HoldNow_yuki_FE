@@ -491,7 +491,7 @@ const ReactQueryHomePage: FC = () => {
           className="mb-6"
         >
           {/* Full-width pagination with items per page on the left */}
-          {totalPages > 1 && (
+          {/* {totalPages > 1 && */(
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-1.5 bg-card border border-border rounded-lg">
               {/* Left side - Items per page selector */}
               <div className="flex items-center gap-2 whitespace-nowrap pl-3">
@@ -560,25 +560,6 @@ const ReactQueryHomePage: FC = () => {
             </div>
           )}
           
-          {/* Items per page only (when no pagination needed) */}
-          {totalPages <= 1 && (
-            <div className="flex justify-end">
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-muted-foreground text-sm">Items per page:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                  className="px-3 py-1.5 bg-background border border-border text-foreground text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value={6}>6</option>
-                  <option value={12}>12</option>
-                  <option value={24}>24</option>
-                  <option value={36}>36</option>
-                  <option value={1000}>All</option>
-                </select>
-              </div>
-            </div>
-          )}
         </motion.div>
 
         {/* Error State */}
