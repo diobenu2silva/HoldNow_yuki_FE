@@ -167,9 +167,30 @@ export default function TradingPage() {
    // Update claim data when query data changes
   useEffect(() => {
     if (claimDataQuery && Array.isArray(claimDataQuery)) {
+      console.log('__yuki__ React Query data updated:', {
+        claimInUSD: claimDataQuery[0],
+        claimHodl: claimDataQuery[1],
+        tokenBalance: claimDataQuery[5],
+        wallet: publicKey?.toBase58()
+      });
       setClaimData(claimDataQuery as [number, number, number, number, number, number]);
     }
-  }, [claimDataQuery]);
+  }, [claimDataQuery, publicKey?.toBase58()]);
+
+  // Update publicKey state when wallet changes
+  useEffect(() => {
+    console.log('__yuki__ Wallet changed, updating publicKey state:', {
+      oldPublicKey: publicKey?.toBase58(),
+      newPublicKey: wallet.publicKey?.toBase58()
+    });
+    setPublicKey(wallet.publicKey);
+    
+    // Reset claim data when wallet disconnects
+    if (!wallet.publicKey && coin.token) {
+      console.log('__yuki__ Wallet disconnected, resetting claim data');
+      setClaimData([0, 0, 0, 0, 0, 0]);
+    }
+  }, [wallet.publicKey, coin.token]);
 
   // Update UserContext solPrice when claimData changes
   useEffect(() => {

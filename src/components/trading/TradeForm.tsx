@@ -76,7 +76,9 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
         setTokenBal(0);
         return;
       }
+      console.log('__yuki__ getBalance: Fetching balance for wallet:', user.wallet, 'token:', coin.token);
       const balance = await getTokenBalance(user.wallet, coin.token);
+      console.log('__yuki__ getBalance: Balance received:', balance);
       setTokenBal(balance ? balance : 0);
     } catch (error) {
       console.error('__yuki__ Error getting token balance:', error);
@@ -86,7 +88,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   
   useEffect(() => {
     getBalance();
-  }, [user, coin.token]);
+  }, [user, user?.wallet, coin.token, wallet.publicKey?.toBase58()]);
 
   const handlTrade = async () => {
     if (!!!amount) {
