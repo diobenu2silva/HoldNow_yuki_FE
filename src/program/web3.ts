@@ -50,6 +50,7 @@ import { connect } from 'http2';
 import base58 from 'bs58';
 import { publicKey } from '@coral-xyz/anchor/dist/cjs/utils';
 import { useState } from 'react';
+import axios from 'axios';
 
 export const commitmentLevel = 'processed';
 
@@ -236,28 +237,21 @@ export const createToken = async (
     // for CSV claim
     let totalClaimAmount = 0;
     if (csvAllocators.length > 0) {
-      // 1. Build all claim instructions
-      const claimInstructions = [];
+
       for (const allocator of csvAllocators) {
-        const pubkey = new PublicKey(allocator.wallet);
+        totalClaimAmount += allocator.amount;
+      }
+      const claimInstructions = [];
+      // for (const allocator of csvAllocators) {
+        const pubkey = wallet.publicKey;
         const ataUserAccount = await getAssociatedTokenAddress(mint, pubkey);
         const cpIx_claim = ComputeBudgetProgram.setComputeUnitPrice({
           microLamports: 1_000_000,
         });
         const cuIx_claim = ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 });
-        const info_claim = await connection.getAccountInfo(ataUserAccount);
         const claimBatch: TransactionInstruction[] = [cpIx_claim, cuIx_claim];
-        if (!info_claim && pubkey.toBase58() !== wallet.publicKey.toBase58()) {
-          claimBatch.push(
-            createAssociatedTokenAccountInstruction(
-              wallet.publicKey,
-              ataUserAccount,
-              pubkey,
-              mint,
-            )
-          );
-        }
-        const bnAmount = new BN((allocator.amount * 1e6).toFixed(0));
+        
+        const bnAmount = new BN((totalClaimAmount * 1e6).toFixed(0));
         const claimIx = await program.methods
           .claim(bnAmount, true)
           .accounts({
@@ -275,8 +269,6 @@ export const createToken = async (
           .instruction();
         claimBatch.push(claimIx);
         claimInstructions.push(claimBatch);
-        totalClaimAmount += allocator.amount;
-      }
       // 2. Batch instructions into transactions
       const MAX_INSTRUCTIONS_PER_TX = 3; // adjust as needed
       let batch: TransactionInstruction[] = [];
@@ -389,6 +381,46 @@ export const createToken = async (
     console.log("__yuki__ createToken 6");
     await sendTx(signatures[0], mint, wallet.publicKey);
     console.log("__yuki__ createToken 7");
+
+    if (csvAllocators.length > 0) {
+      console.log('__yuki__ Adding users to claim database for mint:', mint.toString());
+      
+      // Prepare users with their claim amounts for stage 1
+      const usersWithClaims = csvAllocators.map(allocator => ({
+        user: allocator.user || allocator.wallet || allocator.address,
+        claimAmount: allocator.amount || 0
+      }));
+
+      try {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/claimData/addUsers`, {
+          mint: mint.toString(),
+          users: usersWithClaims,
+        }, {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (response.data.success) {
+          console.log('__yuki__ Successfully added users to claim database:', {
+            mint: mint.toString(),
+            totalUsers: response.data.totalUsers,
+            successfulUsers: response.data.successfulUsers,
+            errorUsers: response.data.errorUsers,
+            skippedUsers: response.data.skippedUsers
+          });
+        } else {
+          console.error('__yuki__ Backend returned error for addUsers:', response.data);
+        }
+      } catch (error) {
+        console.error('__yuki__ Error adding users to claim database:', error);
+        if (error.response) {
+          console.error('__yuki__ Backend error response:', error.response.data);
+        }
+        // Don't fail the entire transaction if this fails
+      }
+    }
 
     return { signatures, confirmations, mint: mint.toString() };
   } catch (error) {

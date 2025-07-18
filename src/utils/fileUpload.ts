@@ -3,6 +3,7 @@ import { coinInfo, metadataInfo } from './types';
 const pinataApiKey: string | undefined = process.env.NEXT_PUBLIC_PINATA_API_KEY;
 const pinataSecretApiKey: string | undefined =
   process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY;
+const JWT: string | undefined = process.env.NEXT_PUBLIC_PINATA_JWT;
 
 interface PinataResponse {
   IpfsHash: string;
@@ -29,6 +30,7 @@ export const pinFileToIPFS = async (
       body: data,
     });
 
+    console.log('__yuki__ pinFileToIPFS res:', res);
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }

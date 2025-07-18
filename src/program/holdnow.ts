@@ -759,6 +759,11 @@ export type Holdnow = {
           "index": false
         },
         {
+          "name": "isFree",
+          "type": "bool",
+          "index": false
+        },
+        {
           "name": "currentStage",
           "type": "u64",
           "index": false
@@ -1968,6 +1973,11 @@ export const IDL: Holdnow = {
         {
           "name": "rewardAmount",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "isFree",
+          "type": "bool",
           "index": false
         },
         {
