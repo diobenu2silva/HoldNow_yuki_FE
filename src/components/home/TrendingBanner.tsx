@@ -59,7 +59,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
       
       onCoinInfoUpdate(handleCoinUpdate);
     }
-  }, [onCoinInfoUpdate, trendingCoins]);
+  }, [onCoinInfoUpdate]); // Removed trendingCoins from dependencies to prevent infinite re-renders
 
   // Real-time progress calculation for all coins
   useEffect(() => {
