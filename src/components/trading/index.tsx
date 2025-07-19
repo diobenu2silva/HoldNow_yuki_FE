@@ -62,7 +62,6 @@ export default function TradingPage() {
   const { visible, setVisible } = useWalletModal();
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const [publicKey, setPublicKey] = useState<PublicKey | null>(wallet.publicKey);
   const [param, setParam] = useState<string>('');
   const [progress, setProgress] = useState<number>(0);
   const [coin, setCoin] = useState<coinInfo>({} as coinInfo);
@@ -90,8 +89,7 @@ export default function TradingPage() {
   // Only destructure the first 6 values, use claimData[6] for coinData
   // Ensure claimData is always an array to prevent destructuring errors
   const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
-  
-
+  const { publicKey } = wallet;
 
   // Memoized calculations for performance
   const memoizedStageProgress = useMemo(() => {
@@ -133,6 +131,7 @@ export default function TradingPage() {
         setCoin(coinData);
         const data = await getClaimData(coinData.token, publicKey?.toBase58() || '');
         setIsLoading(false);
+        console.log('__yuki__ claimDataQuery 1: publicKey', publicKey?.toBase58(), "claimData", data);
         // Transform the object response to array format expected by the component
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           return [
@@ -174,23 +173,17 @@ export default function TradingPage() {
         wallet: publicKey?.toBase58()
       });
       setClaimData(claimDataQuery as [number, number, number, number, number, number]);
+      console.log('__yuki__ claimDataQuery 2: publicKey', publicKey?.toString(), "claimData", claimDataQuery);
     }
   }, [claimDataQuery, publicKey?.toBase58()]);
 
-  // Update publicKey state when wallet changes
+  // Handle wallet disconnection
   useEffect(() => {
-    console.log('__yuki__ Wallet changed, updating publicKey state:', {
-      oldPublicKey: publicKey?.toBase58(),
-      newPublicKey: wallet.publicKey?.toBase58()
-    });
-    setPublicKey(wallet.publicKey);
-    
-    // Reset claim data when wallet disconnects
-    if (!wallet.publicKey && coin.token) {
+    if (!publicKey && coin.token) {
       console.log('__yuki__ Wallet disconnected, resetting claim data');
       setClaimData([0, 0, 0, 0, 0, 0]);
     }
-  }, [wallet.publicKey, coin.token]);
+  }, [publicKey, coin.token]);
 
   // Update UserContext solPrice when claimData changes
   useEffect(() => {
@@ -272,8 +265,15 @@ export default function TradingPage() {
       return;
     }
     
+    console.log('__yuki__ handleClaimDataUpdate triggered:', {
+      payloadToken: payload.token,
+      coinToken: coin.token,
+      payloadUser: payload.user,
+      currentWallet: publicKey?.toBase58()
+    });
     // Compare payload.token (token address) with coin.token (token address)
     if (payload.token === coin.token && publicKey && payload.user === publicKey.toBase58()) {
+      console.log('__yuki__ handleClaimDataUpdate triggered 2');
       // Update React Query cache directly for better performance
       queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
         payload.claimData.claimInUSD ?? 0,
@@ -293,6 +293,7 @@ export default function TradingPage() {
         payload.claimData.rewardCap ?? 0,
         payload.claimData.tokenBalance ?? 0,
       ]);
+      console.log('__yuki__ claimDataQuery 3: publicKey', publicKey?.toString(), "claimData", claimData);
     }
   }, [coin.token, publicKey, param, queryClient]);
 
@@ -365,7 +366,16 @@ export default function TradingPage() {
     if (onCoinInfoUpdate) {
       onCoinInfoUpdate(handleCoinInfoUpdate);
     }
-  }, [onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate]);
+    
+    // Cleanup function to remove stale data when component unmounts or parameters change
+    return () => {
+      console.log('__yuki__ Cleaning up socket callbacks and stale data');
+      // Clear any stale claim data from cache when component unmounts
+      if (param) {
+        queryClient.removeQueries(['claimData', param]);
+      }
+    };
+  }, [onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate, param, queryClient]);
 
   useEffect(() => {
     const segments = pathname.split('/');
@@ -395,15 +405,27 @@ export default function TradingPage() {
     }
   }, [pathname, updateDerivedData]);
 
+  // Handle wallet changes and manual claim data fetching
   useEffect(() => {
     if (coin.token && publicKey) {
-      console.log('__yuki__ Wallet changed, fetching claim data for new wallet');
+      console.log('__yuki__ Wallet connected, fetching claim data for wallet:', publicKey.toBase58());
       const fetchClaimDataForWallet = async () => {
         try {
           const response = await getClaimData(
             coin.token,
             publicKey.toBase58()
           );
+          
+          // Update React Query cache to keep it in sync
+          queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
+            response.claimInUSD ?? 0,
+            response.claimHodl ?? 0,
+            response.currentClaim ?? 0,
+            response.solPrice ?? 0,
+            response.rewardCap ?? 0,
+            response.tokenBalance ?? 0,
+          ]);
+          
           setClaimData([
             response.claimInUSD ?? 0,
             response.claimHodl ?? 0,
@@ -412,18 +434,15 @@ export default function TradingPage() {
             response.rewardCap ?? 0,
             response.tokenBalance ?? 0,
           ]);
-          console.log('__yuki__ Claim data updated for new wallet:', response);
+          console.log('__yuki__ claimDataQuery 4: publicKey', publicKey?.toString(), "claimData", claimData);
         } catch (error) {
-          console.error('__yuki__ Error fetching claim data for new wallet:', error);
+          console.error('__yuki__ Error fetching claim data for wallet:', error);
           setClaimData([0, 0, 0, 0, 0, 0]);
         }
       };
       fetchClaimDataForWallet();
-    } else if (coin.token && !publicKey) {
-      // Wallet disconnected, reset claim data
-      setClaimData([0, 0, 0, 0, 0, 0]);
     }
-  }, [publicKey, coin.token]);
+  }, [publicKey, coin.token, param, queryClient]);
 
   const fetchData = async () => {
     updateDerivedData(coin);
