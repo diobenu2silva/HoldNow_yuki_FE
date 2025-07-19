@@ -9,9 +9,8 @@ import UserContext from '@/context/UserContext';
 import { msgInfo, userInfo } from '@/utils/types';
 import 'dotenv/config.js';
 import LoginContext from '@/context/CoinContex';
-import { useWallet } from '@solana/wallet-adapter-react';
 import SocketProvider from '@/contexts/SocketContext';
-import { ClaimProvider } from '@/context/ClaimContext';
+
 
 
 export const queryClient = new QueryClient({
@@ -27,7 +26,6 @@ export const queryClient = new QueryClient({
 });
 
 export default function Providers({ children }: { children: ReactNode }) {
-  const wallet = useWallet();
   const [user, setUser] = useState<userInfo>({} as userInfo);
   const [login, setLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +73,7 @@ export default function Providers({ children }: { children: ReactNode }) {
               }}
             >
               <SocketProvider>
-                <ClaimProvider>{children}</ClaimProvider>
+                {children}
               </SocketProvider>
               <ToastContainer pauseOnFocusLoss={false} theme="colored" />
             </UserContext.Provider>

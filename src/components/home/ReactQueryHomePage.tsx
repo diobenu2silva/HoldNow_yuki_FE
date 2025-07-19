@@ -89,19 +89,14 @@ const ReactQueryHomePage: FC = () => {
     error: essentialDataError
   } = useEssentialData();
 
-  // Update reply counts when essential data changes
-  useEffect(() => {
-    if (essentialReplyCounts) {
-      setReplyCounts(essentialReplyCounts);
-    }
-  }, [essentialReplyCounts, setReplyCounts]);
+
 
   // Update sol price in context
   useEffect(() => {
     if (solPrice > 0) {
       setIsLoading(true);
     }
-  }, [solPrice, setIsLoading]);
+  }, [solPrice]);
 
   const handleToRouter = useCallback((id: string) => {
     setIsNavigating(true);
@@ -233,8 +228,16 @@ const ReactQueryHomePage: FC = () => {
     }
   }, [currentPage, totalPages, lastPageChange]);
 
-  // Memoize pagination props to prevent unnecessary re-renders
-  const paginationProps = useMemo(() => {
+  // Create stable callback for pagination - prevent double calls
+  const stableHandlePageChange = useCallback((page: number) => {
+    // Prevent double calls by checking if we're already transitioning
+    if (!isPageTransitioning) {
+      handlePageChange(page);
+    }
+  }, [handlePageChange, isPageTransitioning]);
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = useCallback(() => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
     
@@ -265,24 +268,9 @@ const ReactQueryHomePage: FC = () => {
         pageNumbers.push(totalPages);
       }
     }
-
-    return {
-      currentPage,
-      totalPages,
-      onPageChange: handlePageChange,
-      itemsPerPage,
-      totalItems: totalCoins,
-      pageNumbers
-    };
-  }, [currentPage, totalPages, handlePageChange, itemsPerPage, totalCoins]);
-
-  // Create stable callback for pagination - prevent double calls
-  const stableHandlePageChange = useCallback((page: number) => {
-    // Prevent double calls by checking if we're already transitioning
-    if (!isPageTransitioning) {
-      handlePageChange(page);
-    }
-  }, [handlePageChange, isPageTransitioning]);
+    
+    return pageNumbers;
+  }, [currentPage, totalPages]);
 
   const handleItemsPerPageChange = useCallback((newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
@@ -524,7 +512,7 @@ const ReactQueryHomePage: FC = () => {
 
                 {/* Page numbers */}
                 <div className="flex items-center gap-0.5">
-                  {paginationProps.pageNumbers?.map((page, index) => (
+                  {generatePageNumbers().map((page, index) => (
                     <motion.button
                       key={`upper-${page}-${index}`}
                       whileHover={{ scale: 1.1 }}
@@ -660,7 +648,13 @@ const ReactQueryHomePage: FC = () => {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="mt-8 mb-8"
           >
-            <Pagination {...paginationProps} />
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={stableHandlePageChange}
+              itemsPerPage={itemsPerPage}
+              totalItems={totalCoins}
+            />
           </motion.div>
         )}
       </div>

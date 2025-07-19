@@ -10,7 +10,7 @@ import {
 import { claimTx } from '@/program/web3';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
-import { useClaim } from '@/context/ClaimContext';
+
 
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 

@@ -1,5 +1,5 @@
 'use client';
-import { FC, useContext, useEffect, useState } from 'react';
+import { FC, useContext, useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [trendingCoinsState, setTrendingCoinsState] = useState<coinInfo[]>([]);
   const [stageProgressMap, setStageProgressMap] = useState<{[key: string]: number}>({});
+  const prevTrendingCoinsRef = useRef<string>('');
 
   // Use React Query hook for trending coins
   // Request more tokens initially to account for filtering out moved tokens
@@ -36,7 +37,15 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
     // If we have less than 3 after filtering, we'll show what we have
     // If we have more than 3, we'll take the first 3
     const bannerCoins = filteredCoins.slice(0, 3);
-    setTrendingCoinsState(bannerCoins);
+    
+    // Create a stable key to compare with previous state
+    const newIds = bannerCoins.map(coin => coin._id).sort().join(',');
+    
+    // Only update if the data has actually changed to prevent infinite loops
+    if (prevTrendingCoinsRef.current !== newIds) {
+      prevTrendingCoinsRef.current = newIds;
+      setTrendingCoinsState(bannerCoins);
+    }
   }, [trendingCoins]);
 
   // Real-time coin info updates

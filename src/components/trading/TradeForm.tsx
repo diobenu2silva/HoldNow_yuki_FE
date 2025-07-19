@@ -7,7 +7,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { errorAlert } from '../others/ToastGroup';
-import { useClaim } from '@/context/ClaimContext';
+
 import { claim } from '@/utils/util';
 import {
   Dialog,
@@ -37,7 +37,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const [slippageInput, setSlippageInput] = useState<string>('20');
   const { user, setWeb3Tx } = useContext(UserContext);
   
-  const { claimAmount } = useClaim();
+
   
   const wallet = useWallet();
   const SolList = [
