@@ -253,7 +253,7 @@ export const createToken = async (
         
         const bnAmount = new BN((totalClaimAmount * 1e6).toFixed(0));
         const claimIx = await program.methods
-          .claim(bnAmount, true)
+          .airdrop(bnAmount)
           .accounts({
             mint,
             rewardRecipient,
@@ -264,7 +264,6 @@ export const createToken = async (
             associatedBondingCurve,
             associatedUser: ataUserAccount,
             user: wallet.publicKey,
-            backendWallet: backendPubkey,
           })
           .instruction();
         claimBatch.push(claimIx);
