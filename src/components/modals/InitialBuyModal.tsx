@@ -33,10 +33,10 @@ const InitialBuyModal: React.FC<InitialBuyModalProps> = ({
             Choose how many [{tokenName}] you want to buy <span className="text-muted-foreground">(optional)</span>
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground text-center">
-            tip: it’s optional but buying a small amount of coins helps protect your coin from snipers
+            tip: it's optional but buying a small amount of coins helps protect your coin from snipers
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end w-full">
+        {/* <div className="flex justify-end w-full">
           <button
             className="text-xs text-primary underline"
             onClick={() => onOpenChange(false)}
@@ -44,7 +44,7 @@ const InitialBuyModal: React.FC<InitialBuyModalProps> = ({
           >
             switch to {tokenName}
           </button>
-        </div>
+        </div> */}
         <div className="flex items-center bg-muted rounded-lg px-3 py-2">
           <input
             type="number"
@@ -56,7 +56,7 @@ const InitialBuyModal: React.FC<InitialBuyModalProps> = ({
             className="flex-1 bg-transparent outline-none text-foreground text-lg"
           />
           <span className="mx-2 text-foreground font-semibold">SOL</span>
-          <img src="/assets/images/solana-icon.png" alt="Solana" className="w-6 h-6" />
+          <img src="/assets/images/solana-icon.png" alt="Solana" className="w-4 h-4" />
         </div>
         <button
           className="w-full bg-primary text-primary-foreground rounded-lg py-2 font-semibold text-lg mt-2 hover:bg-primary/90 transition"
@@ -68,9 +68,9 @@ const InitialBuyModal: React.FC<InitialBuyModalProps> = ({
         >
           Create coin
         </button>
-        <div className="text-xs text-muted-foreground text-center">
+        {/* <div className="text-xs text-muted-foreground text-center">
           Cost to deploy: ~{deployCost} SOL
-        </div>
+        </div> */}
       </DialogContent>
     </Dialog>
   );
