@@ -26,7 +26,7 @@ export const useCoinsWithSocket = ({
   enabled = true 
 }: UseCoinsWithSocketOptions): UseCoinsWithSocketReturn => {
   const queryClient = useQueryClient();
-  const { onNewTokenCreated, onCoinInfoUpdate } = useSocket();
+  const { onNewTokenCreated, onCoinInfoUpdate, socket } = useSocket();
 
   const {
     data,
@@ -75,94 +75,122 @@ export const useCoinsWithSocket = ({
 
   // Handle new token creation
   useEffect(() => {
-    if (onNewTokenCreated) {
-      const handleNewToken = (payload: any) => {
-        console.log('__yuki__ New token created:', payload);
-        
-        // Only add new token to the first page (page 1)
-        if (page === 1) {
-          queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
-            if (!oldData) return oldData;
-            
-            const newToken = payload.coinInfo;
-            const existingCoins = oldData.coins || [];
-            
-            // Check if token already exists to avoid duplicates
-            const exists = existingCoins.find((token: coinInfo) => 
-              token._id === newToken._id || token.token === newToken.token
-            );
-            
-            if (exists) return oldData;
-            
-            // Add new token to the beginning and maintain exactly itemsPerPage tokens
-            const updatedCoins = [newToken, ...existingCoins];
-            
-            // Always keep exactly itemsPerPage tokens on the first page
-            // The last token gets pushed to the next page
-            const finalCoins = updatedCoins.slice(0, itemsPerPage);
-            
-            return {
-              ...oldData,
-              coins: finalCoins,
-              total: oldData.total + 1
-            };
-          });
-        } else {
-          // For other pages, just update the total count
-          queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
-            if (!oldData) return oldData;
-            
-            return {
-              ...oldData,
-              total: oldData.total + 1
-            };
-          });
+    if (!onNewTokenCreated || !socket) return;
+
+    const handleNewToken = (payload: any) => {
+      console.log('__yuki__ useCoinsWithSocket: New token created:', payload);
+      console.log('__yuki__ useCoinsWithSocket: Current page:', page, 'sortType:', sortType, 'itemsPerPage:', itemsPerPage);
+      
+      // Update all query keys for this sort type to ensure new token appears
+      // regardless of which page the user is on
+      queryClient.setQueriesData(['coins', sortType], (oldData: any) => {
+        if (!oldData) {
+          console.log('__yuki__ useCoinsWithSocket: No old data found for query key:', ['coins', sortType]);
+          return oldData;
         }
         
-        // Update all other pages' total count
-        queryClient.setQueriesData(['coins', sortType], (oldData: any) => {
-          if (!oldData) return oldData;
+        const newToken = payload.coinInfo;
+        const existingCoins = oldData.coins || [];
+        
+        console.log('__yuki__ useCoinsWithSocket: Existing coins count:', existingCoins.length);
+        
+        // Check if token already exists to avoid duplicates
+        const exists = existingCoins.find((token: coinInfo) => 
+          token._id === newToken._id || token.token === newToken.token
+        );
+        
+        if (exists) {
+          console.log('__yuki__ useCoinsWithSocket: Token already exists, skipping');
+          return oldData;
+        }
+        
+        console.log('__yuki__ useCoinsWithSocket: Adding new token to beginning of list');
+        
+        // Add new token to the beginning
+        const updatedCoins = [newToken, ...existingCoins];
+        
+        return {
+          ...oldData,
+          coins: updatedCoins,
+          total: oldData.total + 1
+        };
+      });
+      
+      // Also update the specific current page query
+      queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
+        if (!oldData) {
+          console.log('__yuki__ useCoinsWithSocket: No old data found for specific page query:', ['coins', sortType, page, itemsPerPage]);
+          return oldData;
+        }
+        
+        const newToken = payload.coinInfo;
+        const existingCoins = oldData.coins || [];
+        
+        // Check if token already exists to avoid duplicates
+        const exists = existingCoins.find((token: coinInfo) => 
+          token._id === newToken._id || token.token === newToken.token
+        );
+        
+        if (exists) {
+          console.log('__yuki__ useCoinsWithSocket: Token already exists on current page, skipping');
+          return oldData;
+        }
+        
+        // For first page, add new token to beginning
+        if (page === 1) {
+          console.log('__yuki__ useCoinsWithSocket: Adding new token to first page');
+          const updatedCoins = [newToken, ...existingCoins];
+          // Keep exactly itemsPerPage tokens
+          const finalCoins = updatedCoins.slice(0, itemsPerPage);
           
+          return {
+            ...oldData,
+            coins: finalCoins,
+            total: oldData.total + 1
+          };
+        } else {
+          console.log('__yuki__ useCoinsWithSocket: Updating total count for non-first page');
+          // For other pages, just update total count
           return {
             ...oldData,
             total: oldData.total + 1
           };
-        });
-        
-        // Invalidate the next page to ensure it has the correct data
-        // This is important when a new token pushes existing tokens to the next page
-        const nextPage = page + 1;
-        queryClient.invalidateQueries(['coins', sortType, nextPage, itemsPerPage]);
-      };
+        }
+      });
       
-      onNewTokenCreated(handleNewToken);
-    }
-  }, [onNewTokenCreated, queryClient, sortType, page, itemsPerPage]);
+      // Invalidate essential data to update any related information
+      queryClient.invalidateQueries(['essentialData']);
+      console.log('__yuki__ useCoinsWithSocket: Invalidated essential data');
+    };
+    
+    onNewTokenCreated(handleNewToken);
+    console.log('__yuki__ useCoinsWithSocket: Registered new token handler for page:', page, 'sortType:', sortType);
+  }, [onNewTokenCreated, queryClient, sortType, page, itemsPerPage, socket]);
 
   // Handle coin info updates (market cap, stage progress, etc.)
   useEffect(() => {
-    if (onCoinInfoUpdate) {
-      const handleCoinUpdate = (payload: any) => {
-        console.log('__yuki__ Coin info updated:', payload);
-        
-        // Update the cache with the updated coin info
-        queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
-          if (!oldData) return oldData;
-          
-          const updatedCoins = oldData.coins.map((coin: coinInfo) => 
-            coin.token === payload.token ? { ...coin, ...payload.coinInfo } : coin
-          );
-          
-          return {
-            ...oldData,
-            coins: updatedCoins
-          };
-        });
-      };
+    if (!onCoinInfoUpdate || !socket) return;
+
+    const handleCoinUpdate = (payload: any) => {
+      console.log('__yuki__ useCoinsWithSocket: Coin info updated:', payload);
       
-      onCoinInfoUpdate(handleCoinUpdate);
-    }
-  }, [onCoinInfoUpdate, queryClient, sortType, page, itemsPerPage]);
+      // Update the cache with the updated coin info
+      queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        const updatedCoins = oldData.coins.map((coin: coinInfo) => 
+          coin.token === payload.token ? { ...coin, ...payload.coinInfo } : coin
+        );
+        
+        return {
+          ...oldData,
+          coins: updatedCoins
+        };
+      });
+    };
+    
+    onCoinInfoUpdate(handleCoinUpdate);
+  }, [onCoinInfoUpdate, queryClient, sortType, page, itemsPerPage, socket]);
 
   return {
     coins: data?.coins || [],

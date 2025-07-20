@@ -133,10 +133,8 @@ const SocketProvider = (props: { children: any }) => {
     callback: (payload: TransactionUpdatePayload) => void;
     validation?: ValidationParams;
   }>>([]);
-  const [holdersUpdateCallbacks, setHoldersUpdateCallbacks] = useState<Array<{
-    callback: (payload: HoldersUpdatePayload) => void;
-    validation?: ValidationParams;
-  }>>([]);
+  const [holdersUpdateCallbacks, setHoldersUpdateCallbacks] = useState<Array<{ callback: (payload: HoldersUpdatePayload) => void, validation?: ValidationParams }>>([]);
+  const [isSocketReady, setIsSocketReady] = useState(false);
 
   const router = useRouter();
   // const router = useRouter();
@@ -169,24 +167,37 @@ const SocketProvider = (props: { children: any }) => {
   }, []);
 
   const onCoinInfoUpdate = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => {
+    if (!isSocketReady) return;
     setCoinInfoCallbacks(prev => [...prev, { callback, validation }]);
-  }, []);
+  }, [isSocketReady]);
 
   const onStageChange = useCallback((callback: (payload: StageChangedPayload) => void, validation?: ValidationParams) => {
+    if (!isSocketReady) return;
     setStageChangeCallbacks(prev => [...prev, { callback, validation }]);
-  }, []);
+  }, [isSocketReady]);
 
   const onNewTokenCreated = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => {
-    setNewTokenCreatedCallbacks(prev => [...prev, { callback, validation }]);
-  }, []);
+    console.log('__yuki__ Socket: Registering newTokenCreated callback, socket ready:', isSocketReady);
+    if (!isSocketReady) {
+      console.log('__yuki__ Socket: Socket not ready, skipping callback registration');
+      return;
+    }
+    setNewTokenCreatedCallbacks(prev => {
+      const newCallbacks = [...prev, { callback, validation }];
+      console.log('__yuki__ Socket: Total newTokenCreated callbacks after registration:', newCallbacks.length);
+      return newCallbacks;
+    });
+  }, [isSocketReady]);
 
   const onTransactionUpdate = useCallback((callback: (payload: TransactionUpdatePayload) => void, validation?: ValidationParams) => {
+    if (!isSocketReady) return;
     setTransactionUpdateCallbacks(prev => [...prev, { callback, validation }]);
-  }, []);
+  }, [isSocketReady]);
 
   const onHoldersUpdate = useCallback((callback: (payload: HoldersUpdatePayload) => void, validation?: ValidationParams) => {
+    if (!isSocketReady) return;
     setHoldersUpdateCallbacks(prev => [...prev, { callback, validation }]);
-  }, []);
+  }, [isSocketReady]);
 
   const connectionUpdatedHandler = (data: number) => {
     setCounter(data);
@@ -250,9 +261,13 @@ const SocketProvider = (props: { children: any }) => {
 
   const newTokenCreatedHandler = (payload: CoinInfoUpdatedPayload) => {
     console.log('__yuki__ Socket: New token created:', payload);
-    newTokenCreatedCallbacks.forEach(({ callback, validation }) => {
+    console.log('__yuki__ Socket: Number of newTokenCreated callbacks:', newTokenCreatedCallbacks.length);
+    newTokenCreatedCallbacks.forEach(({ callback, validation }, index) => {
+      console.log('__yuki__ Socket: Calling newTokenCreated callback', index);
       if (validatePayload(payload, validation)) {
         callback(payload);
+      } else {
+        console.log('__yuki__ Socket: Callback validation failed for index', index);
       }
     });
   };
@@ -284,9 +299,11 @@ const SocketProvider = (props: { children: any }) => {
     });
     socket.on('connect', async () => {
       console.log(' --@ connected to backend', socket.id);
+      setIsSocketReady(true);
     });
     socket.on('disconnect', () => {
       console.log(' --@ disconnected from backend', socket.id);
+      setIsSocketReady(false);
     });
     setSocket(socket);
 

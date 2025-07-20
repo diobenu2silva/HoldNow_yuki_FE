@@ -14,7 +14,6 @@ import { TokenCardSkeleton } from '../loadings/Skeleton';
 import { Switch } from '@/components/ui/switch';
 import { BiSearchAlt } from 'react-icons/bi';
 import { isImageNSFW } from '@/utils/nsfwCheck';
-import { useSocket } from '@/contexts/SocketContext';
 import { useCoinsWithSocket } from '@/hooks/useCoinsWithSocket';
 import { useEssentialData } from '@/hooks/useCoins';
 import { useQueryClient } from 'react-query';
@@ -22,7 +21,6 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const ReactQueryHomePage: FC = () => {
   const { setIsLoading } = useContext(UserContext);
-  const { onNewTokenCreated, onCoinInfoUpdate, replyCounts, setReplyCounts } = useSocket();
   const queryClient = useQueryClient();
   
   const [isClient, setIsClient] = useState(false);
@@ -88,8 +86,6 @@ const ReactQueryHomePage: FC = () => {
     isLoading: isEssentialDataLoading,
     error: essentialDataError
   } = useEssentialData();
-
-
 
   // Update sol price in context
   useEffect(() => {
@@ -178,6 +174,7 @@ const ReactQueryHomePage: FC = () => {
 
   // Memoized sorted data
   const sortedData = useMemo(() => {
+    console.log('__yuki__ ReactQueryHomePage: Sorting data, count:', data.length, 'sortType:', currentSort, 'order:', currentOrder);
     return sortCoins(data, currentSort, currentOrder);
   }, [data, currentSort, currentOrder, sortCoins]);
 
@@ -195,6 +192,7 @@ const ReactQueryHomePage: FC = () => {
         (token.description && token.description.toLowerCase().includes(searchLower))
       );
     }
+    console.log('__yuki__ ReactQueryHomePage: Filtered data count:', filtered.length, 'from sorted:', sortedData.length);
     return filtered;
   }, [sortedData, nsfwFilterState, searchToken, nsfwMap]);
 
