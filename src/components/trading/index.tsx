@@ -412,7 +412,7 @@ export default function TradingPage() {
               coin.token,
               publicKey.toBase58()
             );
-            
+            console.log('__yuki__ tradingPage claimData: fetched for wallet', response);
             // Update React Query cache to keep it in sync
             queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
               response.claimInUSD ?? 0,

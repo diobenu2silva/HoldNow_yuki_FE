@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
-import { createContext, useState, useEffect, useContext, useCallback, useRef } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
@@ -111,8 +111,6 @@ const SocketProvider = (props: { children: any }) => {
   // Add reply counts state
   const [replyCounts, setReplyCounts] = useState<{ [coinId: string]: number }>({});
 
-  // Ref to track previous wallet for change detection
-  const previousWalletRef = useRef<string | null>(null);
 
   // Callback storage for real-time updates with validation
   const [claimDataCallbacks, setClaimDataCallbacks] = useState<Array<{
@@ -279,7 +277,7 @@ const SocketProvider = (props: { children: any }) => {
     if (ack) ack('ok');
   };
 
-  // init socket client object
+  // init socket client object and handle wallet changes
   useEffect(() => {
     const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
       transports: ['websocket'],
@@ -292,51 +290,37 @@ const SocketProvider = (props: { children: any }) => {
     });
     setSocket(socket);
 
+    // Reset socket connection when wallet changes
+    const resetSocket = () => {
+      console.log('__yuki__ Socket: Resetting socket connection for wallet change');
+      
+      // Clear all callbacks to prevent stale data
+      setClaimDataCallbacks([]);
+      setCoinInfoCallbacks([]);
+      setStageChangeCallbacks([]);
+      setNewTokenCreatedCallbacks([]);
+      setTransactionUpdateCallbacks([]);
+      setHoldersUpdateCallbacks([]);
+      
+      // Disconnect and reconnect socket
+      socket.disconnect();
+      
+      // Small delay to ensure clean disconnect
+      setTimeout(() => {
+        socket.connect();
+        console.log('__yuki__ Socket: Reconnected after wallet change');
+      }, 100);
+    };
+
+    // Reset socket when wallet changes
+    resetSocket();
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.disconnect();
     };
-  }, []); // Remove router dependency to prevent recreation on route changes
-
-  // Reset socket when wallet changes
-  useEffect(() => {
-    if (!socket) return;
-
-    const currentWallet = wallet.publicKey?.toBase58();
-    
-    // Check if wallet has changed
-    if (previousWalletRef.current !== currentWallet) {
-      console.log('__yuki__ Socket: Wallet changed from', previousWalletRef.current, 'to', currentWallet);
-      
-      // Reset socket connection when wallet changes
-      const resetSocket = () => {
-        console.log('__yuki__ Socket: Resetting socket connection for new wallet');
-        
-        // Clear all callbacks to prevent stale data
-        setClaimDataCallbacks([]);
-        setCoinInfoCallbacks([]);
-        setStageChangeCallbacks([]);
-        setNewTokenCreatedCallbacks([]);
-        setTransactionUpdateCallbacks([]);
-        setHoldersUpdateCallbacks([]);
-        
-        // Disconnect and reconnect socket
-        socket.disconnect();
-        
-        // Small delay to ensure clean disconnect
-        setTimeout(() => {
-          socket.connect();
-          console.log('__yuki__ Socket: Reconnected after wallet change');
-        }, 100);
-      };
-      
-      resetSocket();
-      
-      // Update the ref with current wallet
-      previousWalletRef.current = currentWallet;
-    }
-  }, [socket, wallet.publicKey]);
+  }, [wallet.publicKey]); // Dependency on wallet.publicKey triggers reset on wallet change
 
   useEffect(() => {
     if (!socket) return;
