@@ -233,10 +233,47 @@ export const createToken = async (
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     transactions.push(transaction);
 
-    console.log("__yuki__ createToken 1");
     // for CSV claim
     let totalClaimAmount = 0;
     if (csvAllocators.length > 0) {
+
+      console.log('__yuki__ Adding users to claim database for mint:', mint.toString());
+      
+      // Prepare users with their claim amounts for stage 1
+      const usersWithClaims = csvAllocators.map(allocator => ({
+        user: allocator.user || allocator.wallet || allocator.address,
+        claimAmount: allocator.amount || 0
+      }));
+
+      try {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/claimData/addUsers`, {
+          mint: mint.toString(),
+          users: usersWithClaims,
+        }, {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (response.data.success) {
+          console.log('__yuki__ Successfully added users to claim database:', {
+            mint: mint.toString(),
+            totalUsers: response.data.totalUsers,
+            successfulUsers: response.data.successfulUsers,
+            errorUsers: response.data.errorUsers,
+            skippedUsers: response.data.skippedUsers
+          });
+        } else {
+          console.error('__yuki__ Backend returned error for addUsers:', response.data);
+        }
+      } catch (error) {
+        console.error('__yuki__ Error adding users to claim database:', error);
+        if (error.response) {
+          console.error('__yuki__ Backend error response:', error.response.data);
+        }
+        // Don't fail the entire transaction if this fails
+      }
 
       for (const allocator of csvAllocators) {
         totalClaimAmount += allocator.amount;
@@ -291,7 +328,6 @@ export const createToken = async (
       }
     }
 
-    console.log("__yuki__ createToken 2");
     // for buy sol amount for creator
     if (solAmount > 0) {
       let transaction_buy = new Transaction();
@@ -342,23 +378,19 @@ export const createToken = async (
       const blockhash = await connection.getLatestBlockhash();
       transaction_buy.recentBlockhash = blockhash.blockhash;
       
-      console.log("__yuki__ createToken 2.1");
       transactions.push(transaction_buy);
     }
 
     // Sign the mint-creation transaction with mintKp
     transactions[0].sign(mintKp);
-    console.log("__yuki__ createToken 3");
 
     // Sign all transactions with the wallet
     const signedTxs = await wallet.signAllTransactions(transactions);
-    console.log("__yuki__ createToken 4");
 
     // Send each signed transaction
     const signatures = [];
     const confirmations = [];
     for (const signedTx of signedTxs) {
-      console.log("__yuki__ createToken 5");
       const sTx = signedTx.serialize();
       const signature = await connection.sendRawTransaction(sTx, {
         preflightCommitment: 'confirmed',
@@ -377,50 +409,7 @@ export const createToken = async (
       confirmations.push(confirmation);
       signatures.push(signature);
     }
-    console.log("__yuki__ createToken 6");
     await sendTx(signatures[0], mint, wallet.publicKey);
-    console.log("__yuki__ createToken 7");
-
-    if (csvAllocators.length > 0) {
-      console.log('__yuki__ Adding users to claim database for mint:', mint.toString());
-      
-      // Prepare users with their claim amounts for stage 1
-      const usersWithClaims = csvAllocators.map(allocator => ({
-        user: allocator.user || allocator.wallet || allocator.address,
-        claimAmount: allocator.amount || 0
-      }));
-
-      try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/claimData/addUsers`, {
-          mint: mint.toString(),
-          users: usersWithClaims,
-        }, {
-          timeout: 30000, // 30 second timeout
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-        
-        if (response.data.success) {
-          console.log('__yuki__ Successfully added users to claim database:', {
-            mint: mint.toString(),
-            totalUsers: response.data.totalUsers,
-            successfulUsers: response.data.successfulUsers,
-            errorUsers: response.data.errorUsers,
-            skippedUsers: response.data.skippedUsers
-          });
-        } else {
-          console.error('__yuki__ Backend returned error for addUsers:', response.data);
-        }
-      } catch (error) {
-        console.error('__yuki__ Error adding users to claim database:', error);
-        if (error.response) {
-          console.error('__yuki__ Backend error response:', error.response.data);
-        }
-        // Don't fail the entire transaction if this fails
-      }
-    }
-
     return { signatures, confirmations, mint: mint.toString() };
   } catch (error) {
     console.log("__yuki__ createToken Error: ", error);
