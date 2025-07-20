@@ -383,13 +383,27 @@ export const getHoldersWithUserInfo = async (token: string): Promise<holderInfo[
 
 export const getSolPriceInUSD = async () => {
   try {
-    // Fetch the price data from CoinGecko
+    // Fetch the price data from CoinGecko with proper error handling
     const response = await axios.get(
-      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
+      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+      {
+        timeout: 5000, // 5 second timeout
+        headers: {
+          'Accept': 'application/json',
+        }
+      }
     );
-    const solPriceInUSD = response.data.solana.usd;
-    return solPriceInUSD;
-  } catch (error) {}
+    
+    if (response.data && response.data.solana && response.data.solana.usd) {
+      return response.data.solana.usd;
+    } else {
+      console.warn('__yuki__ getSolPriceInUSD: Invalid response format');
+      return null;
+    }
+  } catch (error) {
+    console.warn('__yuki__ getSolPriceInUSD: Failed to fetch SOL price:', error.message);
+    return null;
+  }
 };
 
 export const claim = async (
