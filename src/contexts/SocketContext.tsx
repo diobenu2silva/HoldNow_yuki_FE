@@ -52,6 +52,12 @@ interface HoldersUpdatePayload {
   timestamp: number;
 }
 
+// Validation callback types with validation parameters
+interface ValidationParams {
+  expectedToken?: string;
+  expectedUser?: string;
+}
+
 interface Context {
   socket?: Socket;
   counter?: number;
@@ -70,13 +76,13 @@ interface Context {
   numberDecimals?: number;
   alertState?: AlertState;
   setAlertState?: Function;
-  // New methods for real-time updates
-  onClaimDataUpdate?: (callback: (payload: ClaimDataUpdatedPayload) => void) => void;
-  onCoinInfoUpdate?: (callback: (payload: CoinInfoUpdatedPayload) => void) => void;
-  onStageChange?: (callback: (payload: StageChangedPayload) => void) => void;
-  onNewTokenCreated?: (callback: (payload: CoinInfoUpdatedPayload) => void) => void;
-  onTransactionUpdate?: (callback: (payload: TransactionUpdatePayload) => void) => void;
-  onHoldersUpdate?: (callback: (payload: HoldersUpdatePayload) => void) => void;
+  // New methods for real-time updates with validation
+  onClaimDataUpdate?: (callback: (payload: ClaimDataUpdatedPayload) => void, validation?: ValidationParams) => void;
+  onCoinInfoUpdate?: (callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => void;
+  onStageChange?: (callback: (payload: StageChangedPayload) => void, validation?: ValidationParams) => void;
+  onNewTokenCreated?: (callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => void;
+  onTransactionUpdate?: (callback: (payload: TransactionUpdatePayload) => void, validation?: ValidationParams) => void;
+  onHoldersUpdate?: (callback: (payload: HoldersUpdatePayload) => void, validation?: ValidationParams) => void;
   replyCounts?: { [coinId: string]: number };
   setReplyCounts?: Function;
 }
@@ -105,13 +111,31 @@ const SocketProvider = (props: { children: any }) => {
   // Add reply counts state
   const [replyCounts, setReplyCounts] = useState<{ [coinId: string]: number }>({});
 
-  // Callback storage for real-time updates
-  const [claimDataCallbacks, setClaimDataCallbacks] = useState<((payload: ClaimDataUpdatedPayload) => void)[]>([]);
-  const [coinInfoCallbacks, setCoinInfoCallbacks] = useState<((payload: CoinInfoUpdatedPayload) => void)[]>([]);
-  const [stageChangeCallbacks, setStageChangeCallbacks] = useState<((payload: StageChangedPayload) => void)[]>([]);
-  const [newTokenCreatedCallbacks, setNewTokenCreatedCallbacks] = useState<((payload: CoinInfoUpdatedPayload) => void)[]>([]);
-  const [transactionUpdateCallbacks, setTransactionUpdateCallbacks] = useState<((payload: TransactionUpdatePayload) => void)[]>([]);
-  const [holdersUpdateCallbacks, setHoldersUpdateCallbacks] = useState<((payload: HoldersUpdatePayload) => void)[]>([]);
+  // Callback storage for real-time updates with validation
+  const [claimDataCallbacks, setClaimDataCallbacks] = useState<Array<{
+    callback: (payload: ClaimDataUpdatedPayload) => void;
+    validation?: ValidationParams;
+  }>>([]);
+  const [coinInfoCallbacks, setCoinInfoCallbacks] = useState<Array<{
+    callback: (payload: CoinInfoUpdatedPayload) => void;
+    validation?: ValidationParams;
+  }>>([]);
+  const [stageChangeCallbacks, setStageChangeCallbacks] = useState<Array<{
+    callback: (payload: StageChangedPayload) => void;
+    validation?: ValidationParams;
+  }>>([]);
+  const [newTokenCreatedCallbacks, setNewTokenCreatedCallbacks] = useState<Array<{
+    callback: (payload: CoinInfoUpdatedPayload) => void;
+    validation?: ValidationParams;
+  }>>([]);
+  const [transactionUpdateCallbacks, setTransactionUpdateCallbacks] = useState<Array<{
+    callback: (payload: TransactionUpdatePayload) => void;
+    validation?: ValidationParams;
+  }>>([]);
+  const [holdersUpdateCallbacks, setHoldersUpdateCallbacks] = useState<Array<{
+    callback: (payload: HoldersUpdatePayload) => void;
+    validation?: ValidationParams;
+  }>>([]);
 
   const router = useRouter();
   // const router = useRouter();
@@ -119,29 +143,48 @@ const SocketProvider = (props: { children: any }) => {
   const wallet = useWallet();
   const { connection } = useConnection();
 
-  // Real-time update handlers
-  const onClaimDataUpdate = useCallback((callback: (payload: ClaimDataUpdatedPayload) => void) => {
-    setClaimDataCallbacks(prev => [...prev, callback]);
+  // Validation helper function
+  const validatePayload = (payload: any, validation?: ValidationParams): boolean => {
+    if (!validation) return true; // No validation required
+    
+    // Check token validation
+    if (validation.expectedToken && payload.token !== validation.expectedToken) {
+      console.log('__yuki__ Socket: Token validation failed. Expected:', validation.expectedToken, 'Received:', payload.token);
+      return false;
+    }
+    
+    // Check user validation (for payloads that have user field)
+    if (validation.expectedUser && payload.user && payload.user !== validation.expectedUser) {
+      console.log('__yuki__ Socket: User validation failed. Expected:', validation.expectedUser, 'Received:', payload.user);
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Real-time update handlers with validation
+  const onClaimDataUpdate = useCallback((callback: (payload: ClaimDataUpdatedPayload) => void, validation?: ValidationParams) => {
+    setClaimDataCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 
-  const onCoinInfoUpdate = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void) => {
-    setCoinInfoCallbacks(prev => [...prev, callback]);
+  const onCoinInfoUpdate = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => {
+    setCoinInfoCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 
-  const onStageChange = useCallback((callback: (payload: StageChangedPayload) => void) => {
-    setStageChangeCallbacks(prev => [...prev, callback]);
+  const onStageChange = useCallback((callback: (payload: StageChangedPayload) => void, validation?: ValidationParams) => {
+    setStageChangeCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 
-  const onNewTokenCreated = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void) => {
-    setNewTokenCreatedCallbacks(prev => [...prev, callback]);
+  const onNewTokenCreated = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => {
+    setNewTokenCreatedCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 
-  const onTransactionUpdate = useCallback((callback: (payload: TransactionUpdatePayload) => void) => {
-    setTransactionUpdateCallbacks(prev => [...prev, callback]);
+  const onTransactionUpdate = useCallback((callback: (payload: TransactionUpdatePayload) => void, validation?: ValidationParams) => {
+    setTransactionUpdateCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 
-  const onHoldersUpdate = useCallback((callback: (payload: HoldersUpdatePayload) => void) => {
-    setHoldersUpdateCallbacks(prev => [...prev, callback]);
+  const onHoldersUpdate = useCallback((callback: (payload: HoldersUpdatePayload) => void, validation?: ValidationParams) => {
+    setHoldersUpdateCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 
   const connectionUpdatedHandler = (data: number) => {
@@ -176,36 +219,60 @@ const SocketProvider = (props: { children: any }) => {
     setNewMsg(updateMsg);
   };
 
-  // Real-time event handlers
+  // Real-time event handlers with validation
   const coinInfoUpdatedHandler = (payload: CoinInfoUpdatedPayload) => {
     console.log('__yuki__ Socket: Coin info updated:', payload);
-    coinInfoCallbacks.forEach(callback => callback(payload));
+    coinInfoCallbacks.forEach(({ callback, validation }) => {
+      if (validatePayload(payload, validation)) {
+        callback(payload);
+      }
+    });
   };
 
   const claimDataUpdatedHandler = (payload: ClaimDataUpdatedPayload) => {
     console.log('__yuki__ Socket: Claim data updated:', payload);
-    claimDataCallbacks.forEach(callback => callback(payload));
+    claimDataCallbacks.forEach(({ callback, validation }) => {
+      if (validatePayload(payload, validation)) {
+        callback(payload);
+      }
+    });
   };
 
   const stageChangedHandler = (payload: StageChangedPayload) => {
     console.log('__yuki__ Socket: Stage changed:', payload);
-    stageChangeCallbacks.forEach(callback => callback(payload));
+    stageChangeCallbacks.forEach(({ callback, validation }) => {
+      if (validatePayload(payload, validation)) {
+        callback(payload);
+      }
+    });
   };
 
   const newTokenCreatedHandler = (payload: CoinInfoUpdatedPayload) => {
     console.log('__yuki__ Socket: New token created:', payload);
-    newTokenCreatedCallbacks.forEach(callback => callback(payload));
+    newTokenCreatedCallbacks.forEach(({ callback, validation }) => {
+      if (validatePayload(payload, validation)) {
+        callback(payload);
+      }
+    });
   };
 
   const transactionUpdateHandler = (payload: TransactionUpdatePayload, ack?: (msg: string) => void) => {
     console.log('__yuki__ Socket: Transaction update:', payload);
-    transactionUpdateCallbacks.forEach(callback => callback(payload));
+    transactionUpdateCallbacks.forEach(({ callback, validation }) => {
+      if (validatePayload(payload, validation)) {
+        callback(payload);
+      }
+    });
     if (ack) ack('ok');
   };
 
   const holdersUpdateHandler = (payload: HoldersUpdatePayload, ack?: (msg: string) => void) => {
     console.log('__yuki__ Socket: Holders update:', payload);
-    holdersUpdateCallbacks.forEach(callback => callback(payload));
+    holdersUpdateCallbacks.forEach(({ callback, validation }) => {
+      if (validatePayload(payload, validation)) {
+        callback(payload);
+      }
+    });
     if (ack) ack('ok');
   };
 
@@ -294,7 +361,7 @@ const SocketProvider = (props: { children: any }) => {
         numberDecimals,
         alertState,
         setAlertState,
-        // New methods for real-time updates
+        // New methods for real-time updates with validation
         onClaimDataUpdate,
         onCoinInfoUpdate,
         onStageChange,

@@ -249,120 +249,95 @@ export default function TradingPage() {
 
   // Handle real-time claim data updates with debouncing
   const handleClaimDataUpdate = useCallback((payload: any) => {
-    // Only process if coin is properly loaded and has a token
-    if (!coin.token || !publicKey) {
-      console.log('__yuki__ tradingPage socket: ignoring update - no coin token or public key');
-      return;
-    }
+    console.log('__yuki__ tradingPage socket: claim data update for wallet', publicKey?.toBase58());
     
-    // Debug: Log all incoming socket updates to see what's happening
-    console.log('__yuki__ tradingPage socket: received update for wallet', payload.user, 'current wallet:', publicKey.toBase58());
+    // Update React Query cache directly for better performance
+    queryClient.setQueryData(['claimData', param, publicKey?.toBase58()], [
+      payload.claimData.claimInUSD ?? 0,
+      payload.claimData.claimHodl ?? 0,
+      payload.claimData.currentClaim ?? 0,
+      payload.claimData.solPrice ?? 0,
+      payload.claimData.rewardCap ?? 0,
+      payload.claimData.tokenBalance ?? 0,
+    ]);
     
-    // Strict validation: ensure token matches and wallet matches
-    const tokenMatches = payload.token === coin.token;
-    const walletMatches = payload.user === publicKey.toBase58();
-    if (!walletMatches) {
-      console.log('__yuki__ tradingPage socket: ignoring update - wallet mismatch');
-      return;
-    }
-    
-    if (tokenMatches) {
-      console.log('__yuki__ tradingPage socket: wallet match, claim data update for wallet', publicKey.toBase58());
-      
-      // Update React Query cache directly for better performance
-      queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
-        payload.claimData.claimInUSD ?? 0,
-        payload.claimData.claimHodl ?? 0,
-        payload.claimData.currentClaim ?? 0,
-        payload.claimData.solPrice ?? 0,
-        payload.claimData.rewardCap ?? 0,
-        payload.claimData.tokenBalance ?? 0,
-      ]);
-      
-      // Also update local state for immediate UI updates
-      setClaimData([
-        payload.claimData.claimInUSD ?? 0,
-        payload.claimData.claimHodl ?? 0,
-        payload.claimData.currentClaim ?? 0,
-        payload.claimData.solPrice ?? 0,
-        payload.claimData.rewardCap ?? 0,
-        payload.claimData.tokenBalance ?? 0,
-      ]);
-    } else {
-      console.log('__yuki__ tradingPage socket: ignoring update - token match:', tokenMatches, 'wallet match:', walletMatches);
-    }
-  }, [coin.token, publicKey, param, queryClient]);
+    // Also update local state for immediate UI updates
+    setClaimData([
+      payload.claimData.claimInUSD ?? 0,
+      payload.claimData.claimHodl ?? 0,
+      payload.claimData.currentClaim ?? 0,
+      payload.claimData.solPrice ?? 0,
+      payload.claimData.rewardCap ?? 0,
+      payload.claimData.tokenBalance ?? 0,
+    ]);
+  }, [publicKey, param, queryClient]);
 
   // Handle real-time stage changes with optimized updates
   const handleStageChange = useCallback((payload: any) => {
-    // Only process if coin is properly loaded and has a token
-    if (!coin.token) {
-      return;
-    }
+    console.log('__yuki__ tradingPage socket: stage change update');
     
-    // Compare payload.token (token address) with coin.token (token address)
-    if (payload.token === coin.token) {
-      // Update React Query cache directly for better performance
-      queryClient.setQueryData(['coin', param], (oldData: any) => {
-        if (!oldData) return oldData;
-        const updatedCoin = {
-          ...oldData,
-          currentStage: payload.newStage,
-          atStageStarted: new Date(payload.timestamp),
-          airdropStage: payload.isAirdropStage,
-          bondingCurve: payload.isBondingCurve,
-          stageStarted: payload.stageStarted,
-          stageEnded: payload.stageEnded
-        };
-        
-        console.log('__yuki__ tradingPage socket: stage change updated');
-        return updatedCoin;
-      });
-      
-      // Also update local state for immediate UI updates
-      setCoin(prevCoin => ({
-        ...prevCoin,
+    // Update React Query cache directly for better performance
+    queryClient.setQueryData(['coin', param], (oldData: any) => {
+      if (!oldData) return oldData;
+      const updatedCoin = {
+        ...oldData,
         currentStage: payload.newStage,
         atStageStarted: new Date(payload.timestamp),
         airdropStage: payload.isAirdropStage,
         bondingCurve: payload.isBondingCurve,
         stageStarted: payload.stageStarted,
         stageEnded: payload.stageEnded
-      }));
-    }
-  }, [coin.token, param, queryClient]);
+      };
+      
+      console.log('__yuki__ tradingPage socket: stage change updated');
+      return updatedCoin;
+    });
+    
+    // Also update local state for immediate UI updates
+    setCoin(prevCoin => ({
+      ...prevCoin,
+      currentStage: payload.newStage,
+      atStageStarted: new Date(payload.timestamp),
+      airdropStage: payload.isAirdropStage,
+      bondingCurve: payload.isBondingCurve,
+      stageStarted: payload.stageStarted,
+      stageEnded: payload.stageEnded
+    }));
+  }, [param, queryClient]);
 
   // Handle real-time coin info updates with optimized caching
   const handleCoinInfoUpdate = useCallback((payload: any) => {
-    // Only process if coin is properly loaded and has a token
-    if (!coin.token) {
-      return;
-    }
+    console.log('__yuki__ tradingPage socket: coin info update');
     
-    if (payload.token === coin.token) {
-      // Update React Query cache directly for better performance
-      queryClient.setQueryData(['coin', param], payload.coinInfo);
-      
-      // Also update local state for immediate UI updates
-      setCoin(payload.coinInfo);
-      
-      // Update derived data (but not stage progress if we have real-time timer running)
-      updateDerivedData(payload.coinInfo);
-    }
-  }, [coin.token, param, queryClient, updateDerivedData]);
+    // Update React Query cache directly for better performance
+    queryClient.setQueryData(['coin', param], payload.coinInfo);
+    
+    // Also update local state for immediate UI updates
+    setCoin(payload.coinInfo);
+    
+    // Update derived data (but not stage progress if we have real-time timer running)
+    updateDerivedData(payload.coinInfo);
+  }, [param, queryClient, updateDerivedData]);
 
   // Register socket callbacks
   useEffect(() => {
     console.log('__yuki__ tradingPage socket: registering callbacks for wallet', publicKey?.toBase58());
     
     if (onClaimDataUpdate) {
-      onClaimDataUpdate(handleClaimDataUpdate);
+      onClaimDataUpdate(handleClaimDataUpdate, {
+        expectedToken: coin.token,
+        expectedUser: publicKey?.toBase58()
+      });
     }
     if (onStageChange) {
-      onStageChange(handleStageChange);
+      onStageChange(handleStageChange, {
+        expectedToken: coin.token
+      });
     }
     if (onCoinInfoUpdate) {
-      onCoinInfoUpdate(handleCoinInfoUpdate);
+      onCoinInfoUpdate(handleCoinInfoUpdate, {
+        expectedToken: coin.token
+      });
     }
     
     // Cleanup function to remove stale data when component unmounts or parameters change
@@ -373,7 +348,7 @@ export default function TradingPage() {
         queryClient.removeQueries(['claimData', param]);
       }
     };
-  }, [onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate, param, queryClient]);
+  }, [onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate, param, queryClient, coin.token, publicKey?.toBase58()]);
 
   useEffect(() => {
     const segments = pathname.split('/');
