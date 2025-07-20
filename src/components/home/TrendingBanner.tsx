@@ -25,7 +25,90 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
 
   // Use React Query hook for trending coins
   // Request more tokens initially to account for filtering out moved tokens
-  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: 10 });
+  const { trendingCoins, isLoading, error, refetch } = useTrendingCoins({ limit: 20 }); // Increased from 10 to 20
+
+  // Handle page reload and recalculate King of Coin
+  useEffect(() => {
+    const handlePageReload = () => {
+      console.log('__yuki__ TrendingBanner: Page reload detected, recalculating King of Coin');
+      
+      // Reset current slide to 0
+      setCurrentSlide(0);
+      
+      // Clear any cached data and refetch trending coins
+      refetch();
+      
+      // Reset stage progress map
+      setStageProgressMap({});
+      
+      // Clear previous trending coins reference to force update
+      prevTrendingCoinsRef.current = '';
+    };
+
+    // Multiple methods to detect page reload
+    const detectPageReload = () => {
+      // Method 1: Performance Navigation API
+      if (performance.navigation && performance.navigation.type === 1) {
+        return true;
+      }
+      
+      // Method 2: Performance Entry API
+      if (window.performance && window.performance.getEntriesByType) {
+        const navigationEntries = window.performance.getEntriesByType('navigation');
+        if (navigationEntries.length > 0) {
+          const navEntry = navigationEntries[0] as any;
+          if (navEntry.type === 'reload') {
+            return true;
+          }
+        }
+      }
+      
+      // Method 3: Check if page was loaded from cache
+      if (performance.getEntriesByType) {
+        const entries = performance.getEntriesByType('navigation');
+        if (entries.length > 0) {
+          const navEntry = entries[0] as any;
+          if (navEntry.loadEventEnd === 0) {
+            return true; // Page was reloaded
+          }
+        }
+      }
+      
+      return false;
+    };
+
+    // Check if this is a page reload
+    if (detectPageReload()) {
+      handlePageReload();
+    }
+
+    // Also handle visibility change (when user comes back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('__yuki__ TrendingBanner: Page became visible, refreshing data');
+        // Small delay to ensure any background updates are complete
+        setTimeout(() => {
+          refetch();
+        }, 100);
+      }
+    };
+
+    // Handle beforeunload to prepare for reload
+    const handleBeforeUnload = () => {
+      console.log('__yuki__ TrendingBanner: Page unloading, preparing for reload');
+      // Clear any ongoing timers or state
+      setCurrentSlide(0);
+      setStageProgressMap({});
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [refetch]);
 
   // Update local state when trending coins change, filtering out tokens that moved to Raydium
   useEffect(() => {
@@ -33,10 +116,18 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
     // These tokens are no longer in the bonding curve phase and shouldn't be shown in the banner
     const filteredCoins = trendingCoins.filter(coin => !coin.movedToRaydium);
     
-    // Take exactly 3 tokens for the banner
-    // If we have less than 3 after filtering, we'll show what we have
-    // If we have more than 3, we'll take the first 3
-    const bannerCoins = filteredCoins.slice(0, 3);
+    console.log('__yuki__ TrendingBanner: Raw trending coins:', trendingCoins.length, 'Filtered coins:', filteredCoins.length);
+    
+    // If we don't have enough tokens after filtering, include some Raydium-moved tokens as fallback
+    let bannerCoins = filteredCoins.slice(0, 3);
+    
+    if (bannerCoins.length < 3 && trendingCoins.length >= 3) {
+      console.log('__yuki__ TrendingBanner: Not enough non-Raydium tokens, including some Raydium tokens as fallback');
+      // Take the first 3 tokens regardless of Raydium status
+      bannerCoins = trendingCoins.slice(0, 3);
+    }
+    
+    console.log('__yuki__ TrendingBanner: Banner coins selected:', bannerCoins.length, 'coins');
     
     // Create a stable key to compare with previous state
     const newIds = bannerCoins.map(coin => coin._id).sort().join(',');
@@ -61,8 +152,16 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
           // Filter out tokens that have moved to Raydium after the update
           const filteredCoins = updatedCoins.filter(coin => !coin.movedToRaydium);
           
-          // Take exactly 3 tokens
-          return filteredCoins.slice(0, 3);
+          // If we don't have enough tokens after filtering, include some Raydium-moved tokens as fallback
+          let bannerCoins = filteredCoins.slice(0, 3);
+          
+          if (bannerCoins.length < 3 && updatedCoins.length >= 3) {
+            console.log('__yuki__ TrendingBanner: Real-time update - Not enough non-Raydium tokens, including some Raydium tokens as fallback');
+            // Take the first 3 tokens regardless of Raydium status
+            bannerCoins = updatedCoins.slice(0, 3);
+          }
+          
+          return bannerCoins;
         });
       };
       
