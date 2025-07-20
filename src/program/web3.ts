@@ -623,7 +623,7 @@ export const swapTx = async (
     }
   } catch (error) {
     console.log("__yuki__ swapTx Error: ", error);
-    errorAlert("Trade Error: " + error);
+    // errorAlert("Trade Error: " + error);
     return {};
   }
 };
