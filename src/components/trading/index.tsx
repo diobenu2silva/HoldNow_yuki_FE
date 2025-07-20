@@ -64,9 +64,6 @@ export default function TradingPage() {
   const [liquidity, setLiquidity] = useState<number>(0);
   const [stageProg, setStageProg] = useState<number>(0);
   const [sellTax, setSellTax] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isErrorExpanded, setIsErrorExpanded] = useState<boolean>(false);
-  const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
   const [claimData, setClaimData] = useState<[number, number, number, number, number, number]>([0, 0, 0, 0, 0, 0]);
   const { onClaimDataUpdate, onStageChange, onCoinInfoUpdate } = useSocket();
   const router = useRouter();
@@ -86,6 +83,32 @@ export default function TradingPage() {
   const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
   const { publicKey } = wallet;
 
+  // Helper function to safely format numbers and prevent NaN
+  const safeNumber = (value: any, defaultValue: number = 0): number => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return defaultValue;
+    }
+    return Number(value) || defaultValue;
+  };
+
+  // Helper function to safely format currency values
+  const safeCurrency = (value: any, precision: number = 9): string => {
+    const num = safeNumber(value);
+    return num.toPrecision(precision);
+  };
+
+  // Helper function to safely format percentage values
+  const safePercentage = (value: any): string => {
+    const num = safeNumber(value);
+    return `${num}%`;
+  };
+
+  // Helper function to safely format stage progress
+  const safeStageProgress = (value: any): string => {
+    const num = safeNumber(value);
+    return `${num}%`;
+  };
+
   // Memoized calculations for performance
   const memoizedStageProgress = useMemo(() => {
     if (!coin.atStageStarted) return 0;
@@ -96,36 +119,35 @@ export default function TradingPage() {
     const period = nowDate.getTime() - atStageStartedDate.getTime();
     const stageProgress =
       Math.round(
-        (period * 10000) / (millisecondsInADay * (coin.airdropStage ? 1 : coin.stageDuration))
+        (period * 10000) / (millisecondsInADay * (coin.airdropStage ? 1 : safeNumber(coin.stageDuration, 1)))
       ) / 100;
     
-    return stageProgress > 100 ? 100 : stageProgress;
+    return stageProgress > 100 ? 100 : Math.max(0, stageProgress);
   }, [coin.atStageStarted, coin.airdropStage, coin.stageDuration]);
 
   const memoizedDerivedData = useMemo(() => {
     if (!coin.bondingCurve) {
-      const progress = Math.round((coin.progressMcap * solPrice / 1e15) / 10) / 100;
-      const liquidity = Math.round(((coin.lamportReserves / 1e9) * solPrice * 2) / 10) / 100;
+      const progress = Math.round((safeNumber(coin.progressMcap) * safeNumber(solPrice) / 1e15) / 10) / 100;
+      const liquidity = Math.round(((safeNumber(coin.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100;
       return { progress, liquidity, stageProg: memoizedStageProgress };
     } else {
       if (coin.movedToRaydium && !coin.moveRaydiumFailed) {
         return { progress: 100, liquidity: 0, stageProg: 100 };
       } else {
-        const progress = Math.round((coin.progressMcap * solPrice / 1e15) / 10) / 100;
-        const liquidity = Math.round(((coin.lamportReserves / 1e9) * solPrice * 2) / 10) / 100;
+        const progress = Math.round((safeNumber(coin.progressMcap) * safeNumber(solPrice) / 1e15) / 10) / 100;
+        const liquidity = Math.round(((safeNumber(coin.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100;
         return { progress, liquidity, stageProg: 100 };
       }
     }
   }, [coin.bondingCurve, coin.progressMcap, coin.lamportReserves, coin.movedToRaydium, coin.moveRaydiumFailed, solPrice, memoizedStageProgress]);
 
-  const { data: claimDataQuery, isLoading: isCoinLoading } = useQuery(
+  const { data: claimDataQuery } = useQuery(
     ['claimData', param, publicKey?.toBase58()],
     async () => {
       const coinData = await getCoinInfo(param);
       if (coinData.token) {
         setCoin(coinData);
         const data = await getClaimData(coinData.token, publicKey?.toBase58() || '');
-        setIsLoading(false);
         console.log('__yuki__ tradingPage claimDataQuery: fetched data for wallet', publicKey?.toBase58());
         // Transform the object response to array format expected by the component
         if (data && typeof data === 'object' && !Array.isArray(data)) {
@@ -211,10 +233,10 @@ export default function TradingPage() {
     const period = nowDate.getTime() - atStageStartedDate.getTime();
     const stageProgress =
       Math.round(
-        (period * 10000) / (millisecondsInADay * (coinData.airdropStage ? 1 : coinData.stageDuration))
+        (period * 10000) / (millisecondsInADay * (coinData.airdropStage ? 1 : safeNumber(coinData.stageDuration, 1)))
       ) / 100;
     
-    return stageProgress > 100 ? 100 : stageProgress;
+    return stageProgress > 100 ? 100 : Math.max(0, stageProgress);
   }, []);
 
   // Update all derived data based on coin info
@@ -227,9 +249,9 @@ export default function TradingPage() {
         setStageProg(stageProgress);
       }
 
-      setProgress(Math.round((coinData.progressMcap * solPrice / 1e15) / 10) / 100);
+      setProgress(Math.round((safeNumber(coinData.progressMcap) * safeNumber(solPrice) / 1e15) / 10) / 100);
       setLiquidity(
-        Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+        Math.round(((safeNumber(coinData.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100
       );
     } else {
       console.log('__yuki__ tradingPage bondingCurve: true, claim requested');
@@ -238,9 +260,9 @@ export default function TradingPage() {
         setLiquidity(0);
         setStageProg(100);
       } else {
-        setProgress(Math.round((coinData.progressMcap * solPrice / 1e15) / 10) / 100);
+        setProgress(Math.round((safeNumber(coinData.progressMcap) * safeNumber(solPrice) / 1e15) / 10) / 100);
         setLiquidity(
-          Math.round(((coinData.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+          Math.round(((safeNumber(coinData.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100
         );
         setStageProg(100);
       }
@@ -359,7 +381,6 @@ export default function TradingPage() {
       setParam(parameter);
       setCoinId(parameter);
       setCoin({} as coinInfo);
-      setIsLoading(true);
       
       // Immediately fetch coin data to avoid waiting for ClaimContext
       const fetchInitialData = async () => {
@@ -367,10 +388,8 @@ export default function TradingPage() {
           const coinData = await getCoinInfo(parameter);
           setCoin(coinData);
           updateDerivedData(coinData);
-          setIsLoading(false);
         } catch (error) {
           console.error('__yuki__ tradingPage error: fetching initial coin data:', error);
-          setIsLoading(false);
         }
       };
       
@@ -380,8 +399,8 @@ export default function TradingPage() {
 
   // Handle wallet changes and manual claim data fetching
   useEffect(() => {
-    // Only fetch if we have all required data and the query is not already loading
-    if (coin.token && publicKey && !isCoinLoading) {
+    // Only fetch if we have all required data
+    if (coin.token && publicKey) {
       // Check if we already have cached data for this wallet
       const cachedData = queryClient.getQueryData(['claimData', param, publicKey.toBase58()]);
       
@@ -422,7 +441,7 @@ export default function TradingPage() {
         console.log('__yuki__ tradingPage wallet: using cached data for', publicKey.toBase58());
       }
     }
-  }, [publicKey, coin.token, param, queryClient, isCoinLoading]);
+  }, [publicKey, coin.token, param, queryClient]);
 
   const fetchData = async () => {
     updateDerivedData(coin);
@@ -443,7 +462,6 @@ export default function TradingPage() {
     // Stop timer if no coin, no token, no stage started, or bonding curve is true
     if (!coin || !coin.token || !coin.atStageStarted || coin.bondingCurve) {
       console.log('__yuki__ tradingPage timer: stopping - conditions not met');
-      setIsTimerActive(false);
       // Set stage progress to 100 when bonding curve is true
       if (coin?.bondingCurve) {
         setStageProg(100);
@@ -452,7 +470,6 @@ export default function TradingPage() {
     }
 
     console.log('__yuki__ tradingPage timer: starting');
-    setIsTimerActive(true);
 
     const updateProgress = () => {
       const stageProgress = calculateStageProgress(coin);
@@ -460,9 +477,9 @@ export default function TradingPage() {
       
       // Also update other derived data that depends on time
       if (!coin.bondingCurve) {
-        setProgress(Math.round((coin.progressMcap * solPrice / 1e15) / 10) / 100);
+        setProgress(Math.round((safeNumber(coin.progressMcap) * safeNumber(solPrice) / 1e15) / 10) / 100);
         setLiquidity(
-          Math.round(((coin.lamportReserves / 1e9) * solPrice * 2) / 10) / 100
+          Math.round(((safeNumber(coin.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100
         );
       }
       
@@ -478,7 +495,6 @@ export default function TradingPage() {
     return () => {
       console.log('__yuki__ tradingPage timer: cleanup');
       clearInterval(interval);
-      setIsTimerActive(false);
     };
   }, [coin?.atStageStarted, coin?.bondingCurve, coin?.airdropStage, coin?.stagesNumber, calculateStageProgress, solPrice]);
 
@@ -496,7 +512,7 @@ export default function TradingPage() {
     if (coin.movedToRaydium) {
       console.log('__yuki__ tradingPage raydium: moved successfully');
     }
-  }, [coin?.movedToRaydium, coin?.moveRaydiumFailed, coin?.moveRaydiumFailureReason, coin?.raydiumUrl, isLoading, coin?.token]);
+  }, [coin?.movedToRaydium, coin?.moveRaydiumFailed, coin?.moveRaydiumFailureReason, coin?.raydiumUrl, coin?.token]);
 
 
 
@@ -507,13 +523,13 @@ export default function TradingPage() {
   useEffect(() => {
     if (coin.airdropStage) {
       setSellTax(0);
-    } else if (stageProg > coin.sellTaxDecay) {
-      setSellTax(coin.sellTaxMin);
+    } else if (stageProg > safeNumber(coin.sellTaxDecay)) {
+      setSellTax(safeNumber(coin.sellTaxMin));
     } else {
       setSellTax(
         Math.round(
-          coin.sellTaxMax -
-            ((coin.sellTaxMax - coin.sellTaxMin) / coin.sellTaxDecay) *
+          safeNumber(coin.sellTaxMax) -
+            ((safeNumber(coin.sellTaxMax) - safeNumber(coin.sellTaxMin)) / safeNumber(coin.sellTaxDecay, 1)) *
               stageProg
         )
       );
@@ -568,54 +584,8 @@ export default function TradingPage() {
             </div>
           </div>
 
-          {/* Loading Indicator */}
-          {(isLoading || isCoinLoading) && (
-            <div className="w-full space-y-6">
-              {/* Header Skeleton */}
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-muted rounded-lg animate-pulse"></div>
-                <div className="flex-1">
-                  <div className="h-6 bg-muted rounded animate-pulse mb-2"></div>
-                  <div className="h-4 bg-muted rounded animate-pulse w-1/2"></div>
-                </div>
-              </div>
-
-              {/* Token Balance Skeleton */}
-              <div className="flex items-center gap-2">
-                <div className="h-6 bg-muted rounded animate-pulse w-32"></div>
-                <div className="h-6 bg-muted rounded animate-pulse w-16"></div>
-              </div>
-
-              {/* Mobile Tab Skeleton */}
-              <div className="flex bg-card border border-border rounded-lg p-1">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex-1 py-2 px-4">
-                    <div className="h-4 bg-muted rounded animate-pulse"></div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Content Skeleton */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Main Content */}
-                <div className="lg:col-span-2 space-y-4">
-                  <div className="h-8 bg-muted rounded animate-pulse"></div>
-                  <div className="h-64 bg-muted rounded animate-pulse"></div>
-                  <div className="h-64 bg-muted rounded animate-pulse"></div>
-                </div>
-                
-                {/* Sidebar */}
-                <div className="space-y-4">
-                  <div className="h-32 bg-muted rounded animate-pulse"></div>
-                  <div className="h-32 bg-muted rounded animate-pulse"></div>
-                  <div className="h-32 bg-muted rounded animate-pulse"></div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Raydium Move Failed Notification - Show only if failed, even if later succeeded */}
-          {!isLoading && coin.bondingCurve && !coin.movedToRaydium && (
+          {coin.bondingCurve && !coin.movedToRaydium && (
             <div className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">❌ Move to Raydium Failed</h3>
@@ -626,11 +596,8 @@ export default function TradingPage() {
                   </div>
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <span 
-                      className={`text-white font-medium text-sm sm:text-base break-words flex-1 cursor-pointer hover:text-gray-200 transition-colors overflow-hidden ${
-                        isErrorExpanded ? 'whitespace-normal' : 'truncate'
-                      }`}
-                      onClick={() => setIsErrorExpanded(!isErrorExpanded)}
-                      title={isErrorExpanded ? 'Click to collapse' : 'Click to expand'}
+                      className="text-white font-medium text-sm sm:text-base break-words flex-1 cursor-pointer hover:text-gray-200 transition-colors overflow-hidden truncate"
+                      title="Click to expand"
                     >
                       {coin.moveRaydiumFailureReason || 'Unknown error'}
                     </span>
@@ -650,7 +617,7 @@ export default function TradingPage() {
           )}
 
           {/* Raydium Success Notification - Show only if succeeded AND never failed */}
-          {!isLoading && coin.bondingCurve && coin.movedToRaydium && (
+          {coin.bondingCurve && coin.movedToRaydium && (
             <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
               <div className="max-w-6xl mx-auto">
                 <h3 className="text-xl font-bold mb-2">Moved to Raydium Successfully!</h3>
@@ -675,7 +642,7 @@ export default function TradingPage() {
           {/* Display token balance at the top */}
           <div className="mb-4 flex items-center gap-2">
             <span className="font-semibold text-primary">Your Token Balance:</span>
-            <span className="text-lg">{tokenBalance ?? 0}</span>
+            <span className="text-lg">{safeNumber(tokenBalance)}</span>
             <span className="text-muted-foreground">{coin?.ticker || 'Token'}</span>
           </div>
 
@@ -791,14 +758,14 @@ export default function TradingPage() {
                   <p className="font-semibold text-xl text-foreground">{`All Stages Completed`}</p>
                 ) : (
                   <p className="font-semibold text-xl text-foreground">
-                    {`Stage ${Math.min(coin.currentStage, coin.stagesNumber)} Reward Claim`}
+                    {`Stage ${Math.min(safeNumber(coin.currentStage), safeNumber(coin.stagesNumber))} Reward Claim`}
                   </p>
                 )}
                 {login && publicKey ? (
                   <div className="w-full justify-center items-center flex flex-col gap-2">             
                     <p className="text-sm px-5 text-muted-foreground">You are eligible to claim:</p>
-                    <p className="text-xl font-semibold text-primary">{`${Number(claimInUSD).toPrecision(9)} USD`}</p>
-                    <p className="text-xl font-semibold text-primary">{`${Number(claimHodl).toPrecision(6)} HODL`}</p>
+                    <p className="text-xl font-semibold text-primary">{safeCurrency(claimInUSD)} USD</p>
+                    <p className="text-xl font-semibold text-primary">{safeCurrency(claimHodl, 6)} HODL</p>
                   </div>
                 ) : (
                   <p className="text-sm px-5 text-muted-foreground">
@@ -857,15 +824,15 @@ export default function TradingPage() {
 
               <div className="w-full flex flex-col gap-4">
                 <div className="w-full grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-4">
-                  <DataCard text="MCAP" data={`${progress} k`} />
-                  <DataCard text="Liquidity" data={`${liquidity} k`} />
+                  <DataCard text="MCAP" data={`${safeNumber(progress)} k`} />
+                  <DataCard text="Liquidity" data={`${safeNumber(liquidity)} k`} />
                 </div>
                 <div className="w-full grid grid-cols-2 gap-2 sm:gap-4">
                   <DataCard
                     text="Stage"
-                    data={`${Math.min(coin.currentStage, coin.stagesNumber)} of ${coin.stagesNumber}`}
+                    data={`${Math.min(safeNumber(coin.currentStage), safeNumber(coin.stagesNumber))} of ${safeNumber(coin.stagesNumber)}`}
                   />
-                  <DataCard text="Sell Tax" data={`${sellTax} %`} />
+                  <DataCard text="Sell Tax" data={safePercentage(sellTax)} />
                 </div>
               </div>
 
@@ -876,17 +843,17 @@ export default function TradingPage() {
                       {coin.bondingCurve
                         ? 'All Stages Completed'
                         : coin.airdropStage
-                          ? `Airdrop ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of 1 Day`
-                          : `Stage ${Math.min(coin.currentStage, coin.stagesNumber)} : ${stageProg}% of ${coin.stageDuration} Days`}
+                          ? `Airdrop ${Math.min(safeNumber(coin.currentStage), safeNumber(coin.stagesNumber))} : ${safeStageProgress(stageProg)} of 1 Day`
+                          : `Stage ${Math.min(safeNumber(coin.currentStage), safeNumber(coin.stagesNumber))} : ${safeStageProgress(stageProg)} of ${safeNumber(coin.stageDuration)} Days`}
                     </p>
-                    {isTimerActive && (
+                    {coin?.token && coin?.atStageStarted && !coin?.bondingCurve && (
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0" title="Updating in real-time"></div>
                     )}
                   </div>
                   <div className="bg-muted rounded-full h-2 relative">
                     <div
                       className="bg-primary rounded-full h-2 transition-all duration-300"
-                      style={{ width: `${stageProg}%` }}
+                      style={{ width: `${safeNumber(stageProg)}%` }}
                     ></div>
                   </div>
                 </div>
