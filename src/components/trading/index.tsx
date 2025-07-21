@@ -80,7 +80,7 @@ export default function TradingPage() {
 
   // Only destructure the first 6 values, use claimData[6] for coinData
   // Ensure claimData is always an array to prevent destructuring errors
-  const [claimInUSD, claimHodl, currentClaim, solPrice, rewardCap, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
+  const [claimInUSD, claimHodl, currentClaim, solPrice, airdropClaim, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
   const { publicKey } = wallet;
 
   // Helper function to safely format numbers and prevent NaN
@@ -156,7 +156,7 @@ export default function TradingPage() {
             data.claimHodl ?? 0,
             data.currentClaim ?? 0,
             data.solPrice ?? 0,
-            data.rewardCap ?? 0,
+            data.airdropClaim ?? 0,  // Fixed: was data.rewardCap
             data.tokenBalance ?? 0,
           ];
         }
@@ -279,7 +279,7 @@ export default function TradingPage() {
       payload.claimData.claimHodl ?? 0,
       payload.claimData.currentClaim ?? 0,
       payload.claimData.solPrice ?? 0,
-      payload.claimData.rewardCap ?? 0,
+      payload.claimData.airdropClaim ?? 0,
       payload.claimData.tokenBalance ?? 0,
     ]);
     
@@ -289,7 +289,7 @@ export default function TradingPage() {
       payload.claimData.claimHodl ?? 0,
       payload.claimData.currentClaim ?? 0,
       payload.claimData.solPrice ?? 0,
-      payload.claimData.rewardCap ?? 0,
+      payload.claimData.airdropClaim ?? 0,
       payload.claimData.tokenBalance ?? 0,
     ]);
   }, [publicKey, param, queryClient]);
@@ -419,7 +419,7 @@ export default function TradingPage() {
               response.claimHodl ?? 0,
               response.currentClaim ?? 0,
               response.solPrice ?? 0,
-              response.rewardCap ?? 0,
+              response.airdropClaim ?? 0,
               response.tokenBalance ?? 0,
             ]);
             
@@ -428,7 +428,7 @@ export default function TradingPage() {
               response.claimHodl ?? 0,
               response.currentClaim ?? 0,
               response.solPrice ?? 0,
-              response.rewardCap ?? 0,
+              response.airdropClaim ?? 0,
               response.tokenBalance ?? 0,
             ]);
           } catch (error) {
@@ -557,7 +557,9 @@ export default function TradingPage() {
   };
 
   const handleClaim = async () => {
-    const res = await claim(user, coin, wallet, Number(claimHodl));
+    const amount = coin.bondingCurve ? Number(airdropClaim + claimHodl) : Number(claimHodl);
+    console.log('__yuki__ tradingPage handleClaim amount', amount, 'coin.bondingCurve', coin.bondingCurve);
+    const res = await claim(user, coin, wallet, Number(amount), coin.bondingCurve);
     // fetchData();
 
     if (res !== 'success') {
@@ -766,6 +768,9 @@ export default function TradingPage() {
                     <p className="text-sm px-5 text-muted-foreground">You are eligible to claim:</p>
                     <p className="text-xl font-semibold text-primary">{safeCurrency(claimInUSD)} USD</p>
                     <p className="text-xl font-semibold text-primary">{safeCurrency(claimHodl, 6)} HODL</p>
+                    {airdropClaim > 0 && (
+                      <p className="text-sm font-semibold text-primary">{safeCurrency(airdropClaim, 6)} HODL({coin.bondingCurve ? 'Airdrop' : 'Airdrop Locked'})</p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm px-5 text-muted-foreground">
@@ -780,13 +785,13 @@ export default function TradingPage() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={
-                          coin.airdropStage
+                          coin.airdropStage && (coin.bondingCurve ? Number(airdropClaim + claimHodl) : Number(claimHodl)) > 0
                             ? handleClaim
                             : undefined
                         }
                         className={`w-1/2 border-2 border-primary/30 cursor-pointer rounded-lg py-2 px-6 font-semibold flex flex-col mx-auto transition-all duration-200
                           ${
-                            coin.airdropStage
+                            coin.airdropStage && (coin.bondingCurve ? Number(airdropClaim + claimHodl) : Number(claimHodl)) > 0
                               ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl'
                               : 'bg-muted text-muted-foreground cursor-not-allowed'
                           }`}

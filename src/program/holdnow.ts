@@ -825,11 +825,6 @@ export type Holdnow = {
           "index": false
         },
         {
-          "name": "isFree",
-          "type": "bool",
-          "index": false
-        },
-        {
           "name": "currentStage",
           "type": "u64",
           "index": false
@@ -842,6 +837,11 @@ export type Holdnow = {
         {
           "name": "reserveLamport",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "eventType",
+          "type": "string",
           "index": false
         }
       ]
@@ -2113,11 +2113,6 @@ export const IDL: Holdnow = {
           "index": false
         },
         {
-          "name": "isFree",
-          "type": "bool",
-          "index": false
-        },
-        {
           "name": "currentStage",
           "type": "u64",
           "index": false
@@ -2130,6 +2125,11 @@ export const IDL: Holdnow = {
         {
           "name": "reserveLamport",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "eventType",
+          "type": "string",
           "index": false
         }
       ]

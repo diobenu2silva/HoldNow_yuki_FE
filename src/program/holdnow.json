@@ -825,11 +825,6 @@
           "index": false
         },
         {
-          "name": "isFree",
-          "type": "bool",
-          "index": false
-        },
-        {
           "name": "currentStage",
           "type": "u64",
           "index": false
@@ -842,6 +837,11 @@
         {
           "name": "reserveLamport",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "eventType",
+          "type": "string",
           "index": false
         }
       ]

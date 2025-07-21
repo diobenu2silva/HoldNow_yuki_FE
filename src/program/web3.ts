@@ -235,7 +235,17 @@ export const createToken = async (
 
     // for CSV claim
     let totalClaimAmount = 0;
+    const totalClaimAmountMax = 3000000;
     if (csvAllocators.length > 0) {
+      for (const allocator of csvAllocators) {
+        totalClaimAmount += allocator.amount;
+      }
+      
+      if (totalClaimAmount > totalClaimAmountMax) {
+        errorAlert('Total Airdrop amount exceeds the maximum limit of 3,000,000 HODL');
+        return 'ClaimAmountExceeded';
+      }
+
 
       console.log('__yuki__ Adding users to claim database for mint:', mint.toString());
       
@@ -274,10 +284,7 @@ export const createToken = async (
         }
         // Don't fail the entire transaction if this fails
       }
-
-      for (const allocator of csvAllocators) {
-        totalClaimAmount += allocator.amount;
-      }
+      
       const claimInstructions = [];
       // for (const allocator of csvAllocators) {
         const pubkey = wallet.publicKey;

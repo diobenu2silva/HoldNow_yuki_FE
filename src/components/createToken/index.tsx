@@ -1,5 +1,10 @@
 'use client';
-import { ChangeEvent, useContext, useEffect, useState } from 'react';
+import React, {
+  useState,
+  useEffect,
+  ChangeEvent,
+  useContext,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/loadings/Spinner';
 import { errorAlert, infoAlert } from '@/components/others/ToastGroup';
@@ -202,6 +207,16 @@ export default function CreateToken() {
         return;
       }
 
+      // Handle claim amount exceeded error
+      if (result === 'ClaimAmountExceeded') {
+        // Reset CSV upload
+        setCsvFile(null);
+        setCsvFileContent('');
+        setCsvFilePreview(null);
+        setIsLoading(false);
+        return; // Stay on create page, don't redirect
+      }
+
       // Process CSV airdrop data if provided
       /*if (csvAllocators.length > 0 && result.mint && wallet.publicKey) {
         try {
@@ -393,13 +408,14 @@ export default function CreateToken() {
                   setSelectRange={(changeRange) =>
                     setTokenSellTaxRange(changeRange)
                   }
+                  hasCsvUpload={!!csvFileContent}
                 />
                 <SelectInput
                   header="Sell Tax Decay"
                   data={SellTaxDecayData}
                   setSelectData={(inputData) => setTokenSellTaxDecay(inputData.id)}
                   style="h-[200px] overflow-y-scroll z-10"
-                  firstData="Untill halfway through - 100%"
+                  firstData="Until halfway through - 100%"
                 />
               </div>
             </div>
@@ -426,7 +442,8 @@ export default function CreateToken() {
                     }}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Upload a CSV file with wallet addresses and amounts. Format: wallet_address,amount (one per line)
+                    Upload a CSV file with wallet addresses and amounts. Format: wallet_address,amount (one per line) <br />
+                    Total Airdrop amount must be less than 3,000,000 HODL
                   </p>
                 </div>
               </div>

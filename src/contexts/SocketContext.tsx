@@ -22,7 +22,7 @@ interface ClaimDataUpdatedPayload {
     claimHodl: number;
     currentClaim: number;
     solPrice: number;
-    rewardCap: number;
+    airdropClaim: number;
     tokenBalance: number;
   };
 }

@@ -52,7 +52,7 @@ export const getClaimData = async (
     return {
       tokenBal: 0,
       hodlSum: 0,
-      rewardCap: 0,
+      airdropClaim: 0,
       isBlocked: true,
       tokenReserves: 0,
       lamportReserves: 0,
@@ -410,9 +410,10 @@ export const claim = async (
   userData: userInfo,
   coin: coinInfo,
   wallet: WalletContextState,
-  amount: number
+  amount: number,
+  airdrop: boolean,
 ) => {
-  const signedTx = await claimTx(coin, wallet, wallet.publicKey, amount, false);
+  const signedTx = await claimTx(coin, wallet, wallet.publicKey, amount, airdrop);
   if (!signedTx) {
     console.log('Claim transaction failed');
     return;

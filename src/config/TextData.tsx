@@ -23,16 +23,16 @@ export const StageDurationData = [
 ];
 
 export const SellTaxDecayData = [
-  { id: 10, text: 'Untill halfway through - 10%' },
-  { id: 20, text: 'Untill halfway through - 20%' },
-  { id: 30, text: 'Untill halfway through - 30%' },
-  { id: 40, text: 'Untill halfway through - 40%' },
-  { id: 50, text: 'Untill halfway through - 50%' },
-  { id: 60, text: 'Untill halfway through - 60%' },
-  { id: 70, text: 'Untill halfway through - 70%' },
-  { id: 80, text: 'Untill halfway through - 80%' },
-  { id: 90, text: 'Untill halfway through - 90%' },
-  { id: 100, text: 'Untill halfway through - 100%' },
+  { id: 10, text: 'until halfway through - 10%' },
+  { id: 20, text: 'until halfway through - 20%' },
+  { id: 30, text: 'until halfway through - 30%' },
+  { id: 40, text: 'until halfway through - 40%' },
+  { id: 50, text: 'until halfway through - 50%' },
+  { id: 60, text: 'until halfway through - 60%' },
+  { id: 70, text: 'until halfway through - 70%' },
+  { id: 80, text: 'until halfway through - 80%' },
+  { id: 90, text: 'until halfway through - 90%' },
+  { id: 100, text: 'until halfway through - 100%' },
 ];
 
 export const FinalTokenPoolData = [
