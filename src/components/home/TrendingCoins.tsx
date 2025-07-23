@@ -100,11 +100,11 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({
     <div className="w-full">
       <h2 className="text-2xl font-bold text-foreground mb-4">
         Trending Coins
-        {/* {trendingCoins.length > 0 && trendingCoins[0]?.trendingData?.isFallback && (
+        {trendingCoins.length > 0 && trendingCoins[0]?.trendingData?.isFallback && (
           <span className="text-sm font-normal text-muted-foreground ml-2">
             (Showing largest market cap coins - no recent activity)
           </span>
-        )} */}
+        )}
       </h2>
       <div className="relative">
         {/* Wrapper for scrollable container */}
