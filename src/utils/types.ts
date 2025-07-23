@@ -126,6 +126,11 @@ export interface msgInfo {
   heart?: number;
   replyCount?: number;
   replyTo?: any;
+  favorites?: Array<{
+    userId: string;
+    type: 'thumbUp' | 'thumbDown' | 'heart';
+    timestamp?: Date;
+  }>;
 }
 
 export interface tradeInfo {

@@ -1,7 +1,7 @@
 import { coinInfo, holderInfo, tradeInfo, msgInfo } from '@/utils/types';
 import { useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { Trade } from './Trade';
-import { getHoldersWithUserInfo, getCoinTrade, getMessageByCoin, addMessageFavorite } from '@/utils/util';
+import { getHoldersWithUserInfo, getCoinTrade, getMessageByCoin, addMessageFavorite, removeMessageFavorite } from '@/utils/util';
 import UserContext from '@/context/UserContext';
 import { Holder } from './Holders';
 import { motion } from 'framer-motion';
@@ -57,6 +57,63 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
 
   
   const { onTransactionUpdate, onHoldersUpdate } = useSocket();
+
+  // Helper function to check if user has favorited a message
+  const hasUserFavorited = (message: any, type: 'thumbUp' | 'thumbDown' | 'heart') => {
+    if (!user || !message.favorites) return false;
+    return message.favorites.some((fav: any) => 
+      fav.userId === user._id && fav.type === type
+    );
+  };
+
+  // Helper function to handle favorite toggle
+  const handleFavoriteToggle = async (message: any, type: 'thumbUp' | 'thumbDown' | 'heart') => {
+    try {
+      const hasFavorited = hasUserFavorited(message, type);
+      
+      if (hasFavorited) {
+        // Remove favorite
+        console.log(`__yuki__ Removing ${type} from message:`, message._id, 'by user:', user._id);
+        const result = await removeMessageFavorite(message._id, type, user._id);
+        console.log(`__yuki__ Remove ${type} result:`, result);
+        
+        if (!result.error) {
+          // Update the message in the local state
+          const updatedMessages = messages.map(msg => 
+            msg._id === message._id ? { 
+              ...msg, 
+              [type]: Math.max(0, (msg[type] || 0) - 1),
+              favorites: msg.favorites.filter((fav: any) => !(fav.userId === user._id && fav.type === type))
+            } : msg
+          );
+          setMessages(updatedMessages);
+        } else {
+          console.error(`__yuki__ Remove ${type} error:`, result.error);
+        }
+      } else {
+        // Add favorite
+        console.log(`__yuki__ Adding ${type} to message:`, message._id, 'by user:', user._id);
+        const result = await addMessageFavorite(message._id, type, user._id);
+        console.log(`__yuki__ Add ${type} result:`, result);
+        
+        if (!result.error) {
+          // Update the message in the local state
+          const updatedMessages = messages.map(msg => 
+            msg._id === message._id ? { 
+              ...msg, 
+              [type]: (msg[type] || 0) + 1,
+              favorites: [...(msg.favorites || []), { userId: user._id, type }]
+            } : msg
+          );
+          setMessages(updatedMessages);
+        } else {
+          console.error(`__yuki__ Add ${type} error:`, result.error);
+        }
+      }
+    } catch (error) {
+      console.error(`Error toggling ${type}:`, error);
+    }
+  };
 
   // Generic sort function
   const sortData = <T,>(data: T[], field: string, direction: SortDirection, getValue: (item: T, field: string) => any): T[] => {
@@ -555,90 +612,50 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                       {/* Message Actions - Moved to bottom */}
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
                         <div className="flex items-center gap-4 text-sm">
-                          {/* Only show favorite buttons if user is the message author */}
-                          {user && message.sender && user._id === message.sender._id ? (
+                          {/* Show favorite buttons for all users to interact with */}
+                          {user && (
                             <>
                               <button 
-                                className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                                className={`flex items-center gap-1 transition-colors ${
+                                  hasUserFavorited(message, 'thumbUp') 
+                                    ? 'text-primary' 
+                                    : 'text-muted-foreground hover:text-primary'
+                                }`}
                                 onClick={async () => {
-                                  try {
-                                    const result = await addMessageFavorite(message._id, 'thumbUp', user._id);
-                                    if (!result.error) {
-                                      // Update the message in the local state
-                                      const updatedMessages = messages.map(msg => 
-                                        msg._id === message._id ? { ...msg, thumbUp: (msg.thumbUp || 0) + 1 } : msg
-                                      );
-                                      setMessages(updatedMessages);
-                                    }
-                                  } catch (error) {
-                                    console.error('Error adding thumb up:', error);
-                                  }
+                                  await handleFavoriteToggle(message, 'thumbUp');
                                 }}
                               >
                                 <ThumbsUp className="w-4 h-4" />
                                 <span>{message.thumbUp || 0}</span>
                               </button>
                               <button 
-                                className="flex items-center gap-1 text-muted-foreground hover:text-red-500 transition-colors"
+                                className={`flex items-center gap-1 transition-colors ${
+                                  hasUserFavorited(message, 'thumbDown') 
+                                    ? 'text-red-500' 
+                                    : 'text-muted-foreground hover:text-red-500'
+                                }`}
                                 onClick={async () => {
-                                  try {
-                                    const result = await addMessageFavorite(message._id, 'thumbDown', user._id);
-                                    if (!result.error) {
-                                      // Update the message in the local state
-                                      const updatedMessages = messages.map(msg => 
-                                        msg._id === message._id ? { ...msg, thumbDown: (msg.thumbDown || 0) + 1 } : msg
-                                      );
-                                      setMessages(updatedMessages);
-                                    }
-                                  } catch (error) {
-                                    console.error('Error adding thumb down:', error);
-                                  }
+                                  await handleFavoriteToggle(message, 'thumbDown');
                                 }}
                               >
                                 <ThumbsDown className="w-4 h-4" />
                                 <span>{message.thumbDown || 0}</span>
                               </button>
                               <button 
-                                className="flex items-center gap-1 text-muted-foreground hover:text-pink-500 transition-colors"
+                                className={`flex items-center gap-1 transition-colors ${
+                                  hasUserFavorited(message, 'heart') 
+                                    ? 'text-pink-500' 
+                                    : 'text-muted-foreground hover:text-pink-500'
+                                }`}
                                 onClick={async () => {
-                                  try {
-                                    const result = await addMessageFavorite(message._id, 'heart', user._id);
-                                    if (!result.error) {
-                                      // Update the message in the local state
-                                      const updatedMessages = messages.map(msg => 
-                                        msg._id === message._id ? { ...msg, heart: (msg.heart || 0) + 1 } : msg
-                                      );
-                                      setMessages(updatedMessages);
-                                    }
-                                  } catch (error) {
-                                    console.error('Error adding heart:', error);
-                                  }
+                                  await handleFavoriteToggle(message, 'heart');
                                 }}
                               >
                                 <Heart className="w-4 h-4" />
                                 <span>{message.heart || 0}</span>
                               </button>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <ThumbsUp className="w-4 h-4" />
-                                <span>{message.thumbUp || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <ThumbsDown className="w-4 h-4" />
-                                <span>{message.thumbDown || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <Heart className="w-4 h-4" />
-                                <span>{message.heart || 0}</span>
-                              </div>
                             </>
                           )}
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <MessageCircle className="w-4 h-4" />
-                            <span>{message.replyCount || 0}</span>
-                          </div>
                         </div>
                       </div>
                     </div>

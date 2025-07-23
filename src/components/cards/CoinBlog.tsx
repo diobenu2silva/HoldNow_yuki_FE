@@ -9,7 +9,7 @@ import { FaTelegramPlane } from 'react-icons/fa';
 import { CurrencyDollarIcon, ArrowTrendingUpIcon, UserIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSocket } from '@/contexts/SocketContext';
-import { getSolPriceInUSD, getUserInfo } from '@/utils/util';
+import { getSolPriceInUSD, getUserInfo, getMessageByCoin } from '@/utils/util';
 
 interface CoinBlogProps {
   coin: coinInfo;
@@ -151,6 +151,38 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
   
   // Get the current reply count for this coin (use currentCoin._id for consistency)
   const currentReplyCount = replyCounts[currentCoin._id] || 0;
+
+  // Local state for reply count as fallback
+  const [localReplyCount, setLocalReplyCount] = useState<number>(0);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('__yuki__ CoinBlog: Reply counts state:', replyCounts);
+    console.log('__yuki__ CoinBlog: Current coin ID:', currentCoin._id);
+    console.log('__yuki__ CoinBlog: Current reply count:', currentReplyCount);
+  }, [replyCounts, currentCoin._id, currentReplyCount]);
+
+  // Fallback: Fetch reply count directly if not available in socket context
+  useEffect(() => {
+    const fetchReplyCount = async () => {
+      if (!currentReplyCount && currentCoin._id) {
+        try {
+          console.log('__yuki__ CoinBlog: Fetching reply count directly for coin:', currentCoin._id);
+          const messages = await getMessageByCoin(currentCoin._id);
+          const count = messages.length;
+          console.log('__yuki__ CoinBlog: Direct reply count:', count);
+          setLocalReplyCount(count);
+        } catch (error) {
+          console.error('__yuki__ CoinBlog: Error fetching reply count:', error);
+        }
+      }
+    };
+
+    fetchReplyCount();
+  }, [currentCoin._id, currentReplyCount]);
+
+  // Use socket reply count if available, otherwise use local count
+  const displayReplyCount = currentReplyCount || localReplyCount;
 
   return (
     <motion.div
@@ -326,7 +358,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
                       ${(currentCoin.progressMcap * solPrice / 1e18 || 0).toLocaleString()} K
                     </div>
                     <div className="text-gray-900 dark:text-white font-bold text-base">
-                      {currentReplyCount}
+                      {displayReplyCount}
                     </div>
                   </div>
                 </div>
@@ -342,7 +374,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
                     <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
                   </div>
                   <div className="text-gray-900 dark:text-white font-bold text-base">
-                    {currentReplyCount}
+                    {displayReplyCount}
                   </div>
                 </div>
                 

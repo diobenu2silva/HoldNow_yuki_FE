@@ -242,21 +242,10 @@ export const getLatestReplies = async (): Promise<{ coinId: string; latestReplyT
 
 export const getReplyCounts = async (): Promise<{ coinId: string; replyCount: number }[]> => {
   try {
-    // Get all coins first
-    const coins = await getCoinsInfo();
-    if (!coins || coins.length === 0) return [];
-    
-    // Get reply counts for each coin using getMessageByCoin
-    const replyCountsPromises = coins.map(async (coin) => {
-      const messages = await getMessageByCoin(coin._id);
-      return {
-        coinId: coin._id,
-        replyCount: messages.length
-      };
-    });
-    
-    const replyCounts = await Promise.all(replyCountsPromises);
-    return replyCounts;
+    console.log('__yuki__ getReplyCounts: Fetching reply counts from backend');
+    const response = await axios.get(`${BACKEND_URL}/feedback/reply-counts`, config);
+    console.log('__yuki__ getReplyCounts: Response:', response.data);
+    return response.data;
   } catch (err) {
     console.log('__yuki__ getReplyCounts Error fetching reply counts:', err);
     return [];
