@@ -16,9 +16,10 @@ interface CoinBlogProps {
   componentKey: string;
   isNSFW?: boolean; // new prop for future use
   solPrice?: number; // new prop for solPrice
+  compact?: boolean; // new prop for compact layout
 }
 
-export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, solPrice: propSolPrice }) => {
+export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, solPrice: propSolPrice, compact = false }) => {
   const router = useRouter();
   const { onCoinInfoUpdate } = useSocket();
   const { setSolPrice, solPrice: contextSolPrice } = useContext(UserContext);
@@ -157,198 +158,205 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
       initial="hidden"
       animate="visible"
       whileHover="hover"
-      className="card card-hover card-glow overflow-hidden group cursor-pointer border-border flex flex-col justify-between"
+      className={`card card-hover card-glow overflow-hidden group cursor-pointer border-border flex flex-col justify-between ${
+        compact ? 'w-full max-w-full min-w-0' : 'w-full max-w-full'
+      }`}
+      style={{ 
+        width: '100%', 
+        maxWidth: '100%',
+        minWidth: compact ? '0' : 'auto'
+      }}
     >
-      <div className="relative w-full overflow-hidden">
-        {/* Social Links - Top Right Corner */}
-        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
-          {currentCoin.description && currentCoin.description.length > 50 && (
-            <div
-              className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full cursor-help"
-              title={currentCoin.description}
-            >
-              <HiOutlineInformationCircle className="w-3 h-3" />
-            </div>
-          )}
-          {currentCoin.website && (
-            <a
-              href={currentCoin.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full hover:bg-white/90 dark:hover:bg-black/60 transition-colors duration-200"
-              title="Website"
-              onClick={e => e.stopPropagation()}
-            >
-              <HiOutlineGlobeAlt className="w-3 h-3" />
-            </a>
-          )}
-          {currentCoin.twitter && (
-            <a
-              href={currentCoin.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full hover:bg-white/90 dark:hover:bg-black/60 transition-colors duration-200"
-              title="Twitter"
-              onClick={e => e.stopPropagation()}
-            >
-              <FaXTwitter className="w-3 h-3" />
-            </a>
-          )}
-          {currentCoin.telegram && (
-            <a
-              href={currentCoin.telegram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full hover:bg-white/90 dark:hover:bg-black/60 transition-colors duration-200"
-              title="Telegram"
-              onClick={e => e.stopPropagation()}
-            >
-              <FaTelegramPlane className="w-3 h-3" />
-            </a>
-          )}
-        </div>
-
-        {/* Image and Info Row */}
-        <div className="flex flex-col px-2 pt-3 gap-2 items-start min-h-0"
-          style={currentCoin.frontBanner ? {
-            backgroundImage: `url(${currentCoin.frontBanner})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          } : { background: 'var(--card)' }}
-          >
-          <div className="flex items-start gap-3 w-full">
-            <img
-              src={currentCoin?.url}
-              alt={currentCoin?.name}
-              className="w-16 h-16 object-cover rounded-lg border-4 border-card bg-card shadow-lg mt-0 flex-shrink-0"
-              style={{ marginTop: 0 }}
-            />
-            <div className="flex flex-col flex-1 gap-1 min-w-0 w-full">
-              <div className="bg-white/10 dark:bg-black/20 backdrop-blur-sm px-2 py-1 rounded max-w-[calc(100%-32px)] mr-2 overflow-hidden">
-                <div className="flex items-center gap-2 w-full">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white drop-shadow-lg group-hover:text-primary transition-colors duration-300 truncate min-w-0">
-                    {currentCoin?.name}
-                  </h3>
+          <div className="relative w-full overflow-hidden">
+            {/* Social Links - Top Right Corner */}
+            <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
+              {currentCoin.description && currentCoin.description.length > 50 && (
+                <div
+                  className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full cursor-help"
+                  title={currentCoin.description}
+                >
+                  <HiOutlineInformationCircle className="w-3 h-3" />
                 </div>
-                <div className="flex items-center gap-1 text-sm mt-1 w-full">
-                  <span className="badge badge-primary text-xs text-white drop-shadow-lg flex-shrink-0">{currentCoin?.ticker}</span>
+              )}
+              {currentCoin.website && (
+                <a
+                  href={currentCoin.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full hover:bg-white/90 dark:hover:bg-black/60 transition-colors duration-200"
+                  title="Website"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <HiOutlineGlobeAlt className="w-3 h-3" />
+                </a>
+              )}
+              {currentCoin.twitter && (
+                <a
+                  href={currentCoin.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full hover:bg-white/90 dark:hover:bg-black/60 transition-colors duration-200"
+                  title="Twitter"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <FaXTwitter className="w-3 h-3" />
+                </a>
+              )}
+              {currentCoin.telegram && (
+                <a
+                  href={currentCoin.telegram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white/10 dark:bg-black/40 backdrop-blur-sm text-gray-900 dark:text-white p-1.5 rounded-full hover:bg-white/90 dark:hover:bg-black/60 transition-colors duration-200"
+                  title="Telegram"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <FaTelegramPlane className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+
+            {/* Image and Info Row */}
+            <div className="flex flex-col px-2 pt-3 gap-2 items-start min-h-0"
+              style={currentCoin.frontBanner ? {
+                backgroundImage: `url(${currentCoin.frontBanner})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              } : { background: 'var(--card)' }}
+              >
+              <div className="flex items-start gap-3 w-full">
+                <img
+                  src={currentCoin?.url}
+                  alt={currentCoin?.name}
+                  className="w-16 h-16 object-cover rounded-lg border-4 border-card bg-card shadow-lg mt-0 flex-shrink-0"
+                  style={{ marginTop: 0 }}
+                />
+                <div className="flex flex-col flex-1 gap-1 min-w-0 w-full">
+                  <div className="bg-white/10 dark:bg-black/20 backdrop-blur-sm px-2 py-1 rounded max-w-[calc(100%-32px)] mr-2 overflow-hidden">
+                    <div className="flex items-center gap-2 w-full">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white drop-shadow-lg group-hover:text-primary transition-colors duration-300 truncate min-w-0">
+                        {currentCoin?.name}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm mt-1 w-full">
+                      <span className="badge badge-primary text-xs text-white drop-shadow-lg flex-shrink-0">{currentCoin?.ticker}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          {componentKey === 'coin' && currentCoin?.description && (
-            <div className="w-full px-1.5 max-w-[calc(100%-27px)] mb-2">
-              <div className="text-gray-900 dark:text-white drop-shadow-lg bg-white/10 dark:bg-black/20 px-2 py-1 rounded backdrop-blur-sm text-sm flex flex-col items-start gap-2 w-full overflow-hidden">
-                <div className="flex items-center gap-1 text-sm mt-1 w-full">
-                  <UserIcon className="w-4 h-4 text-gray-900 dark:text-white drop-shadow-lg flex-shrink-0" />
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      const creatorId = typeof currentCoin?.creator === 'string' 
-                        ? currentCoin.creator 
-                        : (currentCoin?.creator as userInfo)?._id;
-                      if (creatorId) {
-                        router.push(`/profile/${creatorId}`);
-                      }
-                    }}
-                    className="text-gray-900 dark:text-white hover:text-primary/80 font-medium transition-colors duration-200 drop-shadow-lg truncate min-w-0"
-                    >
-                    {typeof currentCoin?.creator === 'string' ? currentCoin?.creator : (currentCoin?.creator as userInfo)?.name || 'Unknown Creator'}
-                  </button>
+              {componentKey === 'coin' && currentCoin?.description && (
+                <div className="w-full px-1.5 max-w-[calc(100%-27px)] mb-2">
+                  <div className="text-gray-900 dark:text-white drop-shadow-lg bg-white/10 dark:bg-black/20 px-2 py-1 rounded backdrop-blur-sm text-sm flex flex-col items-start gap-2 w-full overflow-hidden">
+                    <div className="flex items-center gap-1 text-sm mt-1 w-full">
+                      <UserIcon className="w-4 h-4 text-gray-900 dark:text-white drop-shadow-lg flex-shrink-0" />
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          const creatorId = typeof currentCoin?.creator === 'string' 
+                            ? currentCoin.creator 
+                            : (currentCoin?.creator as userInfo)?._id;
+                          if (creatorId) {
+                            router.push(`/profile/${creatorId}`);
+                          }
+                        }}
+                        className="text-gray-900 dark:text-white hover:text-primary/80 font-medium transition-colors duration-200 drop-shadow-lg truncate min-w-0"
+                        >
+                        {typeof currentCoin?.creator === 'string' ? currentCoin?.creator : (currentCoin?.creator as userInfo)?.name || 'Unknown Creator'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <HiOutlineInformationCircle className="w-4 h-4 text-gray-900 dark:text-white drop-shadow-lg flex-shrink-0 mt-0.5" />
+                      <span className="truncate min-w-0">
+                        {currentCoin?.description}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <HiOutlineInformationCircle className="w-4 h-4 text-gray-900 dark:text-white drop-shadow-lg flex-shrink-0 mt-0.5" />
-                  <span className="truncate min-w-0">
-                    {currentCoin?.description}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
-          )}
-        </div>
-      
-      </div>  
-      
+          
+          </div>  
+          
 
-      
-      {/* Stage Progress Section */}
-      <div className="p-2 bg-white/10 dark:bg-black/40 backdrop-blur-sm border-t border-gray-200 dark:border-white/20">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1">
-            <ArrowTrendingUpIcon className="w-4 h-4 text-gray-900 dark:text-white" />
-            <span className="text-gray-700 dark:text-white/80 text-sm">Stage Progress</span>
-          </div>
-          <div className="text-right">
-            <div className="text-gray-900 dark:text-white font-bold text-base">
-              {stageProg}%
-            </div>
-            <div className="text-gray-600 dark:text-white/70 text-xs">
-              Stage {Math.min(currentCoin.currentStage, currentCoin.stagesNumber)} of {currentCoin.stagesNumber} ({currentCoin.bondingCurve ? ((currentCoin.movedToRaydium) ? "On Dex" : "Failed") : (currentCoin.airdropStage ? "Airdrop Stage" : "Trading Stage1")})
-            </div>
-          </div>
-        </div>
-        {/* Progress Bar */}
-        <div className="relative">
-          <div className="w-full h-2 bg-gray-200 dark:bg-white/20 rounded-full overflow-hidden">
-            <motion.div
-              variants={progressVariants}
-              initial="hidden"
-              animate="visible"
-              className="h-full bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-full relative"
-            />
-          </div>
-        </div>
-        
-        {/* Market Cap Display - Only show if not moved to Raydium */}
-        {!currentCoin.movedToRaydium && (
-          <div className="mt-1 pt-1 border-t border-gray-200 dark:border-white/20">
-            <div className="flex items-center justify-between">
-              <div className="flex-col items-center gap-1">
-                <div className="flex items-center gap-1">
-                  <CurrencyDollarIcon className="w-4 h-4 text-gray-900 dark:text-white" />
-                  <span className="text-gray-700 dark:text-white/80 text-sm">Market Cap</span>
-                </div>
-                <div className="text-gray-600 dark:text-white/70 text-xs flex items-center gap-1">
-                  <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-gray-900 dark:text-white" />
-                  <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
-                </div>
+          
+          {/* Stage Progress Section */}
+          <div className="p-2 bg-white/10 dark:bg-black/40 backdrop-blur-sm border-t border-gray-200 dark:border-white/20">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1">
+                <ArrowTrendingUpIcon className="w-4 h-4 text-gray-900 dark:text-white" />
+                <span className="text-gray-700 dark:text-white/80 text-sm">Stage Progress</span>
               </div>
               <div className="text-right">
                 <div className="text-gray-900 dark:text-white font-bold text-base">
-                  ${(currentCoin.progressMcap * solPrice / 1e18 || 0).toLocaleString()} K
+                  {stageProg}%
                 </div>
-                <div className="text-gray-900 dark:text-white font-bold text-base">
-                  {currentReplyCount}
+                <div className="text-gray-600 dark:text-white/70 text-xs">
+                  Stage {Math.min(currentCoin.currentStage, currentCoin.stagesNumber)} of {currentCoin.stagesNumber} ({currentCoin.bondingCurve ? ((currentCoin.movedToRaydium) ? "On Dex" : "Failed") : (currentCoin.airdropStage ? "Airdrop Stage" : "Trading Stage1")})
                 </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        {/* Replies Only Display - Show when moved to Raydium */}
-        {currentCoin.movedToRaydium && (
-          <div className="mt-1 pt-1 border-t border-gray-200 dark:border-white/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-gray-900 dark:text-white" />
-                <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
-              </div>
-              <div className="text-gray-900 dark:text-white font-bold text-base">
-                {currentReplyCount}
+            {/* Progress Bar */}
+            <div className="relative">
+              <div className="w-full h-2 bg-gray-200 dark:bg-white/20 rounded-full overflow-hidden">
+                <motion.div
+                  variants={progressVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="h-full bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-full relative"
+                />
               </div>
             </div>
             
-            {/* DEX Listed Stamp - Bottom Right, next row to replies */}
-            <div className="mt-1 flex justify-end">
-              <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
-                <CheckCircleIcon className="w-3 h-3" />
-                Listed on DEX
+            {/* Market Cap Display - Only show if not moved to Raydium */}
+            {!currentCoin.movedToRaydium && (
+              <div className="mt-1 pt-1 border-t border-gray-200 dark:border-white/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex-col items-center gap-1">
+                    <div className="flex items-center gap-1">
+                      <CurrencyDollarIcon className="w-4 h-4 text-gray-900 dark:text-white" />
+                      <span className="text-gray-700 dark:text-white/80 text-sm">Market Cap</span>
+                    </div>
+                    <div className="text-gray-600 dark:text-white/70 text-xs flex items-center gap-1">
+                      <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-gray-900 dark:text-white" />
+                      <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-gray-900 dark:text-white font-bold text-base">
+                      ${(currentCoin.progressMcap * solPrice / 1e18 || 0).toLocaleString()} K
+                    </div>
+                    <div className="text-gray-900 dark:text-white font-bold text-base">
+                      {currentReplyCount}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+            
+            {/* Replies Only Display - Show when moved to Raydium */}
+            {currentCoin.movedToRaydium && (
+              <div className="mt-1 pt-1 border-t border-gray-200 dark:border-white/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <HiOutlineChatBubbleLeftRight className="w-4 h-4 text-gray-900 dark:text-white" />
+                    <span className="text-gray-700 dark:text-white/80 text-sm">Replies</span>
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-bold text-base">
+                    {currentReplyCount}
+                  </div>
+                </div>
+                
+                {/* DEX Listed Stamp - Bottom Right, next row to replies */}
+                <div className="mt-1 flex justify-end">
+                  <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
+                    <CheckCircleIcon className="w-3 h-3" />
+                    Listed on DEX
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </motion.div>
+        </motion.div>
   );
 };
 

@@ -463,14 +463,83 @@ export const getKingOfCoin = async (): Promise<coinInfo[]> => {
       `${BACKEND_URL}/coin/king-of-coin`,
       config
     );
-    
     if (response.data && response.data.coins) {
       return response.data.coins;
     }
-    
     return [];
   } catch (err) {
     console.log('__yuki__ getKingOfCoin Error fetching king of coin:', err);
+    return [];
+  }
+};
+
+// Follow/Unfollow functions
+export const followUser = async (followerWallet: string, followingWallet: string): Promise<any> => {
+  try {
+    const response = await axios.post(
+      `${BACKEND_URL}/user/follow`,
+      { followerWallet, followingWallet },
+      config
+    );
+    return response.data;
+  } catch (err) {
+    console.log('__yuki__ followUser Error:', err);
+    return { error: 'Failed to follow user' };
+  }
+};
+
+export const unfollowUser = async (followerWallet: string, followingWallet: string): Promise<any> => {
+  try {
+    const response = await axios.post(
+      `${BACKEND_URL}/user/unfollow`,
+      { followerWallet, followingWallet },
+      config
+    );
+    return response.data;
+  } catch (err) {
+    console.log('__yuki__ unfollowUser Error:', err);
+    return { error: 'Failed to unfollow user' };
+  }
+};
+
+export const getFollowers = async (wallet: string): Promise<userInfo[]> => {
+  try {
+    const response = await axios.get(
+      `${BACKEND_URL}/user/${wallet}/followers`,
+      config
+    );
+    return response.data.followers || [];
+  } catch (err) {
+    console.log('__yuki__ getFollowers Error:', err);
+    return [];
+  }
+};
+
+export const getFollowing = async (wallet: string): Promise<userInfo[]> => {
+  try {
+    const response = await axios.get(
+      `${BACKEND_URL}/user/${wallet}/following`,
+      config
+    );
+    return response.data.following || [];
+  } catch (err) {
+    console.log('__yuki__ getFollowing Error:', err);
+    return [];
+  }
+};
+
+// Get user's coins held using web3 API
+export const getUserCoinsHeld = async (wallet: string): Promise<any[]> => {
+  try {
+    console.log('__yuki__ getUserCoinsHeld: Calling API for wallet:', wallet);
+    const response = await axios.get(
+      `${BACKEND_URL}/coin/user-held/${wallet}`,
+      config
+    );
+    console.log('__yuki__ getUserCoinsHeld: API response:', response.data);
+    return response.data.coins || [];
+  } catch (err) {
+    console.log('__yuki__ getUserCoinsHeld Error:', err);
     return [];
   }
 };

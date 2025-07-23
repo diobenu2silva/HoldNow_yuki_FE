@@ -27,6 +27,8 @@ export interface userInfo {
   avatar?: string;
   isLedger?: Boolean;
   signature?: string;
+  followers?: string[]; // Array of wallet addresses following this user
+  following?: string[]; // Array of wallet addresses this user is following
 }
 
 export interface metadataInfo {
@@ -136,6 +138,7 @@ export interface holderInfo {
   owner: string;
   amount: number;
   avatar?: string;
+  userId?: string;
 }
 
 export interface recordInfo {

@@ -477,14 +477,21 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
                               {/* User Avatar */}
-                              <img
+                              <motion.img
                                 src={message.sender?.avatar || '/assets/images/user-avatar.png'}
                                 alt={`${message.sender?.name || 'User'} avatar`}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-primary/30"
+                                className="w-10 h-10 rounded-full object-cover border-2 border-primary/30 cursor-pointer hover:scale-110 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
                                   target.src = '/assets/images/user-avatar.png';
                                 }}
+                                onClick={() => {
+                                  if (message.sender?._id) {
+                                    window.location.href = `/profile/${message.sender._id}`;
+                                  }
+                                }}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
                               />
                               
                               {/* User Info */}
