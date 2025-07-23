@@ -8,14 +8,19 @@ import UserContext from '@/context/UserContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
-import { useTrendingCoins } from '@/hooks/useTrendingCoins';
+import { useKingOfCoin } from '@/hooks/useTrendingCoins';
 
 interface TrendingBannerProps {
   onCoinClick: (coinId: string) => void;
   maxCount?: number; // Optional prop to set maximum king of coin count
+  timePeriod?: string; // Time period for trending (5m, 1h, 6h, 24h) - not used for King of Coin
 }
 
-const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) => {
+const TrendingBanner: FC<TrendingBannerProps> = ({ 
+  onCoinClick, 
+  maxCount = 3,
+  timePeriod = '5m'
+}) => {
   const { solPrice } = useContext(UserContext);
   const { replyCounts, onCoinInfoUpdate } = useSocket();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -23,9 +28,8 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
   const [stageProgressMap, setStageProgressMap] = useState<{[key: string]: number}>({});
   const prevTrendingCoinsRef = useRef<string>('');
 
-  // Use React Query hook for trending coins
-  // Request more tokens initially to account for filtering out moved tokens
-  const { trendingCoins, isLoading, error, refetch } = useTrendingCoins({ limit: 20 }); // Increased from 10 to 20
+  // Use React Query hook for King of Coin (always top 3 largest market cap coins)
+  const { kingCoins, isLoading, error, refetch } = useKingOfCoin(true);
 
   // Handle page reload and recalculate King of Coin
   useEffect(() => {
@@ -114,17 +118,17 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
   useEffect(() => {
     // Filter out tokens that have successfully moved to Raydium
     // These tokens are no longer in the bonding curve phase and shouldn't be shown in the banner
-    const filteredCoins = trendingCoins.filter(coin => !coin.movedToRaydium);
+    const filteredCoins = kingCoins.filter(coin => !coin.movedToRaydium);
     
-    console.log('__yuki__ TrendingBanner: Raw trending coins:', trendingCoins.length, 'Filtered coins:', filteredCoins.length);
+    console.log('__yuki__ TrendingBanner: Raw king coins:', kingCoins.length, 'Filtered coins:', filteredCoins.length);
     
     // If we don't have enough tokens after filtering, include some Raydium-moved tokens as fallback
     let bannerCoins = filteredCoins.slice(0, 3);
     
-    if (bannerCoins.length < 3 && trendingCoins.length >= 3) {
+    if (bannerCoins.length < 3 && kingCoins.length >= 3) {
       console.log('__yuki__ TrendingBanner: Not enough non-Raydium tokens, including some Raydium tokens as fallback');
       // Take the first 3 tokens regardless of Raydium status
-      bannerCoins = trendingCoins.slice(0, 3);
+      bannerCoins = kingCoins.slice(0, 3);
     }
     
     console.log('__yuki__ TrendingBanner: Banner coins selected:', bannerCoins.length, 'coins');
@@ -137,7 +141,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
       prevTrendingCoinsRef.current = newIds;
       setTrendingCoinsState(bannerCoins);
     }
-  }, [trendingCoins]);
+  }, [kingCoins]);
 
   // Real-time coin info updates
   useEffect(() => {
@@ -241,7 +245,14 @@ const TrendingBanner: FC<TrendingBannerProps> = ({ onCoinClick, maxCount = 3 }) 
 
   return (
     <div className="w-full">
-            <h2 className="text-2xl font-bold text-foreground mb-4">King of Coin</h2>
+            <h2 className="text-2xl font-bold text-foreground">
+          King of Coin
+          {/* {kingCoins.length > 0 && kingCoins[0]?.trendingData?.isFallback && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              (Largest market cap coins)
+            </span>
+          )} */}
+        </h2>
       <div className="flex gap-4 h-[250px]">
         {/* Left Side Banner */}
         {trendingCoinsState.length >= 3 && (

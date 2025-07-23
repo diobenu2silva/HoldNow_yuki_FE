@@ -52,6 +52,12 @@ interface HoldersUpdatePayload {
   timestamp: number;
 }
 
+interface TrendingUpdatePayload {
+  timePeriod: string;
+  coins: coinInfo[];
+  timestamp: number;
+}
+
 // Validation callback types with validation parameters
 interface ValidationParams {
   expectedToken?: string;
@@ -83,6 +89,7 @@ interface Context {
   onNewTokenCreated?: (callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => void;
   onTransactionUpdate?: (callback: (payload: TransactionUpdatePayload) => void, validation?: ValidationParams) => void;
   onHoldersUpdate?: (callback: (payload: HoldersUpdatePayload) => void, validation?: ValidationParams) => void;
+  onTrendingUpdate?: (callback: (payload: TrendingUpdatePayload) => void, validation?: ValidationParams) => void;
   replyCounts?: { [coinId: string]: number };
   setReplyCounts?: Function;
 }
@@ -134,6 +141,7 @@ const SocketProvider = (props: { children: any }) => {
     validation?: ValidationParams;
   }>>([]);
   const [holdersUpdateCallbacks, setHoldersUpdateCallbacks] = useState<Array<{ callback: (payload: HoldersUpdatePayload) => void, validation?: ValidationParams }>>([]);
+  const [trendingUpdateCallbacks, setTrendingUpdateCallbacks] = useState<Array<{ callback: (payload: TrendingUpdatePayload) => void, validation?: ValidationParams }>>([]);
   const [isSocketReady, setIsSocketReady] = useState(false);
 
   const router = useRouter();
@@ -197,6 +205,11 @@ const SocketProvider = (props: { children: any }) => {
   const onHoldersUpdate = useCallback((callback: (payload: HoldersUpdatePayload) => void, validation?: ValidationParams) => {
     if (!isSocketReady) return;
     setHoldersUpdateCallbacks(prev => [...prev, { callback, validation }]);
+  }, [isSocketReady]);
+
+  const onTrendingUpdate = useCallback((callback: (payload: TrendingUpdatePayload) => void, validation?: ValidationParams) => {
+    if (!isSocketReady) return;
+    setTrendingUpdateCallbacks(prev => [...prev, { callback, validation }]);
   }, [isSocketReady]);
 
   const connectionUpdatedHandler = (data: number) => {
@@ -292,6 +305,16 @@ const SocketProvider = (props: { children: any }) => {
     if (ack) ack('ok');
   };
 
+  const trendingUpdateHandler = (payload: TrendingUpdatePayload, ack?: (msg: string) => void) => {
+    console.log('__yuki__ Socket: Trending update:', payload);
+    trendingUpdateCallbacks.forEach(({ callback, validation }) => {
+      if (validatePayload(payload, validation)) {
+        callback(payload);
+      }
+    });
+    if (ack) ack('ok');
+  };
+
   // init socket client object and handle wallet changes
   useEffect(() => {
     const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
@@ -318,6 +341,7 @@ const SocketProvider = (props: { children: any }) => {
       setNewTokenCreatedCallbacks([]);
       setTransactionUpdateCallbacks([]);
       setHoldersUpdateCallbacks([]);
+      setTrendingUpdateCallbacks([]);
       
       // Disconnect and reconnect socket
       socket.disconnect();
@@ -366,6 +390,7 @@ const SocketProvider = (props: { children: any }) => {
     socket.on('newTokenCreated', newTokenCreatedHandler);
     socket.on('transactionUpdate', transactionUpdateHandler);
     socket.on('holdersUpdate', holdersUpdateHandler);
+    socket.on('trendingUpdate', trendingUpdateHandler);
 
     return () => {
       socket.off('connectionUpdated', connectionUpdatedHandler);
@@ -381,8 +406,9 @@ const SocketProvider = (props: { children: any }) => {
       socket.off('newTokenCreated', newTokenCreatedHandler);
       socket.off('transactionUpdate', transactionUpdateHandler);
       socket.off('holdersUpdate', holdersUpdateHandler);
+      socket.off('trendingUpdate', trendingUpdateHandler);
     };
-  }, [socket, claimDataCallbacks, coinInfoCallbacks, stageChangeCallbacks, newTokenCreatedCallbacks, transactionUpdateCallbacks, holdersUpdateCallbacks]);
+  }, [socket, claimDataCallbacks, coinInfoCallbacks, stageChangeCallbacks, newTokenCreatedCallbacks, transactionUpdateCallbacks, holdersUpdateCallbacks, trendingUpdateCallbacks]);
 
   return (
     <context.Provider
@@ -411,6 +437,7 @@ const SocketProvider = (props: { children: any }) => {
         onNewTokenCreated,
         onTransactionUpdate,
         onHoldersUpdate,
+        onTrendingUpdate,
         replyCounts,
         setReplyCounts,
       }}

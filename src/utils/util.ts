@@ -439,6 +439,42 @@ export const claim = async (
   }
 };
 
+export const getTrendingCoins = async (timePeriod: string): Promise<coinInfo[]> => {
+  try {
+    const response = await axios.get(
+      `${BACKEND_URL}/coin/trending/${timePeriod}`,
+      config
+    );
+    
+    if (response.data && response.data.coins) {
+      return response.data.coins;
+    }
+    
+    return [];
+  } catch (err) {
+    console.log('__yuki__ getTrendingCoins Error fetching trending coins:', err);
+    return [];
+  }
+};
+
+export const getKingOfCoin = async (): Promise<coinInfo[]> => {
+  try {
+    const response = await axios.get(
+      `${BACKEND_URL}/coin/king-of-coin`,
+      config
+    );
+    
+    if (response.data && response.data.coins) {
+      return response.data.coins;
+    }
+    
+    return [];
+  } catch (err) {
+    console.log('__yuki__ getKingOfCoin Error fetching king of coin:', err);
+    return [];
+  }
+};
+
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

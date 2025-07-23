@@ -77,6 +77,15 @@ export interface coinInfo {
   movedToRaydiumAt?: Date;
   moveRaydiumFailed?: boolean;
   moveRaydiumFailureReason?: string;
+  moveRaydiumFailedAt?: Date;
+
+  // Trending data
+  trendingData?: {
+    totalVolume: number;
+    transactionCount: number;
+    timePeriod: string;
+    isFallback?: boolean;
+  };
 }
 
 export interface createCoinInfo {

@@ -12,16 +12,23 @@ import { useTrendingCoins } from '@/hooks/useTrendingCoins';
 interface TrendingCoinsProps {
   onCoinClick: (coinId: string) => void;
   maxCount?: number; // Optional prop to set maximum trending coins count
+  timePeriod?: string; // Time period for trending (5m, 1h, 6h, 24h)
 }
 
-const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) => {
+const TrendingCoins: FC<TrendingCoinsProps> = ({ 
+  onCoinClick, 
+  maxCount = 20,
+  timePeriod = '5m'
+}) => {
   const { solPrice } = useContext(UserContext);
   const { replyCounts } = useSocket();
   const [scrollPosition, setScrollPosition] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Use React Query hook for trending coins
-  const { trendingCoins, isLoading, error } = useTrendingCoins({ limit: maxCount });
+  // Use React Query hook for trending coins with time period
+  const { trendingCoins, isLoading, error } = useTrendingCoins({ 
+    timePeriod: timePeriod as '5m' | '1h' | '6h' | '24h'
+  });
 
   // Filter out tokens that have successfully moved to Raydium
   const filteredTrendingCoins = trendingCoins.filter(coin => !coin.movedToRaydium);
@@ -91,7 +98,14 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({ onCoinClick, maxCount = 20 }) =
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-foreground mb-4">Trending Coins</h2>
+      <h2 className="text-2xl font-bold text-foreground mb-4">
+        Trending Coins
+        {/* {trendingCoins.length > 0 && trendingCoins[0]?.trendingData?.isFallback && (
+          <span className="text-sm font-normal text-muted-foreground ml-2">
+            (Showing largest market cap coins - no recent activity)
+          </span>
+        )} */}
+      </h2>
       <div className="relative">
         {/* Wrapper for scrollable container */}
         <div className="relative overflow-hidden">

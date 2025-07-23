@@ -38,6 +38,7 @@ const ReactQueryHomePage: FC = () => {
   const [nsfwMap, setNsfwMap] = useState<{[url: string]: boolean}>({});
   const [isPageTransitioning, setIsPageTransitioning] = useState(false);
   const [lastPageChange, setLastPageChange] = useState(0);
+  const [currentTimePeriod, setCurrentTimePeriod] = useState<string>('5m');
   
   const router = useRouter();
   const pathname = usePathname();
@@ -165,6 +166,12 @@ const ReactQueryHomePage: FC = () => {
     setCurrentSort(sortType);
     setCurrentOrder(order);
     setCurrentPage(1); // Reset to first page when sorting changes
+  }, []);
+
+  // Handle time period change from TimeTrending
+  const handleTimePeriodChange = useCallback((timePeriod: string) => {
+    setCurrentTimePeriod(timePeriod);
+    console.log('__yuki__ Time period changed to:', timePeriod);
   }, []);
 
   // Reset to first page when filters change - simplified to prevent infinite loops
@@ -376,7 +383,11 @@ const ReactQueryHomePage: FC = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-8"
         >
-          <TrendingBanner onCoinClick={handleToRouter} maxCount={3} />
+          <TrendingBanner 
+            onCoinClick={handleToRouter} 
+            maxCount={3} 
+            timePeriod={currentTimePeriod}
+          />
         </motion.div>
 
         {/* Trending Coins Section */}
@@ -386,7 +397,11 @@ const ReactQueryHomePage: FC = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-8"
         >
-          <TrendingCoins onCoinClick={handleToRouter} maxCount={20} />
+          <TrendingCoins 
+            onCoinClick={handleToRouter} 
+            maxCount={20} 
+            timePeriod={currentTimePeriod}
+          />
         </motion.div>
 
         {/* Filter and View Controls */}
@@ -400,6 +415,8 @@ const ReactQueryHomePage: FC = () => {
             onSortChange={handleSortChange}
             currentSort={currentSort}
             currentOrder={currentOrder}
+            onTimePeriodChange={handleTimePeriodChange}
+            currentTimePeriod={currentTimePeriod}
           />
         </motion.div>
 

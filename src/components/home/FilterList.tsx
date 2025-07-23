@@ -3,7 +3,7 @@ import { FC, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserContext from '@/context/UserContext';
-import TimeTranding from '../buttons/TimeTranding';
+import TimeTrending from '../buttons/TimeTranding';
 import { CiFilter } from 'react-icons/ci';
 import switchOn from '@/../public/assets/images/switch-on.png';
 import switchOff from '@/../public/assets/images/switch-off.png';
@@ -18,17 +18,36 @@ interface FilterListProps {
   currentOrder: string;
   nsfwFilterState?: boolean;
   setNsfwFilterState?: (checked: boolean) => void;
+  onTimePeriodChange?: (timePeriod: string) => void;
+  currentTimePeriod?: string;
 }
 
-const FilterList: FC<FilterListProps> = ({ onSortChange, currentSort, currentOrder, nsfwFilterState, setNsfwFilterState }) => {
+const FilterList: FC<FilterListProps> = ({ 
+  onSortChange, 
+  currentSort, 
+  currentOrder, 
+  nsfwFilterState, 
+  setNsfwFilterState,
+  onTimePeriodChange,
+  currentTimePeriod = '5m'
+}) => {
   const [token, setToken] = useState('');
 
   const searchToken = () => {};
 
+  const handleTimePeriodChange = (timePeriod: string) => {
+    if (onTimePeriodChange) {
+      onTimePeriodChange(timePeriod);
+    }
+  };
+
   return (
     <div className="w-full gap-4 h-full flex flex-col px-2">
       <div className="flex flex-col md:flex-row gap-3">
-        <TimeTranding />
+        <TimeTrending 
+          onTimePeriodChange={handleTimePeriodChange}
+          selectedPeriod={currentTimePeriod}
+        />
         <FilterListButton 
           onSortChange={onSortChange}
           currentSort={currentSort}
