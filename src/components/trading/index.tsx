@@ -1,7 +1,6 @@
 'use client';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Chatting } from '@/components/trading/Chatting';
-import { ChatPanel } from '@/components/trading/ChatPanel';
 import { TradeForm } from '@/components/trading/TradeForm';
 import { TradingChart } from '@/components/TVChart/TradingChart';
 import UserContext from '@/context/UserContext';
@@ -68,12 +67,6 @@ export default function TradingPage() {
   const { onClaimDataUpdate, onStageChange, onCoinInfoUpdate } = useSocket();
   const router = useRouter();
   
-  // Chat panel state
-  const [isChatPanelOpen, setIsChatPanelOpen] = useState(false);
-  const [isChatMinimized, setIsChatMinimized] = useState(false);
-  const [chatPosition, setChatPosition] = useState({ x: 0, y: 0 });
-  const [chatSize, setChatSize] = useState({ width: 350, height: 500 });
-
   // Mobile state
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<'chart' | 'chat' | 'trade'>('chart');
@@ -206,14 +199,14 @@ export default function TradingPage() {
   // Mobile detection
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      // Adjust chat position for mobile
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // Adjust layout for mobile
       if (window.innerWidth < 768) {
-        setChatPosition({ x: 0, y: 0 });
-        setChatSize({ width: window.innerWidth, height: window.innerHeight * 0.6 });
+        // Mobile layout adjustments
       } else {
-        setChatPosition({ x: window.innerWidth - 380, y: window.innerHeight - 540 });
-        setChatSize({ width: 350, height: 500 });
+        // Desktop layout adjustments
       }
     };
 
@@ -686,7 +679,7 @@ export default function TradingPage() {
 
           <div className={`w-full flex flex-col ${isMobile ? '' : 'md3:flex-row'} gap-4`}>
             {/* Main Content Area */}
-            <div className={`${isMobile ? 'w-full' : 'flex-1'} px-2 transition-all duration-300 ease-in-out ${isChatPanelOpen && !isMobile ? 'mr-4' : ''}`}>
+            <div className={`${isMobile ? 'w-full' : 'flex-1'} px-2 transition-all duration-300 ease-in-out`}>
               {/* Token Info Header */}
               <div className="w-full flex flex-col justify-between gap-2 mb-4">
                 <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2 items-center justify-between`}>
@@ -735,22 +728,6 @@ export default function TradingPage() {
               )}
             </div>
             
-            {/* Chat Panel - Desktop Only */}
-            {!isMobile && (
-              <ChatPanel 
-                param={param}
-                coin={coin}
-                isOpen={isChatPanelOpen}
-                onClose={() => setIsChatPanelOpen(false)}
-                onMinimize={() => setIsChatMinimized(!isChatMinimized)}
-                isMinimized={isChatMinimized}
-                position={chatPosition}
-                onPositionChange={setChatPosition}
-                size={chatSize}
-                onSizeChange={setChatSize}
-              />
-            )}
-
             {/* Trade Panel */}
             <div className={`${isMobile ? 'w-full' : 'w-full max-w-[300px] 2xs:max-w-[420px]'} px-2 gap-4 flex flex-col mx-auto ${(!isMobile || activeTab === 'trade') ? 'block' : 'hidden'}`}>
               <TradeForm coin={coin} progress={progress} />
@@ -875,25 +852,6 @@ export default function TradingPage() {
           </div>
         </div>
       </div>
-      
-      {/* Chat Button - Fixed in bottom right corner */}
-      <motion.button
-        onClick={() => setIsChatPanelOpen(!isChatPanelOpen)}
-        className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary/95 to-primary/85 text-primary-foreground hover:from-primary/95 hover:via-primary/90 hover:to-primary/80 transition-all duration-500 shadow-[0_6px_24px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl border border-white/20 hover:border-white/30"
-        whileHover={{ scale: 1.1, y: -2, rotate: 3 }}
-        whileTap={{ scale: 0.92 }}
-        initial={{ opacity: 0, y: 20, scale: 0.7, rotate: -5 }}
-        animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-        transition={{ delay: 0.6, type: "spring", stiffness: 150, damping: 15 }}
-      >
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl"></div>
-          <svg className="w-6 h-6 drop-shadow-lg relative z-10" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-          </svg>
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-red-400 to-red-600 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-        </div>
-      </motion.button>
     </div>
   );
 }
