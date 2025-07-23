@@ -2,9 +2,10 @@
 
 import { coinInfo } from '@/utils/types';
 import { FC } from 'react';
-import { FaTwitter } from 'react-icons/fa';
 import { FaTelegramPlane } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import { TbWorld } from 'react-icons/tb';
+import { motion } from 'framer-motion';
 
 interface SocialListProps {
   coin: coinInfo;
@@ -14,36 +15,42 @@ const SocialList: FC<SocialListProps> = ({ coin }) => {
   return (
     <div className="flex flex-row gap-4 px-2 justify-center">
       {coin.website && (
-        <a
+        <motion.a
           href={coin.website}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="cursor-pointer bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm border border-white/20"
         >
-          <TbWorld />
-        </a>
+          <TbWorld className="w-4 h-4 drop-shadow-sm" />
+        </motion.a>
       )}
 
       {coin.twitter && (
-        <a
+        <motion.a
           href={coin.twitter}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="cursor-pointer bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white p-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm border border-white/20"
         >
-          <FaTwitter />
-        </a>
+          <FaXTwitter className="w-4 h-4 drop-shadow-sm" />
+        </motion.a>
       )}
 
       {coin.telegram && (
-        <a
+        <motion.a
           href={coin.telegram}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-2xl text-[#64ffda] bg-[#64ffda]/30 hover:text-blue-500 hover:border-blue-500 hover:bg-blue-500/30 p-2 cursor-pointer rounded-full border-[1px] border-[#143F72]"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="cursor-pointer bg-gradient-to-br from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm border border-white/20"
         >
-          <FaTelegramPlane />
-        </a>
+          <FaTelegramPlane className="w-4 h-4 drop-shadow-sm" />
+        </motion.a>
       )}
     </div>
   );

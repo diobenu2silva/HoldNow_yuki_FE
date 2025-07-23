@@ -454,7 +454,7 @@ const ReactQueryHomePage: FC = () => {
             </div>
           </div>
 
-          {/* Center - NSFW Filter */}
+          {/* Center - NSFW Filter
           <div className="flex items-center gap-4 h-full">
             <div className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg bg-card h-full">
               <span className="text-foreground text-sm whitespace-nowrap">Include NSFW</span>
@@ -469,7 +469,7 @@ const ReactQueryHomePage: FC = () => {
                 {nsfwFilterState ? 'ON' : 'OFF'}
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Right side - Search Box */}
           <div className="flex flex-1 items-center h-full">

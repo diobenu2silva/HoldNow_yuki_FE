@@ -2,7 +2,8 @@
 import { coinInfo } from '@/utils/types';
 import { FC, useContext, useState } from 'react';
 import { HiOutlineTag, HiOutlineGlobeAlt, HiOutlineInformationCircle } from 'react-icons/hi2';
-import { FaTwitter, FaTelegramPlane } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
+import { FaTelegramPlane } from 'react-icons/fa';
 
 interface TokenDataProps {
   coinData: coinInfo;
@@ -39,7 +40,7 @@ const TokenData: FC<TokenDataProps> = ({ coinData }) => {
             className="bg-black/40 backdrop-blur-sm text-white p-1.5 rounded-full hover:bg-black/60 transition-colors duration-200"
             title="Twitter"
           >
-            <FaTwitter className="w-3 h-3" />
+            <FaXTwitter className="w-3 h-3" />
           </a>
         )}
         {coinData.telegram && (

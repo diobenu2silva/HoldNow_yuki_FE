@@ -20,7 +20,7 @@ interface ClaimDataUpdatedPayload {
   claimData: {
     claimInUSD: number;
     claimHodl: number;
-    currentClaim: number;
+    redistribution: number; // Renamed from currentClaim
     solPrice: number;
     airdropClaim: number;
     tokenBalance: number;

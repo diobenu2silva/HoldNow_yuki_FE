@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import UserContext from '@/context/UserContext';
 import { motion } from 'framer-motion';
 import { HiOutlineGlobeAlt, HiOutlineChatBubbleLeftRight, HiOutlineInformationCircle } from 'react-icons/hi2';
-import { FaTwitter, FaTelegramPlane } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
+import { FaTelegramPlane } from 'react-icons/fa';
 import { CurrencyDollarIcon, ArrowTrendingUpIcon, UserIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSocket } from '@/contexts/SocketContext';
@@ -190,7 +191,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
               title="Twitter"
               onClick={e => e.stopPropagation()}
             >
-              <FaTwitter className="w-3 h-3" />
+              <FaXTwitter className="w-3 h-3" />
             </a>
           )}
           {currentCoin.telegram && (

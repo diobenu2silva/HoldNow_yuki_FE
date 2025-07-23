@@ -80,7 +80,7 @@ export default function TradingPage() {
 
   // Only destructure the first 6 values, use claimData[6] for coinData
   // Ensure claimData is always an array to prevent destructuring errors
-  const [claimInUSD, claimHodl, currentClaim, solPrice, airdropClaim, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
+  const [claimInUSD, claimHodl, redistribution, solPrice, airdropClaim, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
   const { publicKey } = wallet;
 
   // Helper function to safely format numbers and prevent NaN
@@ -154,7 +154,7 @@ export default function TradingPage() {
           return [
             data.claimInUSD ?? 0,
             data.claimHodl ?? 0,
-            data.currentClaim ?? 0,
+            data.redistribution ?? 0,
             data.solPrice ?? 0,
             data.airdropClaim ?? 0,  // Fixed: was data.rewardCap
             data.tokenBalance ?? 0,
@@ -277,7 +277,7 @@ export default function TradingPage() {
     queryClient.setQueryData(['claimData', param, publicKey?.toBase58()], [
       payload.claimData.claimInUSD ?? 0,
       payload.claimData.claimHodl ?? 0,
-      payload.claimData.currentClaim ?? 0,
+      payload.claimData.redistribution ?? 0, // Updated field name
       payload.claimData.solPrice ?? 0,
       payload.claimData.airdropClaim ?? 0,
       payload.claimData.tokenBalance ?? 0,
@@ -287,7 +287,7 @@ export default function TradingPage() {
     setClaimData([
       payload.claimData.claimInUSD ?? 0,
       payload.claimData.claimHodl ?? 0,
-      payload.claimData.currentClaim ?? 0,
+      payload.claimData.redistribution ?? 0, // Updated field name
       payload.claimData.solPrice ?? 0,
       payload.claimData.airdropClaim ?? 0,
       payload.claimData.tokenBalance ?? 0,
@@ -417,7 +417,7 @@ export default function TradingPage() {
             queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
               response.claimInUSD ?? 0,
               response.claimHodl ?? 0,
-              response.currentClaim ?? 0,
+              response.redistribution ?? 0, // Updated field name
               response.solPrice ?? 0,
               response.airdropClaim ?? 0,
               response.tokenBalance ?? 0,
@@ -426,7 +426,7 @@ export default function TradingPage() {
             setClaimData([
               response.claimInUSD ?? 0,
               response.claimHodl ?? 0,
-              response.currentClaim ?? 0,
+              response.redistribution ?? 0, // Updated field name
               response.solPrice ?? 0,
               response.airdropClaim ?? 0,
               response.tokenBalance ?? 0,
@@ -767,9 +767,9 @@ export default function TradingPage() {
                   <div className="w-full justify-center items-center flex flex-col gap-2">             
                     <p className="text-sm px-5 text-muted-foreground">You are eligible to claim:</p>
                     <p className="text-xl font-semibold text-primary">{safeCurrency(claimInUSD)} USD</p>
-                    <p className="text-xl font-semibold text-primary">{safeCurrency(claimHodl, 6)} HODL</p>
+                    <p className="text-xl font-semibold text-primary">{safeCurrency(claimHodl, 6)} {coin.ticker}</p>
                     {airdropClaim > 0 && (
-                      <p className="text-sm font-semibold text-primary">{safeCurrency(airdropClaim, 6)} HODL({coin.bondingCurve ? 'Airdrop' : 'Airdrop Locked'})</p>
+                      <p className="text-sm font-semibold text-primary">{safeCurrency(airdropClaim, 6)} {coin.ticker} ({coin.bondingCurve ? 'Airdrop' : 'Airdrop Locked'})</p>
                     )}
                   </div>
                 ) : (
@@ -813,7 +813,7 @@ export default function TradingPage() {
               </div>
 
               <div className="text-foreground font-bold flex flex-row items-center gap-1 text-xl justify-center">
-                <p>HODL</p>
+                <p>{coin.ticker}</p>
                 <motion.p
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -829,8 +829,8 @@ export default function TradingPage() {
 
               <div className="w-full flex flex-col gap-4">
                 <div className="w-full grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-4">
-                  <DataCard text="MCAP" data={`${safeNumber(progress)} k`} />
-                  <DataCard text="Liquidity" data={`${safeNumber(liquidity)} k`} />
+                  <DataCard text="MCAP" data={`$${safeNumber(progress)} k`} />
+                  <DataCard text="Liquidity" data={`$${safeNumber(liquidity)} k`} />
                 </div>
                 <div className="w-full grid grid-cols-2 gap-2 sm:gap-4">
                   <DataCard
@@ -838,6 +838,12 @@ export default function TradingPage() {
                     data={`${Math.min(safeNumber(coin.currentStage), safeNumber(coin.stagesNumber))} of ${safeNumber(coin.stagesNumber)}`}
                   />
                   <DataCard text="Sell Tax" data={safePercentage(sellTax)} />
+                </div>
+                <div className="w-full grid grid-cols-1 gap-2 sm:gap-4">
+                  <DataCard 
+                    text="Redistribution"
+                    data={`$${safeCurrency(redistribution / 1000, 4)} k`} 
+                  />
                 </div>
               </div>
 
