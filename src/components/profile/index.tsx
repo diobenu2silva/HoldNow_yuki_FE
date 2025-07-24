@@ -11,11 +11,13 @@ import {
   unfollowUser, 
   getFollowers, 
   getFollowing, 
-  getUserCoinsHeld
+  getUserCoinsHeld,
+  updateUser
 } from '@/utils/util';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useContext } from 'react';
-import { LuFileEdit, LuUsers, LuUserPlus, LuUserMinus } from 'react-icons/lu';
+import { LuUsers, LuUserPlus, LuUserMinus } from 'react-icons/lu';
+import { HiOutlinePencil } from 'react-icons/hi2';
 import { MdContentCopy } from 'react-icons/md';
 import { ProfileMenuList } from '@/config/TextData';
 import {
@@ -290,9 +292,7 @@ export default function ProfilePage() {
       // Remove _id before sending to backend
       const { _id, ...userUpdatePayload } = updatedUser;
       if (userData._id) {
-        const backendResult = await import('@/utils/util').then(({ updateUser }) =>
-          updateUser(userData._id, userUpdatePayload)
-        );
+        const backendResult = await updateUser(userData._id, userUpdatePayload);
         if (backendResult?.error) {
           errorAlert('Failed to update avatar in backend.');
           return;
@@ -411,7 +411,7 @@ export default function ProfilePage() {
                         onClick={() => setProfileEditModal(true)}
                         className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
                       >
-                        <LuFileEdit className="w-5 h-5 text-primary" />
+                        <HiOutlinePencil className="w-5 h-5 text-primary" />
                       </motion.button>
                     )}
                   </div>

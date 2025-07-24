@@ -81,40 +81,8 @@ export const useCoinsWithSocket = ({
       console.log('__yuki__ useCoinsWithSocket: New token created:', payload);
       console.log('__yuki__ useCoinsWithSocket: Current page:', page, 'sortType:', sortType, 'itemsPerPage:', itemsPerPage);
       
-      // Update all query keys for this sort type to ensure new token appears
-      // regardless of which page the user is on
-      queryClient.setQueriesData(['coins', sortType], (oldData: any) => {
-        if (!oldData) {
-          console.log('__yuki__ useCoinsWithSocket: No old data found for query key:', ['coins', sortType]);
-          return oldData;
-        }
-        
-        const newToken = payload.coinInfo;
-        const existingCoins = oldData.coins || [];
-        
-        console.log('__yuki__ useCoinsWithSocket: Existing coins count:', existingCoins.length);
-        
-        // Check if token already exists to avoid duplicates
-        const exists = existingCoins.find((token: coinInfo) => 
-          token._id === newToken._id || token.token === newToken.token
-        );
-        
-        if (exists) {
-          console.log('__yuki__ useCoinsWithSocket: Token already exists, skipping');
-          return oldData;
-        }
-        
-        console.log('__yuki__ useCoinsWithSocket: Adding new token to beginning of list');
-        
-        // Add new token to the beginning
-        const updatedCoins = [newToken, ...existingCoins];
-        
-        return {
-          ...oldData,
-          coins: updatedCoins,
-          total: oldData.total + 1
-        };
-      });
+      // Don't update all queries - this was causing the new token to appear on all pages
+      // Instead, we'll only update the specific pages that need to be updated
       
       // Also update the specific current page query
       queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
@@ -142,6 +110,60 @@ export const useCoinsWithSocket = ({
           const updatedCoins = [newToken, ...existingCoins];
           // Keep exactly itemsPerPage tokens
           const finalCoins = updatedCoins.slice(0, itemsPerPage);
+          
+          // If we have more coins than itemsPerPage, handle the overflow properly
+          if (updatedCoins.length > itemsPerPage) {
+            const overflowCoin = updatedCoins[itemsPerPage];
+            console.log('__yuki__ useCoinsWithSocket: Moving overflow coin to page 2:', overflowCoin.name);
+            
+            // Update page 2 to include the overflow coin
+            queryClient.setQueryData(['coins', sortType, 2, itemsPerPage], (page2Data: any) => {
+              if (page2Data) {
+                const page2Coins = page2Data.coins || [];
+                // Check if overflow coin already exists on page 2
+                const existsOnPage2 = page2Coins.find((token: coinInfo) => 
+                  token._id === overflowCoin._id || token.token === overflowCoin.token
+                );
+                
+                if (!existsOnPage2) {
+                  console.log('__yuki__ useCoinsWithSocket: Adding overflow coin to page 2');
+                  const updatedPage2Coins = [overflowCoin, ...page2Coins];
+                  // Keep exactly itemsPerPage tokens on page 2 as well
+                  const finalPage2Coins = updatedPage2Coins.slice(0, itemsPerPage);
+                  
+                  // If page 2 also overflows, handle page 3
+                  if (updatedPage2Coins.length > itemsPerPage) {
+                    const page2OverflowCoin = updatedPage2Coins[itemsPerPage];
+                    console.log('__yuki__ useCoinsWithSocket: Moving overflow coin to page 3:', page2OverflowCoin.name);
+                    
+                    queryClient.setQueryData(['coins', sortType, 3, itemsPerPage], (page3Data: any) => {
+                      if (page3Data) {
+                        const page3Coins = page3Data.coins || [];
+                        const existsOnPage3 = page3Coins.find((token: coinInfo) => 
+                          token._id === page2OverflowCoin._id || token.token === page2OverflowCoin.token
+                        );
+                        
+                        if (!existsOnPage3) {
+                          console.log('__yuki__ useCoinsWithSocket: Adding overflow coin to page 3');
+                          return {
+                            ...page3Data,
+                            coins: [page2OverflowCoin, ...page3Coins]
+                          };
+                        }
+                      }
+                      return page3Data;
+                    });
+                  }
+                  
+                  return {
+                    ...page2Data,
+                    coins: finalPage2Coins
+                  };
+                }
+              }
+              return page2Data;
+            });
+          }
           
           return {
             ...oldData,

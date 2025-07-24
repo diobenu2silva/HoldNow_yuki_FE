@@ -350,6 +350,41 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     }
   }, [currentTable, coin._id]);
 
+  // Listen for real-time message updates from socket
+  useEffect(() => {
+    if (newMsg && newMsg.coinId === coin._id) {
+      console.log('__yuki__ Chatting: New message received via socket:', newMsg);
+      // Debug: Log message structure to see what fields are available
+      console.log('__yuki__ Chatting: Message structure:', {
+        id: newMsg._id,
+        hasImages: !!newMsg.images,
+        imagesLength: newMsg.images?.length,
+        hasImg: !!newMsg.img,
+        imgValue: newMsg.img,
+        imagesValue: newMsg.images
+      });
+      
+      // Add the new message to the existing messages
+      if (!messages) {
+        setMessages([newMsg]);
+      } else {
+        // Check if message already exists to prevent duplicates
+        // Compare by message content, sender, and time (within 5 seconds to account for slight timing differences)
+        const messageExists = messages.some(msg => {
+          const msgTime = msg.time instanceof Date ? msg.time : new Date(msg.time || 0);
+          const newMsgTime = newMsg.time instanceof Date ? newMsg.time : new Date(newMsg.time || 0);
+          const timeDiff = Math.abs(msgTime.getTime() - newMsgTime.getTime());
+          return msg.msg === newMsg.msg && 
+                 timeDiff < 5000 && // Within 5 seconds
+                 (msg.sender as any)?._id === (newMsg.sender as any)?._id;
+        });
+        if (!messageExists) {
+          setMessages([...messages, newMsg]);
+        }
+      }
+    }
+  }, [newMsg, coin._id, messages, setMessages]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (param) {
