@@ -23,6 +23,17 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
 }) => {
   const { solPrice } = useContext(UserContext);
   const { replyCounts, onCoinInfoUpdate } = useSocket();
+  
+  // Helper function to get stage type description
+  const getStageType = (coin: coinInfo) => {
+    if (coin.bondingCurve) {
+      return coin.movedToRaydium ? "On Dex" : "Failed";
+    } else if (coin.airdropStage) {
+      return "Airdrop Stage";
+    } else {
+      return "Trading Stage";
+    }
+  };
   const [currentSlide, setCurrentSlide] = useState(0);
   const [trendingCoinsState, setTrendingCoinsState] = useState<coinInfo[]>([]);
   const [stageProgressMap, setStageProgressMap] = useState<{[key: string]: number}>({});
@@ -320,7 +331,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
                   {/* Stage Progress */}
                   <div className="mb-2">
                     <div className="flex justify-between text-xs mb-1">
-                      <span>Stage Progress</span>
+                      <span>Stage {Math.min(trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].currentStage, trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].stagesNumber)} of {trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length].stagesNumber} ({getStageType(trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length])})</span>
                       <span>{(stageProgressMap[trendingCoinsState[(currentSlide - 1 + trendingCoinsState.length) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-white/20 rounded-full h-1.5">
@@ -401,7 +412,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
               {/* Stage Progress */}
               <div className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
-                  <span>Stage Progress</span>
+                  <span>Stage {Math.min(currentCoin.currentStage, currentCoin.stagesNumber)} of {currentCoin.stagesNumber} ({getStageType(currentCoin)})</span>
                   <span>{currentStageProgress.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-2">
@@ -515,7 +526,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
                   {/* Stage Progress */}
                   <div className="mb-2">
                     <div className="flex justify-between text-xs mb-1">
-                      <span>Stage Progress</span>
+                      <span>Stage {Math.min(trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].currentStage, trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].stagesNumber)} of {trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length].stagesNumber} ({getStageType(trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length])})</span>
                       <span>{(stageProgressMap[trendingCoinsState[(currentSlide + 1) % trendingCoinsState.length]._id] || 0).toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-white/20 rounded-full h-1.5">

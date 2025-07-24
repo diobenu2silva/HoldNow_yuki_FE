@@ -323,7 +323,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
                   {stageProg}%
                 </div>
                 <div className="text-gray-600 dark:text-white/70 text-xs">
-                  Stage {Math.min(currentCoin.currentStage, currentCoin.stagesNumber)} of {currentCoin.stagesNumber} ({currentCoin.bondingCurve ? ((currentCoin.movedToRaydium) ? "On Dex" : "Failed") : (currentCoin.airdropStage ? "Airdrop Stage" : "Trading Stage1")})
+                  Stage {Math.min(currentCoin.currentStage, currentCoin.stagesNumber)} of {currentCoin.stagesNumber} ({currentCoin.bondingCurve ? ((currentCoin.movedToRaydium) ? "On Dex" : "Failed") : (currentCoin.airdropStage ? "Airdrop Stage" : "Trading Stage")})
                 </div>
               </div>
             </div>
