@@ -59,9 +59,12 @@ const TokenData: FC<TokenDataProps> = ({ coinData }) => {
       {/* Content layer */}
       <div className="relative z-10 flex flex-col xs:flex-row gap-3 w-full">
         <img
-          src={coinData.url}
+          src={coinData.url || '/assets/images/test-token-bg~.png'}
           className="rounded-md w-24 h-24 border-2 border-primary/20 mx-auto xs:mx-0 bg-card/80 object-cover backdrop-blur-sm"
           alt="Token IMG"
+          onError={(e) => {
+            e.currentTarget.src = '/assets/images/test-token-bg~.png';
+          }}
         />
         <div className="flex flex-col gap-1 py-1 min-w-0 flex-1">
           <span className="inline-block">

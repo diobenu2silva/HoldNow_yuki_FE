@@ -537,9 +537,12 @@ export default function ProfilePage() {
                             <CardContent className="p-4">
                               <div className="flex items-center gap-4">
                                 <img
-                                  src={coinData.url}
+                                  src={coinData.url || '/assets/images/test-token-bg~.png'}
                                   alt={coinData.name}
                                   className="w-12 h-12 rounded-lg object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/assets/images/test-token-bg~.png';
+                                  }}
                                 />
                                 <div className="flex-1">
                                   <h3 className="font-semibold text-foreground">{coinData.name}</h3>

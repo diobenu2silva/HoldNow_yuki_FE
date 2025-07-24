@@ -311,14 +311,14 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 rounded-full overflow-hidden border border-border">
                         <Image
-                          src={coin.url}
+                          src={coin.url || '/assets/images/test-token-bg~.png'}
                           alt={coin.name}
                           width={40}
                           height={40}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/assets/images/user-avatar.png';
+                            target.src = '/assets/images/test-token-bg~.png';
                           }}
                         />
                       </div>

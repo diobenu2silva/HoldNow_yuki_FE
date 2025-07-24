@@ -258,10 +258,13 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
               >
               <div className="flex items-start gap-3 w-full">
                 <img
-                  src={currentCoin?.url}
+                  src={currentCoin?.url || '/assets/images/test-token-bg~.png'}
                   alt={currentCoin?.name}
                   className="w-16 h-16 object-cover rounded-lg border-4 border-card bg-card shadow-lg mt-0 flex-shrink-0"
                   style={{ marginTop: 0 }}
+                  onError={(e) => {
+                    e.currentTarget.src = '/assets/images/test-token-bg~.png';
+                  }}
                 />
                 <div className="flex flex-col flex-1 gap-1 min-w-0 w-full">
                   <div className="bg-white/10 dark:bg-black/20 backdrop-blur-sm px-2 py-1 rounded max-w-[calc(100%-32px)] mr-2 overflow-hidden">
