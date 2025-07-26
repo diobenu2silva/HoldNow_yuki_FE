@@ -141,7 +141,7 @@ export default function TradingPage() {
       if (coinData.token) {
         setCoin(coinData);
         const data = await getClaimData(coinData.token, publicKey?.toBase58() || '');
-        console.log('__yuki__ tradingPage claimDataQuery: fetched data for wallet', publicKey?.toBase58());
+        console.log('__yuki__ tradingPage claimDataQuery: fetched data for wallet', publicKey?.toBase58(), 'data', data);
         // Transform the object response to array format expected by the component
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           return [
@@ -159,7 +159,7 @@ export default function TradingPage() {
       }
     },
     {
-      enabled: !!param && !!publicKey,
+      enabled: !!param,
       staleTime: 10000, // 10 seconds - prevent unnecessary refetches
       cacheTime: 2 * 60 * 1000, // 2 minutes
       refetchOnWindowFocus: false,

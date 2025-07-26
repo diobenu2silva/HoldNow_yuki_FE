@@ -11,7 +11,6 @@ import { claimTx } from '@/program/web3';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 
-
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const headers: Record<string, string> = {
@@ -41,11 +40,15 @@ export const getClaimData = async (
   wallet: string
 ): Promise<any> => {
   try {
+    if (!wallet) {
+      wallet = '_';
+    }
     const response = await axios.get(
       `${BACKEND_URL}/claimData/${mint}/${wallet}`,
       config
     );
 
+    console.log('__yuki__ getClaimData: response.data', response.data);
     return response.data;
   } catch (err) {
     console.log('__yuki__ error getting the claim data : ', err);
