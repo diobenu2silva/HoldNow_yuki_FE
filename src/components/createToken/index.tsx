@@ -157,9 +157,8 @@ export default function CreateToken() {
       let csvAllocators: any[] = [];
       if (csvFile && csvFileContent) {
         try {
-          console.log("__yuki__ reading csv file using FileReader", csvFile.name);
+      
           csvAllocators = await parseCSV(csvFileContent);
-          console.log("__yuki__ csvAllocators", csvAllocators);
         } catch (error) {
           console.error('__yuki__ Error reading CSV file:', error);
           errorAlert('Failed to read CSV file. Please check the format.');
@@ -200,7 +199,6 @@ export default function CreateToken() {
       };
 
       const result = await createToken(wallet, coinData, csvAllocators, solAmount);
-      console.log("__yuki__ token created", result);
       if (result === 'WalletError' || !result) {
         errorAlert('Payment failed or was rejected.');
         setIsLoading(false);
@@ -225,14 +223,10 @@ export default function CreateToken() {
           
           const coinId = await axios.get(`${BACKEND_URL}/coinTrade/coinID/${result.mint}`);
 
-          console.log("__yuki__ csv coinId", coinId);
           const coinInfo = await getCoinInfo(coinId.data.coinId._id);
-          console.log("__yuki__ csv coinInfo", coinInfo);
           if (coinInfo.error) {
             errorAlert('Failed to get coin information for airdrop.');
           }
-          
-          console.log('__yuki__ csvAllocators', csvAllocators);
 
           for (const allocator of csvAllocators) {
             try {

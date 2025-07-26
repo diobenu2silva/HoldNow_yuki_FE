@@ -48,10 +48,8 @@ export const getClaimData = async (
       config
     );
 
-    console.log('__yuki__ getClaimData: response.data', response.data);
     return response.data;
   } catch (err) {
-    console.log('__yuki__ error getting the claim data : ', err);
     return {
       tokenBal: 0,
       hodlSum: 0,
@@ -122,7 +120,6 @@ export const getCoinsInfo = async (): Promise<coinInfo[]> => {
     const res = await axios.get(`${BACKEND_URL}/coin/`, config);
     return res.data;
   } catch (err) {
-    console.log('__yuki__ getCoinsInof Error fetching coins info:', err);
     return [];
   }
 };

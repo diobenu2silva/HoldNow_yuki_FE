@@ -73,9 +73,9 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
       
       if (hasFavorited) {
         // Remove favorite
-        console.log(`__yuki__ Removing ${type} from message:`, message._id, 'by user:', user._id);
+  
         const result = await removeMessageFavorite(message._id, type, user._id);
-        console.log(`__yuki__ Remove ${type} result:`, result);
+        
         
         if (!result.error) {
           // Update the message in the local state
@@ -92,9 +92,9 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
         }
       } else {
         // Add favorite
-        console.log(`__yuki__ Adding ${type} to message:`, message._id, 'by user:', user._id);
+
         const result = await addMessageFavorite(message._id, type, user._id);
-        console.log(`__yuki__ Add ${type} result:`, result);
+        
         
         if (!result.error) {
           // Update the message in the local state
@@ -341,7 +341,7 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
   // Listen for real-time message updates from socket
   useEffect(() => {
     if (newMsg && newMsg.coinId === coin._id) {
-      console.log('__yuki__ Chatting: New message received via socket:', newMsg);
+  
       
       // Add the new message to the existing messages
       if (!messages) {
@@ -427,13 +427,13 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
 
   // Sort messages for chat
   const sortedMessages = useMemo(() => {
-    console.log('Computing sorted messages. Messages:', messages);
+
     if (!messages || !Array.isArray(messages)) {
-      console.log('No messages or not array, returning empty array');
+      
       return [];
     }
     const sorted = sortData(messages, chatSortField, chatSortDir, getChatSortValue);
-    console.log('Sorted messages:', sorted);
+    
     return sorted;
   }, [messages, chatSortField, chatSortDir]);
 

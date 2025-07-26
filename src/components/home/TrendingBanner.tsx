@@ -45,7 +45,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
   // Handle page reload and recalculate King of Coin
   useEffect(() => {
     const handlePageReload = () => {
-      console.log('__yuki__ TrendingBanner: Page reload detected, recalculating King of Coin');
+  
       
       // Reset current slide to 0
       setCurrentSlide(0);
@@ -100,7 +100,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
     // Also handle visibility change (when user comes back to tab)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('__yuki__ TrendingBanner: Page became visible, refreshing data');
+    
         // Small delay to ensure any background updates are complete
         setTimeout(() => {
           refetch();
@@ -110,7 +110,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
 
     // Handle beforeunload to prepare for reload
     const handleBeforeUnload = () => {
-      console.log('__yuki__ TrendingBanner: Page unloading, preparing for reload');
+  
       // Clear any ongoing timers or state
       setCurrentSlide(0);
       setStageProgressMap({});
@@ -131,18 +131,18 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
     // These tokens are no longer in the bonding curve phase and shouldn't be shown in the banner
     const filteredCoins = kingCoins.filter(coin => !coin.movedToRaydium);
     
-    console.log('__yuki__ TrendingBanner: Raw king coins:', kingCoins.length, 'Filtered coins:', filteredCoins.length);
+
     
     // If we don't have enough tokens after filtering, include some Raydium-moved tokens as fallback
     let bannerCoins = filteredCoins.slice(0, 3);
     
     if (bannerCoins.length < 3 && kingCoins.length >= 3) {
-      console.log('__yuki__ TrendingBanner: Not enough non-Raydium tokens, including some Raydium tokens as fallback');
+  
       // Take the first 3 tokens regardless of Raydium status
       bannerCoins = kingCoins.slice(0, 3);
     }
     
-    console.log('__yuki__ TrendingBanner: Banner coins selected:', bannerCoins.length, 'coins');
+
     
     // Create a stable key to compare with previous state
     const newIds = bannerCoins.map(coin => coin._id).sort().join(',');
@@ -171,7 +171,7 @@ const TrendingBanner: FC<TrendingBannerProps> = ({
           let bannerCoins = filteredCoins.slice(0, 3);
           
           if (bannerCoins.length < 3 && updatedCoins.length >= 3) {
-            console.log('__yuki__ TrendingBanner: Real-time update - Not enough non-Raydium tokens, including some Raydium tokens as fallback');
+        
             // Take the first 3 tokens regardless of Raydium status
             bannerCoins = updatedCoins.slice(0, 3);
           }

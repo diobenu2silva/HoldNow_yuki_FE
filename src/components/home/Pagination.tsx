@@ -58,7 +58,7 @@ const Pagination: FC<PaginationProps> = ({
 
   const handlePageClick = (page: number | string) => {
     if (typeof page === 'number' && page >= 1 && page <= totalPages) {
-      console.log('Pagination click:', page); // Debug log
+  
       onPageChange(page);
     }
   };

@@ -34,7 +34,7 @@ const LazyChatting = lazy(() => import('@/components/trading/Chatting').then(mod
 const getBalance = async (wallet: string, token: string) => {
   try {
     if (!wallet || !token) {
-      console.log('__yuki__ tradingPage getBalance: Invalid parameters');
+  
       return 0;
     }
     const balance = await getTokenBalance(wallet, token);
@@ -141,7 +141,7 @@ export default function TradingPage() {
       if (coinData.token) {
         setCoin(coinData);
         const data = await getClaimData(coinData.token, publicKey?.toBase58() || '');
-        console.log('__yuki__ tradingPage claimDataQuery: fetched data for wallet', publicKey?.toBase58(), 'data', data);
+
         // Transform the object response to array format expected by the component
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           return [
@@ -176,7 +176,7 @@ export default function TradingPage() {
    // Update claim data when query data changes
   useEffect(() => {
     if (claimDataQuery && Array.isArray(claimDataQuery)) {
-      console.log('__yuki__ tradingPage claimData: updated for wallet', publicKey?.toBase58());
+
       setClaimData(claimDataQuery as [number, number, number, number, number, number]);
     }
   }, [claimDataQuery, publicKey?.toBase58()]);
@@ -184,7 +184,6 @@ export default function TradingPage() {
   // Handle wallet disconnection
   useEffect(() => {
     if (!publicKey && coin.token) {
-      console.log('__yuki__ tradingPage wallet: disconnected, resetting claim data');
       setClaimData([0, 0, 0, 0, 0, 0]);
     }
   }, [publicKey, coin.token]);
@@ -246,25 +245,24 @@ export default function TradingPage() {
       setLiquidity(
         Math.round(((safeNumber(coinData.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100
       );
-    } else {
-      console.log('__yuki__ tradingPage bondingCurve: true, claim requested');
-      if (coinData.movedToRaydium && !coinData.moveRaydiumFailed) {
-        setProgress(100);
-        setLiquidity(0);
-        setStageProg(100);
-      } else {
-        setProgress(Math.round((safeNumber(coinData.progressMcap) * safeNumber(solPrice) / 1e15) / 10) / 100);
-        setLiquidity(
-          Math.round(((safeNumber(coinData.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100
-        );
-        setStageProg(100);
+          } else {
+        if (coinData.movedToRaydium && !coinData.moveRaydiumFailed) {
+          setProgress(100);
+          setLiquidity(0);
+          setStageProg(100);
+        } else {
+          setProgress(Math.round((safeNumber(coinData.progressMcap) * safeNumber(solPrice) / 1e15) / 10) / 100);
+          setLiquidity(
+            Math.round(((safeNumber(coinData.lamportReserves) / 1e9) * safeNumber(solPrice) * 2) / 10) / 100
+          );
+          setStageProg(100);
+        }
       }
-    }
   }, [calculateStageProgress, solPrice]);
 
   // Handle real-time claim data updates with debouncing
   const handleClaimDataUpdate = useCallback((payload: any) => {
-    console.log('__yuki__ tradingPage socket: claim data update for wallet', publicKey?.toBase58());
+    
     
     // Update React Query cache directly for better performance
     queryClient.setQueryData(['claimData', param, publicKey?.toBase58()], [
@@ -289,7 +287,7 @@ export default function TradingPage() {
 
   // Handle real-time stage changes with optimized updates
   const handleStageChange = useCallback((payload: any) => {
-    console.log('__yuki__ tradingPage socket: stage change update');
+    
     
     // Update React Query cache directly for better performance
     queryClient.setQueryData(['coin', param], (oldData: any) => {
@@ -304,7 +302,7 @@ export default function TradingPage() {
         stageEnded: payload.stageEnded
       };
       
-      console.log('__yuki__ tradingPage socket: stage change updated');
+
       return updatedCoin;
     });
     
@@ -322,8 +320,6 @@ export default function TradingPage() {
 
   // Handle real-time coin info updates with optimized caching
   const handleCoinInfoUpdate = useCallback((payload: any) => {
-    console.log('__yuki__ tradingPage socket: coin info update');
-    
     // Update React Query cache directly for better performance
     queryClient.setQueryData(['coin', param], payload.coinInfo);
     
@@ -371,8 +367,6 @@ export default function TradingPage() {
     
     // Register socket callbacks with optimized validation
     if (coin.token && publicKey?.toBase58()) {
-      console.log('__yuki__ tradingPage socket: registering callbacks for wallet', publicKey?.toBase58());
-      
       const validationParams = {
         expectedToken: coin.token,
         expectedUser: publicKey?.toBase58()
@@ -391,7 +385,6 @@ export default function TradingPage() {
     
     // Cleanup function to remove stale data when component unmounts or parameters change
     return () => {
-      console.log('__yuki__ tradingPage cleanup: removing stale data');
       if (param) {
         queryClient.removeQueries(['claimData', param]);
       }
@@ -405,15 +398,14 @@ export default function TradingPage() {
       // Check if we already have cached data for this wallet
       const cachedData = queryClient.getQueryData(['claimData', param, publicKey.toBase58()]);
       
-      if (!cachedData) {
-        console.log('__yuki__ tradingPage wallet: connected, fetching claim data for', publicKey.toBase58());
-        const fetchClaimDataForWallet = async () => {
+              if (!cachedData) {
+          const fetchClaimDataForWallet = async () => {
           try {
             const response = await getClaimData(
               coin.token,
               publicKey.toBase58()
             );
-            console.log('__yuki__ tradingPage claimData: fetched for wallet', response);
+            
             // Update React Query cache to keep it in sync
             queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
               response.claimInUSD ?? 0,
@@ -438,9 +430,7 @@ export default function TradingPage() {
           }
         };
         fetchClaimDataForWallet();
-      } else {
-        console.log('__yuki__ tradingPage wallet: using cached data for', publicKey.toBase58());
-      }
+              }
     }
   }, [publicKey, coin.token, param, queryClient]);
 
@@ -462,15 +452,12 @@ export default function TradingPage() {
   useEffect(() => {
     // Stop timer if no coin, no token, no stage started, or bonding curve is true
     if (!coin || !coin.token || !coin.atStageStarted || coin.bondingCurve) {
-      console.log('__yuki__ tradingPage timer: stopping - conditions not met');
       // Set stage progress to 100 when bonding curve is true
       if (coin?.bondingCurve) {
         setStageProg(100);
       }
       return; // Exit early, don't set up interval
     }
-
-    console.log('__yuki__ tradingPage timer: starting');
 
     const updateProgress = () => {
       const stageProgress = calculateStageProgress(coin);
@@ -494,7 +481,7 @@ export default function TradingPage() {
 
     // Cleanup interval on unmount or when dependencies change
     return () => {
-      console.log('__yuki__ tradingPage timer: cleanup');
+  
       clearInterval(interval);
     };
   }, [coin?.atStageStarted, coin?.bondingCurve, coin?.airdropStage, coin?.stagesNumber, calculateStageProgress, solPrice]);
@@ -507,11 +494,11 @@ export default function TradingPage() {
     }
     
     if (coin.moveRaydiumFailed) {
-      console.log('__yuki__ tradingPage raydium: move failed -', coin.moveRaydiumFailureReason);
+
     }
     
     if (coin.movedToRaydium) {
-      console.log('__yuki__ tradingPage raydium: moved successfully');
+
     }
   }, [coin?.movedToRaydium, coin?.moveRaydiumFailed, coin?.moveRaydiumFailureReason, coin?.raydiumUrl, coin?.token]);
 
@@ -559,15 +546,15 @@ export default function TradingPage() {
 
   const handleClaim = async () => {
     const amount = coin.bondingCurve ? Number(airdropClaim + claimHodl) : Number(claimHodl);
-    console.log('__yuki__ tradingPage handleClaim amount', amount, 'coin.bondingCurve', coin.bondingCurve);
+
     const res = await claim(user, coin, wallet, Number(amount), coin.bondingCurve);
     // fetchData();
 
     if (res !== 'success') {
-      console.log('__yuki__ tradingPage claim: failed');
+
       errorAlert('Claim failed');
     }
-    console.log('__yuki__ tradingPage claim: result -', res);
+
   };
 
   return (

@@ -91,7 +91,7 @@ const OptimizedHomePage: FC = () => {
   useEffect(() => {
     if (onNewTokenCreated) {
       const handleNewToken = (payload: any) => {
-        console.log('__yuki__ New token created:', payload);
+    
         // Refresh the data to include the new token
         refresh();
       };
@@ -104,7 +104,7 @@ const OptimizedHomePage: FC = () => {
   useEffect(() => {
     if (onCoinInfoUpdate) {
       const handleCoinUpdate = (payload: any) => {
-        console.log('__yuki__ Coin info updated:', payload);
+    
         // Refresh data to get updated coin info
         refresh();
       };

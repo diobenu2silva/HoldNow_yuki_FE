@@ -172,7 +172,7 @@ const ReactQueryHomePage: FC = () => {
   // Handle time period change from TimeTrending
   const handleTimePeriodChange = useCallback((timePeriod: string) => {
     setCurrentTimePeriod(timePeriod);
-    console.log('__yuki__ Time period changed to:', timePeriod);
+
   }, []);
 
   // Reset to first page when filters change - simplified to prevent infinite loops
@@ -182,7 +182,7 @@ const ReactQueryHomePage: FC = () => {
 
   // Memoized sorted data
   const sortedData = useMemo(() => {
-    console.log('__yuki__ ReactQueryHomePage: Sorting data, count:', data.length, 'sortType:', currentSort, 'order:', currentOrder);
+
     return sortCoins(data, currentSort, currentOrder);
   }, [data, currentSort, currentOrder, sortCoins]);
 
@@ -200,7 +200,7 @@ const ReactQueryHomePage: FC = () => {
         (token.description && token.description.toLowerCase().includes(searchLower))
       );
     }
-    console.log('__yuki__ ReactQueryHomePage: Filtered data count:', filtered.length, 'from sorted:', sortedData.length);
+
     return filtered;
   }, [sortedData, nsfwFilterState, searchToken, nsfwMap]);
 
@@ -222,7 +222,7 @@ const ReactQueryHomePage: FC = () => {
   const handlePageChange = useCallback((page: number) => {
     const now = Date.now();
     if (page !== currentPage && page >= 1 && page <= totalPages && (now - lastPageChange) > 300) {
-      console.log('Page change triggered:', page); // Debug log
+  
       setLastPageChange(now);
       setIsPageTransitioning(true);
       setCurrentPage(page);

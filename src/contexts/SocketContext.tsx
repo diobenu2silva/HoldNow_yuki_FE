@@ -156,13 +156,13 @@ const SocketProvider = (props: { children: any }) => {
     
     // Check token validation
     if (validation.expectedToken && payload.token !== validation.expectedToken) {
-      console.log('__yuki__ Socket: Token validation failed. Expected:', validation.expectedToken, 'Received:', payload.token);
+      
       return false;
     }
     
     // Check user validation (for payloads that have user field)
     if (validation.expectedUser && payload.user && payload.user !== validation.expectedUser) {
-      console.log('__yuki__ Socket: User validation failed. Expected:', validation.expectedUser, 'Received:', payload.user);
+      
       return false;
     }
     
@@ -185,14 +185,12 @@ const SocketProvider = (props: { children: any }) => {
   }, [isSocketReady]);
 
   const onNewTokenCreated = useCallback((callback: (payload: CoinInfoUpdatedPayload) => void, validation?: ValidationParams) => {
-    console.log('__yuki__ Socket: Registering newTokenCreated callback, socket ready:', isSocketReady);
     if (!isSocketReady) {
-      console.log('__yuki__ Socket: Socket not ready, skipping callback registration');
       return;
     }
     setNewTokenCreatedCallbacks(prev => {
       const newCallbacks = [...prev, { callback, validation }];
-      console.log('__yuki__ Socket: Total newTokenCreated callbacks after registration:', newCallbacks.length);
+  
       return newCallbacks;
     });
   }, [isSocketReady]);
@@ -217,7 +215,7 @@ const SocketProvider = (props: { children: any }) => {
   };
 
   const createSuccessHandler = (name: string, mint: string) => {
-    console.log('Successfully Create Token Name:', name);
+    
     setAlertState({
       open: true,
       message: 'Success',
@@ -228,7 +226,7 @@ const SocketProvider = (props: { children: any }) => {
   };
 
   const createFailedHandler = (name: string, mint: string) => {
-    console.log('Failed Create Token Name:', name);
+    
     setAlertState({
       open: true,
       message: 'Failed',
@@ -239,7 +237,7 @@ const SocketProvider = (props: { children: any }) => {
   };
 
   const createMessageHandler = (updateCoinId: string, updateMsg: msgInfo) => {
-    console.log('Updated Message', updateCoinId, updateMsg);
+    
     setCoinId(updateCoinId);
     setNewMsg(updateMsg);
   };
@@ -249,7 +247,7 @@ const SocketProvider = (props: { children: any }) => {
     const timeoutMap = new Map();
     
     return (payload: any, ack?: (msg: string) => void) => {
-      console.log(`__yuki__ Socket: ${eventName} received:`, payload);
+
       
       // Use a single timeout per event type to batch updates
       if (timeoutMap.has(eventName)) {
@@ -263,7 +261,7 @@ const SocketProvider = (props: { children: any }) => {
         );
         
         if (validCallbacks.length > 0) {
-          console.log(`__yuki__ Socket: Processing ${validCallbacks.length} valid callbacks for ${eventName}`);
+  
           validCallbacks.forEach(({ callback }) => {
             try {
               callback(payload);
@@ -295,18 +293,18 @@ const SocketProvider = (props: { children: any }) => {
       transports: ['websocket'],
     });
     socket.on('connect', async () => {
-      console.log(' --@ connected to backend', socket.id);
+
       setIsSocketReady(true);
     });
     socket.on('disconnect', () => {
-      console.log(' --@ disconnected from backend', socket.id);
+
       setIsSocketReady(false);
     });
     setSocket(socket);
 
     // Reset socket connection when wallet changes
     const resetSocket = () => {
-      console.log('__yuki__ Socket: Resetting socket connection for wallet change');
+      
       
       // Clear all callbacks to prevent stale data
       setClaimDataCallbacks([]);
@@ -323,7 +321,7 @@ const SocketProvider = (props: { children: any }) => {
       // Small delay to ensure clean disconnect
       setTimeout(() => {
         socket.connect();
-        console.log('__yuki__ Socket: Reconnected after wallet change');
+
       }, 100);
     };
 
@@ -342,7 +340,7 @@ const SocketProvider = (props: { children: any }) => {
 
     socket.on('connectionUpdated', connectionUpdatedHandler);
     socket.on('Creation', () => {
-      console.log('--------@ Token Creation: ');
+  
     });
     socket.on('TokenCreated', createSuccessHandler);
     socket.on('TokenNotCreated', createFailedHandler);

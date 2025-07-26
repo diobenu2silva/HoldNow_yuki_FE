@@ -60,20 +60,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   const { onTransactionUpdate, onHoldersUpdate } = useSocket();
 
-  // Listen for real-time message updates from socket
+    // Listen for real-time message updates from socket
   useEffect(() => {
     if (newMsg && newMsg.coinId === coin._id) {
-      console.log('__yuki__ ChatPanel: New message received via socket:', newMsg);
-      // Debug: Log message structure to see what fields are available
-      console.log('__yuki__ ChatPanel: Message structure:', {
-        id: newMsg._id,
-        hasImages: !!newMsg.images,
-        imagesLength: newMsg.images?.length,
-        hasImg: !!newMsg.img,
-        imgValue: newMsg.img,
-        imagesValue: newMsg.images
-      });
-      
       // Add the new message to the existing messages
       if (!messages) {
         setMessages([newMsg]);
@@ -313,11 +302,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       // Upload image to IPFS if selected
       let uploadedImageUrl: string | undefined;
       if (selectedImage && imagePreview) {
-        console.log('Uploading image to IPFS...');
+    
         const uploadResult = await uploadImage(imagePreview);
         if (uploadResult) {
           uploadedImageUrl = uploadResult;
-          console.log('Image uploaded successfully:', uploadedImageUrl);
+  
         } else {
           console.error('Failed to upload image to IPFS');
         }

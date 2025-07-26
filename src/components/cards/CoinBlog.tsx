@@ -33,7 +33,6 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
       if (solPrice === 0) {
         try {
           const price = await getSolPriceInUSD();
-          console.log('__yuki__ CoinBlog: Fetched sol price:', price);
           setSolPrice(price);
           solPrice = price;
         } catch (error) {
@@ -59,10 +58,8 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
     const fetchCreatorInfo = async () => {
       if (typeof currentCoin?.creator === 'string' && currentCoin.creator) {
         try {
-          console.log('__yuki__ CoinBlog: Fetching creator info for:', currentCoin.creator);
           const creatorInfo = await getUserInfo(currentCoin.creator);
           if (creatorInfo && !creatorInfo.error) {
-            console.log('__yuki__ CoinBlog: Creator info fetched:', creatorInfo);
             setCurrentCoin(prevCoin => ({
               ...prevCoin,
               creator: creatorInfo
@@ -84,15 +81,7 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
     if (onCoinInfoUpdate) {
       const handleCoinUpdate = (payload: any) => {
         if (payload.token === currentCoin.token) {
-          console.log('__yuki__ CoinBlog: Coin info updated:', payload);
-          console.log('__yuki__ CoinBlog: Creator data:', {
-            creator: payload.coinInfo.creator,
-            creatorType: typeof payload.coinInfo.creator,
-            hasName: payload.coinInfo.creator?.name,
-            hasId: payload.coinInfo.creator?._id
-          });
           setCurrentCoin(prevCoin => ({ ...prevCoin, ...payload.coinInfo }));
-          console.log('__yuki__ CoinBlog: Current coin:', currentCoin);
         }
       };
       
@@ -101,21 +90,12 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
   }, [onCoinInfoUpdate, currentCoin.token]);
 
   useEffect(() => {
-    console.log('__yuki__ CoinBlog Timer useEffect triggered:', {
-      bondingCurve: currentCoin.bondingCurve,
-      atStageStarted: currentCoin.atStageStarted,
-      stageDuration: currentCoin.stageDuration,
-      currentStage: currentCoin.currentStage
-    });
-
     // Stop timer if bonding curve is true, no stage started, or no stage duration
     if (currentCoin.bondingCurve || !currentCoin.atStageStarted || !currentCoin.stageDuration) {
-      console.log('__yuki__ CoinBlog: Stopping timer - conditions not met');
       setStageProg(100);
       return; // Exit early, don't set up interval
     }
 
-    console.log('__yuki__ CoinBlog: Starting timer - conditions met');
     const millisecondsInADay = 120 * 1000; // match trading page logic
 
     const updateProgress = () => {
@@ -133,7 +113,6 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
     const intervalId = setInterval(updateProgress, 1000);
     
     return () => {
-      console.log('__yuki__ CoinBlog: Cleaning up timer interval');
       if (intervalId) clearInterval(intervalId);
     };
   }, [currentCoin.currentStage, currentCoin.atStageStarted, currentCoin.stageDuration, currentCoin.bondingCurve]);
@@ -155,22 +134,13 @@ export const CoinBlog: React.FC<CoinBlogProps> = ({ coin, componentKey, isNSFW, 
   // Local state for reply count as fallback
   const [localReplyCount, setLocalReplyCount] = useState<number>(0);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('__yuki__ CoinBlog: Reply counts state:', replyCounts);
-    console.log('__yuki__ CoinBlog: Current coin ID:', currentCoin._id);
-    console.log('__yuki__ CoinBlog: Current reply count:', currentReplyCount);
-  }, [replyCounts, currentCoin._id, currentReplyCount]);
-
   // Fallback: Fetch reply count directly if not available in socket context
   useEffect(() => {
     const fetchReplyCount = async () => {
       if (!currentReplyCount && currentCoin._id) {
         try {
-          console.log('__yuki__ CoinBlog: Fetching reply count directly for coin:', currentCoin._id);
           const messages = await getMessageByCoin(currentCoin._id);
           const count = messages.length;
-          console.log('__yuki__ CoinBlog: Direct reply count:', count);
           setLocalReplyCount(count);
         } catch (error) {
           console.error('__yuki__ CoinBlog: Error fetching reply count:', error);
