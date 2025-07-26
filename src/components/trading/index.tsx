@@ -334,37 +334,7 @@ export default function TradingPage() {
     updateDerivedData(payload.coinInfo);
   }, [param, queryClient, updateDerivedData]);
 
-  // Register socket callbacks
-  useEffect(() => {
-    console.log('__yuki__ tradingPage socket: registering callbacks for wallet', publicKey?.toBase58());
-    
-    if (onClaimDataUpdate) {
-      onClaimDataUpdate(handleClaimDataUpdate, {
-        expectedToken: coin.token,
-        expectedUser: publicKey?.toBase58()
-      });
-    }
-    if (onStageChange) {
-      onStageChange(handleStageChange, {
-        expectedToken: coin.token
-      });
-    }
-    if (onCoinInfoUpdate) {
-      onCoinInfoUpdate(handleCoinInfoUpdate, {
-        expectedToken: coin.token
-      });
-    }
-    
-    // Cleanup function to remove stale data when component unmounts or parameters change
-    return () => {
-      console.log('__yuki__ tradingPage cleanup: removing stale data');
-      // Clear any stale claim data from cache when component unmounts
-      if (param) {
-        queryClient.removeQueries(['claimData', param]);
-      }
-    };
-  }, [onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate, param, queryClient, coin.token, publicKey?.toBase58()]);
-
+  // Optimized socket callback registration and parameter handling
   useEffect(() => {
     const segments = pathname.split('/');
     const parameter = segments[segments.length - 1];
@@ -375,20 +345,58 @@ export default function TradingPage() {
       setCoinId(parameter);
       setCoin({} as coinInfo);
       
-      // Immediately fetch coin data to avoid waiting for ClaimContext
+      // Parallel data fetching for initial load
       const fetchInitialData = async () => {
         try {
-          const coinData = await getCoinInfo(parameter);
-          setCoin(coinData);
-          updateDerivedData(coinData);
+          const [coinData, claimData] = await Promise.allSettled([
+            getCoinInfo(parameter),
+            getClaimData(parameter, publicKey?.toBase58() || '')
+          ]);
+          
+          if (coinData.status === 'fulfilled') {
+            setCoin(coinData.value);
+            updateDerivedData(coinData.value);
+          }
+          
+          if (claimData.status === 'fulfilled') {
+            setClaimData(claimData.value);
+          }
         } catch (error) {
-          console.error('__yuki__ tradingPage error: fetching initial coin data:', error);
+          console.error('__yuki__ tradingPage error: fetching initial data:', error);
         }
       };
       
       fetchInitialData();
     }
-  }, [pathname, updateDerivedData]);
+    
+    // Register socket callbacks with optimized validation
+    if (coin.token && publicKey?.toBase58()) {
+      console.log('__yuki__ tradingPage socket: registering callbacks for wallet', publicKey?.toBase58());
+      
+      const validationParams = {
+        expectedToken: coin.token,
+        expectedUser: publicKey?.toBase58()
+      };
+      
+      if (onClaimDataUpdate) {
+        onClaimDataUpdate(handleClaimDataUpdate, validationParams);
+      }
+      if (onStageChange) {
+        onStageChange(handleStageChange, { expectedToken: coin.token });
+      }
+      if (onCoinInfoUpdate) {
+        onCoinInfoUpdate(handleCoinInfoUpdate, { expectedToken: coin.token });
+      }
+    }
+    
+    // Cleanup function to remove stale data when component unmounts or parameters change
+    return () => {
+      console.log('__yuki__ tradingPage cleanup: removing stale data');
+      if (param) {
+        queryClient.removeQueries(['claimData', param]);
+      }
+    };
+  }, [pathname, param, coin.token, publicKey?.toBase58(), onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate, queryClient, updateDerivedData]);
 
   // Handle wallet changes and manual claim data fetching
   useEffect(() => {

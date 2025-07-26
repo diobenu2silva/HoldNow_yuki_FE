@@ -21,8 +21,6 @@ const TrendingCoins: FC<TrendingCoinsProps> = ({
   maxCount = 20,
   timePeriod = '5m'
 }) => {
-  console.log('🚀🚀🚀 TRENDING COINS COMPONENT RENDERED 🚀🚀🚀');
-  
   const { solPrice } = useContext(UserContext);
   const { replyCounts, onCoinInfoUpdate, onStageChange } = useSocket();
   const [scrollPosition, setScrollPosition] = useState(0);

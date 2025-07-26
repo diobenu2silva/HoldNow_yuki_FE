@@ -11,6 +11,7 @@ import FilterList from './FilterList';
 import Pagination from './Pagination';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TokenCardSkeleton } from '../loadings/Skeleton';
+import { LoadingPage, LoadingSkeleton } from '../loadings/LoadingPage';
 import { Switch } from '@/components/ui/switch';
 import { BiSearchAlt } from 'react-icons/bi';
 import { isImageNSFW } from '@/utils/nsfwCheck';
@@ -584,28 +585,34 @@ const ReactQueryHomePage: FC = () => {
 
         {/* Coins Grid/List */}
         <AnimatePresence mode="wait">
-          {isDataLoading ? (
+          {isDataLoading || isEssentialDataLoading ? (
             <motion.div
               key="loading"
               variants={pageTransitionVariants}
               initial="enter"
               animate="center"
               exit="exit"
-              className={`w-full ${
-                viewMode === 'grid'
-                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6'
-                  : 'flex flex-col gap-4'
-              }`}
+              className="w-full"
             >
-              {Array.from({ length: itemsPerPage }).map((_, index) => (
-                <motion.div
-                  key={index}
-                  variants={itemVariants}
-                  className={viewMode === 'list' ? 'w-full' : ''}
-                >
-                  <TokenCardSkeleton />
-                </motion.div>
-              ))}
+              {isDataLoading ? (
+                <div className={`w-full ${
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6'
+                    : 'flex flex-col gap-4'
+                }`}>
+                  {Array.from({ length: itemsPerPage }).map((_, index) => (
+                    <motion.div
+                      key={index}
+                      variants={itemVariants}
+                      className={viewMode === 'list' ? 'w-full' : ''}
+                    >
+                      <TokenCardSkeleton />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <LoadingPage message="Loading essential data..." />
+              )}
             </motion.div>
           ) : currentData && currentData.length > 0 ? (
             <motion.div

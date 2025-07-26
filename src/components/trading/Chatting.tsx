@@ -276,100 +276,78 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     }
   };
 
-  // Effect to handle token changes and refresh data
+  // Optimized data fetching with parallel operations and merged useEffects
   useEffect(() => {
-    if (coin.token) {
+    const fetchDataForCurrentTable = async () => {
+      if (!param) return;
+      
       setIsRefreshing(true);
-      
-      const refreshDataForNewToken = async () => {
-        try {
-          // Reset data for new token
-          setTrades({} as tradeInfo);
-          setHolders([]);
-          
-          // Fetch fresh data based on current table
-          if (currentTable === 'transaction') {
-            const data = await getCoinTrade(coin.token);
-            setTrades(data);
-          } else if (currentTable === 'top holders') {
-            const data = await getHoldersWithUserInfo(coin.token);
-            setHolders(data);
-          } else if (currentTable === 'chat') {
-            const data = await getMessageByCoin(coin._id);
-            setMessages(data);
-          }
-        } catch (error) {
-          // Error handling - could be enhanced with user notification if needed
-        } finally {
-          setIsRefreshing(false);
-        }
-      };
-      
-      refreshDataForNewToken();
-    }
-  }, [coin.token]);
-
-  // Effect to fetch messages when chat tab is active
-  useEffect(() => {
-    if (currentTable === 'chat' && coin._id) {
-      const fetchMessages = async () => {
-        try {
-          console.log('Fetching messages for coin ID:', coin._id);
+      try {
+        // Parallel data fetching based on current table
+        if (currentTable === 'transaction') {
+          const tokenToUse = coin.token || param;
+          const data = await getCoinTrade(tokenToUse);
+          setTrades(data);
+        } else if (currentTable === 'top holders' && coin.token) {
+          const data = await getHoldersWithUserInfo(coin.token);
+          setHolders(data);
+        } else if (currentTable === 'chat' && coin._id) {
           const data = await getMessageByCoin(coin._id);
-          console.log('Fetched messages:', data);
-          // Debug: Log message structure to see what fields are available
-          if (data && data.length > 0) {
-            console.log('First message structure:', {
-              id: data[0]._id,
-              hasImages: !!data[0].images,
-              imagesLength: data[0].images?.length,
-              hasImg: !!data[0].img,
-              imgValue: data[0].img,
-              imagesValue: data[0].images
-            });
-            
-            // Log all messages with images
-            data.forEach((msg, index) => {
-              if (msg.img || (msg.images && msg.images.length > 0)) {
-                console.log(`Message ${index} has images:`, {
-                  id: msg._id,
-                  img: msg.img,
-                  images: msg.images,
-                  msg: msg.msg?.substring(0, 50) + '...'
-                });
-              }
-            });
-          }
           setMessages(data);
-        } catch (error) {
-          console.error('Error fetching messages:', error);
         }
-      };
-      
-      fetchMessages();
-    }
-  }, [currentTable, coin._id]);
+      } catch (error) {
+        console.error('Error fetching data for current table:', error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+
+    fetchDataForCurrentTable();
+  }, [currentTable, param, coin.token, coin._id]);
+
+  // Optimized token change handler with parallel data fetching
+  useEffect(() => {
+    if (!coin.token) return;
+    
+    setIsRefreshing(true);
+    const refreshDataForNewToken = async () => {
+      try {
+        // Reset data for new token
+        setTrades({} as tradeInfo);
+        setHolders([]);
+        
+        // Parallel data fetching for all tables when token changes
+        const [tradesData, holdersData, messagesData] = await Promise.allSettled([
+          getCoinTrade(coin.token),
+          getHoldersWithUserInfo(coin.token),
+          coin._id ? getMessageByCoin(coin._id) : Promise.resolve([])
+        ]);
+        
+        // Update state based on successful results
+        if (tradesData.status === 'fulfilled') setTrades(tradesData.value);
+        if (holdersData.status === 'fulfilled') setHolders(holdersData.value);
+        if (messagesData.status === 'fulfilled') setMessages(messagesData.value);
+        
+      } catch (error) {
+        console.error('Error refreshing data for new token:', error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+    
+    refreshDataForNewToken();
+  }, [coin.token, coin._id]);
 
   // Listen for real-time message updates from socket
   useEffect(() => {
     if (newMsg && newMsg.coinId === coin._id) {
       console.log('__yuki__ Chatting: New message received via socket:', newMsg);
-      // Debug: Log message structure to see what fields are available
-      console.log('__yuki__ Chatting: Message structure:', {
-        id: newMsg._id,
-        hasImages: !!newMsg.images,
-        imagesLength: newMsg.images?.length,
-        hasImg: !!newMsg.img,
-        imgValue: newMsg.img,
-        imagesValue: newMsg.images
-      });
       
       // Add the new message to the existing messages
       if (!messages) {
         setMessages([newMsg]);
       } else {
         // Check if message already exists to prevent duplicates
-        // Compare by message content, sender, and time (within 5 seconds to account for slight timing differences)
         const messageExists = messages.some(msg => {
           const msgTime = msg.time instanceof Date ? msg.time : new Date(msg.time || 0);
           const newMsgTime = newMsg.time instanceof Date ? newMsg.time : new Date(newMsg.time || 0);
@@ -385,53 +363,52 @@ export const Chatting: React.FC<ChattingProps> = ({ param, coin }) => {
     }
   }, [newMsg, coin._id, messages, setMessages]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (param) {
-        if (currentTable === 'transaction') {
-          // Use coin.token if available, otherwise fall back to param
-          const tokenToUse = coin.token || param;
-          const data = await getCoinTrade(tokenToUse);
-          setTrades(data);
-        } else if (currentTable === 'top holders') {
-          // Only fetch holders if coin.token is available
-          if (coin.token) {
-            const data = await getHoldersWithUserInfo(coin.token);
-            setHolders(data);
-          }
-        } else if (currentTable === 'chat') {
-          // Only fetch messages if coin._id is available
-          if (coin._id) {
-            const data = await getMessageByCoin(coin._id);
-            setMessages(data);
-          }
-        }
-      }
-    };
-    fetchData();
-  }, [currentTable, param]);
-
+  // Optimized socket event handlers with debouncing
   useEffect(() => {
     if (!onTransactionUpdate || !coin.token) return;
+    
+    let timeoutId: NodeJS.Timeout;
     const handleTransactionUpdate = async (payload) => {
       if (payload.token === coin.token) {
-        const tradedata = await getCoinTrade(coin.token)
-        setTrades(tradedata);
+        // Debounce rapid updates
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(async () => {
+          try {
+            const tradedata = await getCoinTrade(coin.token);
+            setTrades(tradedata);
+          } catch (error) {
+            console.error('Error updating transaction data:', error);
+          }
+        }, 300);
       }
     };
+    
     onTransactionUpdate(handleTransactionUpdate);
-    // No cleanup needed as context manages callbacks
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [onTransactionUpdate, coin.token]);
 
   useEffect(() => {
     if (!onHoldersUpdate || !coin.token) return;
+    
+    let timeoutId: NodeJS.Timeout;
     const handleHoldersUpdate = (payload) => {
       if (payload.token === coin.token) {
-        setHolders(payload.holders);
+        // Debounce rapid updates
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setHolders(payload.holders);
+        }, 300);
       }
     };
+    
     onHoldersUpdate(handleHoldersUpdate);
-    // No cleanup needed as context manages callbacks
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [onHoldersUpdate, coin.token]);
 
   // Check if we should show loading state

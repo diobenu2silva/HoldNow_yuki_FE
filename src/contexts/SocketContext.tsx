@@ -244,76 +244,50 @@ const SocketProvider = (props: { children: any }) => {
     setNewMsg(updateMsg);
   };
 
-  // Real-time event handlers with validation
-  const coinInfoUpdatedHandler = (payload: CoinInfoUpdatedPayload) => {
-    console.log('__yuki__ Socket: Coin info updated:', payload);
-    coinInfoCallbacks.forEach(({ callback, validation }) => {
-      if (validatePayload(payload, validation)) {
-        callback(payload);
+  // Optimized real-time event handlers with debouncing and batch processing
+  const createDebouncedHandler = (callbacks: any[], eventName: string) => {
+    const timeoutMap = new Map();
+    
+    return (payload: any, ack?: (msg: string) => void) => {
+      console.log(`__yuki__ Socket: ${eventName} received:`, payload);
+      
+      // Use a single timeout per event type to batch updates
+      if (timeoutMap.has(eventName)) {
+        clearTimeout(timeoutMap.get(eventName));
       }
-    });
+      
+      const timeoutId = setTimeout(() => {
+        // Process all callbacks in a single batch
+        const validCallbacks = callbacks.filter(({ validation }) => 
+          !validation || validatePayload(payload, validation)
+        );
+        
+        if (validCallbacks.length > 0) {
+          console.log(`__yuki__ Socket: Processing ${validCallbacks.length} valid callbacks for ${eventName}`);
+          validCallbacks.forEach(({ callback }) => {
+            try {
+              callback(payload);
+            } catch (error) {
+              console.error(`__yuki__ Socket: Error in ${eventName} callback:`, error);
+            }
+          });
+        }
+        
+        timeoutMap.delete(eventName);
+        if (ack) ack('ok');
+      }, 100); // 100ms debounce for all socket events
+      
+      timeoutMap.set(eventName, timeoutId);
+    };
   };
 
-  const claimDataUpdatedHandler = (payload: ClaimDataUpdatedPayload) => {
-    console.log('__yuki__ Socket: Claim data updated:', payload);
-    claimDataCallbacks.forEach(({ callback, validation }) => {
-      if (validatePayload(payload, validation)) {
-        callback(payload);
-      }
-    });
-  };
-
-  const stageChangedHandler = (payload: StageChangedPayload) => {
-    console.log('__yuki__ Socket: Stage changed:', payload);
-    stageChangeCallbacks.forEach(({ callback, validation }) => {
-      if (validatePayload(payload, validation)) {
-        callback(payload);
-      }
-    });
-  };
-
-  const newTokenCreatedHandler = (payload: CoinInfoUpdatedPayload) => {
-    console.log('__yuki__ Socket: New token created:', payload);
-    console.log('__yuki__ Socket: Number of newTokenCreated callbacks:', newTokenCreatedCallbacks.length);
-    newTokenCreatedCallbacks.forEach(({ callback, validation }, index) => {
-      console.log('__yuki__ Socket: Calling newTokenCreated callback', index);
-      if (validatePayload(payload, validation)) {
-        callback(payload);
-      } else {
-        console.log('__yuki__ Socket: Callback validation failed for index', index);
-      }
-    });
-  };
-
-  const transactionUpdateHandler = (payload: TransactionUpdatePayload, ack?: (msg: string) => void) => {
-    console.log('__yuki__ Socket: Transaction update:', payload);
-    transactionUpdateCallbacks.forEach(({ callback, validation }) => {
-      if (validatePayload(payload, validation)) {
-        callback(payload);
-      }
-    });
-    if (ack) ack('ok');
-  };
-
-  const holdersUpdateHandler = (payload: HoldersUpdatePayload, ack?: (msg: string) => void) => {
-    console.log('__yuki__ Socket: Holders update:', payload);
-    holdersUpdateCallbacks.forEach(({ callback, validation }) => {
-      if (validatePayload(payload, validation)) {
-        callback(payload);
-      }
-    });
-    if (ack) ack('ok');
-  };
-
-  const trendingUpdateHandler = (payload: TrendingUpdatePayload, ack?: (msg: string) => void) => {
-    console.log('__yuki__ Socket: Trending update:', payload);
-    trendingUpdateCallbacks.forEach(({ callback, validation }) => {
-      if (validatePayload(payload, validation)) {
-        callback(payload);
-      }
-    });
-    if (ack) ack('ok');
-  };
+  const coinInfoUpdatedHandler = createDebouncedHandler(coinInfoCallbacks, 'coinInfoUpdated');
+  const claimDataUpdatedHandler = createDebouncedHandler(claimDataCallbacks, 'claimDataUpdated');
+  const stageChangedHandler = createDebouncedHandler(stageChangeCallbacks, 'stageChanged');
+  const newTokenCreatedHandler = createDebouncedHandler(newTokenCreatedCallbacks, 'newTokenCreated');
+  const transactionUpdateHandler = createDebouncedHandler(transactionUpdateCallbacks, 'transactionUpdate');
+  const holdersUpdateHandler = createDebouncedHandler(holdersUpdateCallbacks, 'holdersUpdate');
+  const trendingUpdateHandler = createDebouncedHandler(trendingUpdateCallbacks, 'trendingUpdate');
 
   // init socket client object and handle wallet changes
   useEffect(() => {

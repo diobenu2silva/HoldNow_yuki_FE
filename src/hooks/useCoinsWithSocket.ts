@@ -73,146 +73,97 @@ export const useCoinsWithSocket = ({
     }
   );
 
-  // Handle new token creation
+  // Optimized socket event handlers with debouncing and batch updates
   useEffect(() => {
-    if (!onNewTokenCreated || !socket) return;
+    if (!onNewTokenCreated || !onCoinInfoUpdate || !socket) return;
+
+    let newTokenTimeoutId: NodeJS.Timeout;
+    let coinUpdateTimeoutId: NodeJS.Timeout;
+    const pendingUpdates = new Map();
 
     const handleNewToken = (payload: any) => {
       console.log('__yuki__ useCoinsWithSocket: New token created:', payload);
-      console.log('__yuki__ useCoinsWithSocket: Current page:', page, 'sortType:', sortType, 'itemsPerPage:', itemsPerPage);
       
-      // Don't update all queries - this was causing the new token to appear on all pages
-      // Instead, we'll only update the specific pages that need to be updated
-      
-      // Also update the specific current page query
-      queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
-        if (!oldData) {
-          console.log('__yuki__ useCoinsWithSocket: No old data found for specific page query:', ['coins', sortType, page, itemsPerPage]);
-          return oldData;
-        }
-        
-        const newToken = payload.coinInfo;
-        const existingCoins = oldData.coins || [];
-        
-        // Check if token already exists to avoid duplicates
-        const exists = existingCoins.find((token: coinInfo) => 
-          token._id === newToken._id || token.token === newToken.token
-        );
-        
-        if (exists) {
-          console.log('__yuki__ useCoinsWithSocket: Token already exists on current page, skipping');
-          return oldData;
-        }
-        
-        // For first page, add new token to beginning
-        if (page === 1) {
-          console.log('__yuki__ useCoinsWithSocket: Adding new token to first page');
-          const updatedCoins = [newToken, ...existingCoins];
-          // Keep exactly itemsPerPage tokens
-          const finalCoins = updatedCoins.slice(0, itemsPerPage);
+      // Debounce new token updates
+      clearTimeout(newTokenTimeoutId);
+      newTokenTimeoutId = setTimeout(() => {
+        queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
+          if (!oldData) return oldData;
           
-          // If we have more coins than itemsPerPage, handle the overflow properly
-          if (updatedCoins.length > itemsPerPage) {
-            const overflowCoin = updatedCoins[itemsPerPage];
-            console.log('__yuki__ useCoinsWithSocket: Moving overflow coin to page 2:', overflowCoin.name);
+          const newToken = payload.coinInfo;
+          const existingCoins = oldData.coins || [];
+          
+          // Check if token already exists to avoid duplicates
+          const exists = existingCoins.find((token: coinInfo) => 
+            token._id === newToken._id || token.token === newToken.token
+          );
+          
+          if (exists) return oldData;
+          
+          // Only add to page 1, cascade overflow to other pages
+          if (page === 1) {
+            const updatedCoins = [newToken, ...existingCoins];
             
-            // Update page 2 to include the overflow coin
-            queryClient.setQueryData(['coins', sortType, 2, itemsPerPage], (page2Data: any) => {
-              if (page2Data) {
-                const page2Coins = page2Data.coins || [];
-                // Check if overflow coin already exists on page 2
-                const existsOnPage2 = page2Coins.find((token: coinInfo) => 
-                  token._id === overflowCoin._id || token.token === overflowCoin.token
-                );
-                
-                if (!existsOnPage2) {
-                  console.log('__yuki__ useCoinsWithSocket: Adding overflow coin to page 2');
-                  const updatedPage2Coins = [overflowCoin, ...page2Coins];
-                  // Keep exactly itemsPerPage tokens on page 2 as well
-                  const finalPage2Coins = updatedPage2Coins.slice(0, itemsPerPage);
-                  
-                  // If page 2 also overflows, handle page 3
-                  if (updatedPage2Coins.length > itemsPerPage) {
-                    const page2OverflowCoin = updatedPage2Coins[itemsPerPage];
-                    console.log('__yuki__ useCoinsWithSocket: Moving overflow coin to page 3:', page2OverflowCoin.name);
-                    
-                    queryClient.setQueryData(['coins', sortType, 3, itemsPerPage], (page3Data: any) => {
-                      if (page3Data) {
-                        const page3Coins = page3Data.coins || [];
-                        const existsOnPage3 = page3Coins.find((token: coinInfo) => 
-                          token._id === page2OverflowCoin._id || token.token === page2OverflowCoin.token
-                        );
-                        
-                        if (!existsOnPage3) {
-                          console.log('__yuki__ useCoinsWithSocket: Adding overflow coin to page 3');
-                          return {
-                            ...page3Data,
-                            coins: [page2OverflowCoin, ...page3Coins]
-                          };
-                        }
-                      }
-                      return page3Data;
-                    });
-                  }
-                  
+            // Handle overflow to page 2
+            if (updatedCoins.length > itemsPerPage) {
+              const overflowCoin = updatedCoins[itemsPerPage];
+              queryClient.setQueryData(['coins', sortType, 2, itemsPerPage], (page2Data: any) => {
+                if (page2Data && !page2Data.coins.find((t: coinInfo) => t._id === overflowCoin._id)) {
                   return {
                     ...page2Data,
-                    coins: finalPage2Coins
+                    coins: [overflowCoin, ...page2Data.coins].slice(0, itemsPerPage)
                   };
                 }
-              }
-              return page2Data;
-            });
+                return page2Data;
+              });
+            }
+            
+            return {
+              ...oldData,
+              coins: updatedCoins.slice(0, itemsPerPage),
+              total: oldData.total + 1
+            };
+          } else {
+            return { ...oldData, total: oldData.total + 1 };
           }
-          
-          return {
-            ...oldData,
-            coins: finalCoins,
-            total: oldData.total + 1
-          };
-        } else {
-          console.log('__yuki__ useCoinsWithSocket: Updating total count for non-first page');
-          // For other pages, just update total count
-          return {
-            ...oldData,
-            total: oldData.total + 1
-          };
-        }
-      });
+        });
+        
+        // Batch invalidate related queries
+        queryClient.invalidateQueries(['essentialData']);
+      }, 200);
+    };
+
+    const handleCoinUpdate = (payload: any) => {
+      // Batch coin updates to reduce cache writes
+      pendingUpdates.set(payload.token, payload.coinInfo);
       
-      // Invalidate essential data to update any related information
-      queryClient.invalidateQueries(['essentialData']);
-      console.log('__yuki__ useCoinsWithSocket: Invalidated essential data');
+      clearTimeout(coinUpdateTimeoutId);
+      coinUpdateTimeoutId = setTimeout(() => {
+        if (pendingUpdates.size === 0) return;
+        
+        queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
+          if (!oldData) return oldData;
+          
+          const updatedCoins = oldData.coins.map((coin: coinInfo) => {
+            const update = pendingUpdates.get(coin.token);
+            return update ? { ...coin, ...update } : coin;
+          });
+          
+          pendingUpdates.clear();
+          return { ...oldData, coins: updatedCoins };
+        });
+      }, 150);
     };
     
     onNewTokenCreated(handleNewToken);
-    console.log('__yuki__ useCoinsWithSocket: Registered new token handler for page:', page, 'sortType:', sortType);
-  }, [onNewTokenCreated, queryClient, sortType, page, itemsPerPage, socket]);
-
-  // Handle coin info updates (market cap, stage progress, etc.)
-  useEffect(() => {
-    if (!onCoinInfoUpdate || !socket) return;
-
-    const handleCoinUpdate = (payload: any) => {
-      console.log('__yuki__ useCoinsWithSocket: Coin info updated:', payload);
-      
-      // Update the cache with the updated coin info
-      queryClient.setQueryData(['coins', sortType, page, itemsPerPage], (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        const updatedCoins = oldData.coins.map((coin: coinInfo) => 
-          coin.token === payload.token ? { ...coin, ...payload.coinInfo } : coin
-        );
-        
-        return {
-          ...oldData,
-          coins: updatedCoins
-        };
-      });
-    };
-    
     onCoinInfoUpdate(handleCoinUpdate);
-  }, [onCoinInfoUpdate, queryClient, sortType, page, itemsPerPage, socket]);
+    
+    return () => {
+      clearTimeout(newTokenTimeoutId);
+      clearTimeout(coinUpdateTimeoutId);
+      pendingUpdates.clear();
+    };
+  }, [onNewTokenCreated, onCoinInfoUpdate, queryClient, sortType, page, itemsPerPage, socket]);
 
   return {
     coins: data?.coins || [],
