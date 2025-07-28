@@ -242,9 +242,7 @@ export const getLatestReplies = async (): Promise<{ coinId: string; latestReplyT
 
 export const getReplyCounts = async (): Promise<{ coinId: string; replyCount: number }[]> => {
   try {
-    console.log('__yuki__ getReplyCounts: Fetching reply counts from backend');
     const response = await axios.get(`${BACKEND_URL}/feedback/reply-counts`, config);
-    console.log('__yuki__ getReplyCounts: Response:', response.data);
     return response.data;
   } catch (err) {
     console.log('__yuki__ getReplyCounts Error fetching reply counts:', err);
