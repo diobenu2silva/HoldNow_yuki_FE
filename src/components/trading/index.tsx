@@ -283,7 +283,7 @@ export default function TradingPage() {
       payload.claimData.airdropClaim ?? 0,
       payload.claimData.tokenBalance ?? 0,
     ]);
-  }, [publicKey, param, queryClient, onClaimDataUpdate]);
+  }, [publicKey, param, queryClient, claimData]);
 
   // Handle real-time stage changes with optimized updates
   const handleStageChange = useCallback((payload: any) => {
