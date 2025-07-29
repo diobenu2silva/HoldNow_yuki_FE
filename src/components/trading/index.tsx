@@ -263,7 +263,7 @@ export default function TradingPage() {
   // Handle real-time claim data updates with debouncing
   const handleClaimDataUpdate = useCallback((payload: any) => {
     
-    
+    console.log('__yuki__ handleClaimDataUpdate payload: ', payload);
     // Update React Query cache directly for better performance
     queryClient.setQueryData(['claimData', param, publicKey?.toBase58()], [
       payload.claimData.claimInUSD ?? 0,
@@ -283,7 +283,7 @@ export default function TradingPage() {
       payload.claimData.airdropClaim ?? 0,
       payload.claimData.tokenBalance ?? 0,
     ]);
-  }, [publicKey, param, queryClient]);
+  }, [publicKey, param, queryClient, onClaimDataUpdate]);
 
   // Handle real-time stage changes with optimized updates
   const handleStageChange = useCallback((payload: any) => {
@@ -316,7 +316,7 @@ export default function TradingPage() {
       stageStarted: payload.stageStarted,
       stageEnded: payload.stageEnded
     }));
-  }, [param, queryClient]);
+  }, [param, queryClient, onStageChange]);
 
   // Handle real-time coin info updates with optimized caching
   const handleCoinInfoUpdate = useCallback((payload: any) => {
@@ -328,7 +328,7 @@ export default function TradingPage() {
     
     // Update derived data (but not stage progress if we have real-time timer running)
     updateDerivedData(payload.coinInfo);
-  }, [param, queryClient, updateDerivedData]);
+  }, [param, queryClient, updateDerivedData, onCoinInfoUpdate]);
 
   // Optimized socket callback registration and parameter handling
   useEffect(() => {
@@ -344,19 +344,14 @@ export default function TradingPage() {
       // Parallel data fetching for initial load
       const fetchInitialData = async () => {
         try {
-          const [coinData, claimData] = await Promise.allSettled([
-            getCoinInfo(parameter),
-            getClaimData(parameter, publicKey?.toBase58() || '')
-          ]);
-          
-          if (coinData.status === 'fulfilled') {
-            setCoin(coinData.value);
-            updateDerivedData(coinData.value);
+          const coindata = await getCoinInfo(parameter);
+          if (coindata.token) {
+            setCoin(coindata);
+            updateDerivedData(coindata);
+            const claimData = await getClaimData(coindata.token, publicKey?.toBase58() || '');
+            if (claimData) setClaimData(claimData);
           }
           
-          if (claimData.status === 'fulfilled') {
-            setClaimData(claimData.value);
-          }
         } catch (error) {
           console.error('__yuki__ tradingPage error: fetching initial data:', error);
         }
@@ -398,7 +393,7 @@ export default function TradingPage() {
       // Check if we already have cached data for this wallet
       const cachedData = queryClient.getQueryData(['claimData', param, publicKey.toBase58()]);
       
-              if (!cachedData) {
+        if (!cachedData) {
           const fetchClaimDataForWallet = async () => {
           try {
             const response = await getClaimData(
@@ -430,7 +425,7 @@ export default function TradingPage() {
           }
         };
         fetchClaimDataForWallet();
-              }
+      }
     }
   }, [publicKey, coin.token, param, queryClient]);
 

@@ -171,6 +171,7 @@ const SocketProvider = (props: { children: any }) => {
 
   // Real-time update handlers with validation
   const onClaimDataUpdate = useCallback((callback: (payload: ClaimDataUpdatedPayload) => void, validation?: ValidationParams) => {
+    console.log('__yuki__ onClaimDataUpdate callback: ', callback);
     setClaimDataCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 

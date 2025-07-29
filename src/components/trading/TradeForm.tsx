@@ -25,21 +25,22 @@ interface TradingFormProps {
 }
 
 export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
-  const [amount, setSol] = useState<string>('');
+  const { user, setWeb3Tx } = useContext(UserContext);
+  const wallet = useWallet();
+  const [amount, setAmount] = useState<string>('');
   const [isSell, setIsBuy] = useState<number>(0);
   const [tokenBal, setTokenBal] = useState<number>(0);
-  const [tokenName, setTokenName] = useState<string>('Token');
-  const [canTrade, setCanTrade] = useState<boolean>(false);
+  const [tokenName, setTokenName] = useState<string>('');
+  const [canTrade, setCanTrade] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   // Add slippage state, default 0.2 (20%)
   const [slippage, setSlippage] = useState<number>(0.2);
   // Add modal state for slippage input
   const [showSlippageModal, setShowSlippageModal] = useState<boolean>(false);
   const [slippageInput, setSlippageInput] = useState<string>('20');
-  const { user, setWeb3Tx } = useContext(UserContext);
   
 
   
-  const wallet = useWallet();
   const SolList = [
     { id: 0, price: 'reset' },
     { id: '1', price: '1 sol' },
@@ -63,9 +64,9 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (!isNaN(parseFloat(value))) {
-      setSol(value);
+      setAmount(value);
     } else if (value === '') {
-      setSol(''); // Allow empty string to clear the input
+      setAmount(''); // Allow empty string to clear the input
     }
   };
 
@@ -102,45 +103,54 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
       return;
     }
     
+    // Prevent multiple submissions
+    if (isLoading) {
+      return;
+    }
+    
+    setIsLoading(true);
+    
     try {
       const mint = new PublicKey(coin.token);
       const userWallet = new PublicKey(user.wallet);
       
       if (isSell == 0) {
-      const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
-      const tokenAmount =
-        coin.tokenReserves -
-        totalLiquidity /
-          (coin.lamportReserves + parseFloat(amount) * Math.pow(10, 9));
-      const res = await swapTx(mint, wallet, tokenAmount, isSell, slippage, parseFloat(amount));
-      // if (res) {
-      //   setTimeout(async () => {
-      //     window.location.reload();
-      //   }, 500);
-      // }
-    } else {
-      // const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
-      // const minSol =
-      //   coin.lamportReserves -
-      //   totalLiquidity /
-      //     (coin.tokenReserves + parseFloat(`amount`) * Math.pow(10, 6));
-      const res = await swapTx(
-        mint,
-        wallet,
-        parseFloat(amount),
-        isSell,
-        slippage,
-        0, // claimAmount[2],
-      );
-      // if (res) {
-      //   setTimeout(async () => {
-      //     window.location.reload();
-      //   }, 500);
-      // }
-    }
+        const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
+        const tokenAmount =
+          coin.tokenReserves -
+          totalLiquidity /
+            (coin.lamportReserves + parseFloat(amount) * Math.pow(10, 9));
+        const res = await swapTx(mint, wallet, tokenAmount, isSell, slippage, parseFloat(amount));
+        // if (res) {
+        //   setTimeout(async () => {
+        //     window.location.reload();
+        //   }, 500);
+        // }
+      } else {
+        // const totalLiquidity = coin.tokenReserves * coin.lamportReserves;
+        // const minSol =
+        //   coin.lamportReserves -
+        //   totalLiquidity /
+        //     (coin.tokenReserves + parseFloat(`amount`) * Math.pow(10, 6));
+        const res = await swapTx(
+          mint,
+          wallet,
+          parseFloat(amount),
+          isSell,
+          slippage,
+          0, // claimAmount[2],
+        );
+        // if (res) {
+        //   setTimeout(async () => {
+        //     window.location.reload();
+        //   }, 500);
+        // }
+      }
     } catch (error) {
       console.error('__yuki__ Trade error:', error);
       errorAlert('Trade failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -266,7 +276,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
                 <div
                   key={item.id}
                   className="max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200 text-foreground"
-                  onClick={() => setSol(item.id)}
+                  onClick={() => setAmount(item.id)}
                 >
                   {item.price}
                 </div>
@@ -277,7 +287,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
           <div className="flex flex-col xs:flex-row py-2 gap-3 text-center mx-auto xs:mx-0">
             <button
               className="max-w-[100px] rounded-lg px-2 py-1 border-2 border-primary/30 hover:bg-accent cursor-pointer transition-all duration-200 text-foreground"
-              onClick={() => setSol('')}
+              onClick={() => setAmount('')}
             >
               reset
             </button>
@@ -288,7 +298,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
                   ? 'cursor-pointer hover:bg-accent text-foreground' 
                   : 'cursor-not-allowed text-muted-foreground'
               }`}
-              onClick={() => setSol((tokenBal / 10).toString())}
+              onClick={() => setAmount((tokenBal / 10).toString())}
             >
               10%
             </button>
@@ -299,7 +309,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
                   ? 'cursor-pointer hover:bg-accent text-foreground' 
                   : 'cursor-not-allowed text-muted-foreground'
               }`}
-              onClick={() => setSol((tokenBal / 4).toString())}
+              onClick={() => setAmount((tokenBal / 4).toString())}
             >
               25%
             </button>
@@ -310,7 +320,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
                   ? 'cursor-pointer hover:bg-accent text-foreground' 
                   : 'cursor-not-allowed text-muted-foreground'
               }`}
-              onClick={() => setSol((tokenBal / 2).toString())}
+              onClick={() => setAmount((tokenBal / 2).toString())}
             >
               50%
             </button>
@@ -321,7 +331,7 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
                   ? 'cursor-pointer hover:bg-accent text-foreground' 
                   : 'cursor-not-allowed text-muted-foreground'
               }`}
-              onClick={() => setSol(tokenBal.toString())}
+              onClick={() => setAmount(tokenBal.toString())}
             >
               100%
             </button>
@@ -332,10 +342,14 @@ export const TradeForm: React.FC<TradingFormProps> = ({ coin, progress }) => {
           <></>
         ) : (
           <div
-            className="border-2 border-primary/30 cursor-pointer hover:bg-accent w-full text-center rounded-lg py-2 transition-all duration-200 text-foreground"
-            onClick={handlTrade}
+            className={`border-2 border-primary/30 w-full text-center rounded-lg py-2 transition-all duration-200 text-foreground ${
+              isLoading 
+                ? 'cursor-not-allowed opacity-50' 
+                : 'cursor-pointer hover:bg-accent'
+            }`}
+            onClick={isLoading ? undefined : handlTrade}
           >
-            Place Trade
+            {isLoading ? 'Processing...' : 'Place Trade'}
           </div>
         )}
       </div>

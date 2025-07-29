@@ -52,6 +52,14 @@ import { publicKey } from '@coral-xyz/anchor/dist/cjs/utils';
 import { useState } from 'react';
 import axios from 'axios';
 
+// Transaction tracking to prevent duplicate submissions
+const pendingTransactions = new Set<string>();
+
+// Helper function to generate transaction key
+const getTransactionKey = (wallet: string, mint: string, amount: number, type: number): string => {
+  return `${wallet}-${mint}-${amount}-${type}-${Date.now()}`;
+};
+
 export const commitmentLevel = 'processed';
 
 export const endpoint =
@@ -482,48 +490,66 @@ export const swapTx = async (
   if (!wallet.publicKey || !connection) {
     return;
   }
-  const provider = new anchor.AnchorProvider(connection, wallet, {
-    preflightCommitment: 'confirmed',
-  });
-  anchor.setProvider(provider);
-  const program = new Program(
-    pumpProgramInterface,
-    pumpProgramId,
-    provider
-  ) as Program<Holdnow>;
-  const [global] = PublicKey.findProgramAddressSync(
-    [Buffer.from(GLOBAL_STATE_SEED)],
-    program.programId
+  
+  // Generate unique transaction key
+  const transactionKey = getTransactionKey(
+    wallet.publicKey.toString(),
+    mint.toString(),
+    amount,
+    type
   );
-  const globalAccountData = await program.account.global.fetch(global);
-  const feeRecipient = globalAccountData.feeRecipient;
-  const [rewardRecipient] = await PublicKey.findProgramAddress(
-    [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
-    program.programId
-  );
-  const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
-    [Buffer.from(REWARD_VAULT_SEED), mint.toBuffer()],
-    program.programId
-  );
-  const [bondingCurve] = await PublicKey.findProgramAddress(
-    [Buffer.from(BONDING_CURVE), mint.toBuffer()],
-    program.programId
-  );
-  const [vault] = await PublicKey.findProgramAddress(
-    [Buffer.from(SOL_VAULT_SEED), mint.toBuffer()],
-    program.programId
-  );
-  const [associatedBondingCurve] = await PublicKey.findProgramAddress(
-    [Buffer.from(VAULT_SEED), mint.toBuffer()],
-    program.programId
-  );
-  const associatedUserAccount = await getAssociatedTokenAddress(
-    mint,
-    wallet.publicKey
-  );
-  const info = await connection.getAccountInfo(associatedUserAccount);
-
+  
+  // Check if this transaction is already pending
+  if (pendingTransactions.has(transactionKey)) {
+    console.log("__yuki__ swapTx: Transaction already pending, skipping duplicate submission");
+    return { success: false, message: 'Transaction already pending' };
+  }
+  
+  // Add to pending transactions
+  pendingTransactions.add(transactionKey);
+  
   try {
+    const provider = new anchor.AnchorProvider(connection, wallet, {
+      preflightCommitment: 'confirmed',
+    });
+    anchor.setProvider(provider);
+    const program = new Program(
+      pumpProgramInterface,
+      pumpProgramId,
+      provider
+    ) as Program<Holdnow>;
+    const [global] = PublicKey.findProgramAddressSync(
+      [Buffer.from(GLOBAL_STATE_SEED)],
+      program.programId
+    );
+    const globalAccountData = await program.account.global.fetch(global);
+    const feeRecipient = globalAccountData.feeRecipient;
+    const [rewardRecipient] = await PublicKey.findProgramAddress(
+      [Buffer.from(REWARD_STATE_SEED), mint.toBuffer()],
+      program.programId
+    );
+    const [associatedRewardRecipient] = await PublicKey.findProgramAddress(
+      [Buffer.from(REWARD_VAULT_SEED), mint.toBuffer()],
+      program.programId
+    );
+    const [bondingCurve] = await PublicKey.findProgramAddress(
+      [Buffer.from(BONDING_CURVE), mint.toBuffer()],
+      program.programId
+    );
+    const [vault] = await PublicKey.findProgramAddress(
+      [Buffer.from(SOL_VAULT_SEED), mint.toBuffer()],
+      program.programId
+    );
+    const [associatedBondingCurve] = await PublicKey.findProgramAddress(
+      [Buffer.from(VAULT_SEED), mint.toBuffer()],
+      program.programId
+    );
+    const associatedUserAccount = await getAssociatedTokenAddress(
+      mint,
+      wallet.publicKey
+    );
+    const info = await connection.getAccountInfo(associatedUserAccount);
+
     const transaction = new Transaction();
     const cpIx = ComputeBudgetProgram.setComputeUnitPrice({
       microLamports: 1_000_000,
@@ -619,8 +645,31 @@ export const swapTx = async (
     }
   } catch (error) {
     console.log("__yuki__ swapTx Error: ", error);
+    
+    // Handle specific transaction errors
+    if (error && typeof error === 'object' && 'message' in error) {
+      const errorMessage = (error as any).message;
+      
+      if (errorMessage && errorMessage.includes('Transaction simulation failed: This transaction has already been processed')) {
+        console.log("__yuki__ swapTx: Transaction already processed, this is likely a duplicate submission");
+        // Return a success-like response since the transaction was actually processed
+        return { success: true, message: 'Transaction already processed' };
+      }
+      
+      if (errorMessage && errorMessage.includes('SendTransactionError')) {
+        console.log("__yuki__ swapTx: SendTransactionError detected");
+        // Log additional details if available
+        if ('logs' in error) {
+          console.log("__yuki__ swapTx: Error logs:", (error as any).logs);
+        }
+      }
+    }
+    
     // errorAlert("Trade Error: " + error);
     return {};
+  } finally {
+    // Remove from pending transactions
+    pendingTransactions.delete(transactionKey);
   }
 };
 
