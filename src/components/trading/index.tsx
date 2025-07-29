@@ -547,6 +547,7 @@ export default function TradingPage() {
   const handleClaim = async () => {
     const amount = coin.bondingCurve ? Number(airdropClaim + claimHodl) : Number(claimHodl);
 
+    console.log('__yuki__ handleClaim wallet: ', wallet.publicKey.toBase58());
     const res = await claim(user, coin, wallet, Number(amount), coin.bondingCurve);
     // fetchData();
 
@@ -814,7 +815,7 @@ export default function TradingPage() {
                 <div className="w-full grid grid-cols-1 gap-2 sm:gap-4">
                   <DataCard 
                     text="Redistribution"
-                    data={`$${safeCurrency(redistribution / 1000, 4)} k`} 
+                    data={`$${safeCurrency(redistribution, 4)}`} 
                   />
                 </div>
               </div>
