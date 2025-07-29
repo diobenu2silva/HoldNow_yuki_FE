@@ -102,6 +102,15 @@ export default function TradingPage() {
     return `${num}%`;
   };
 
+  // Helper function to format claimHodl - show 0.000 HODL format when under 0.001
+  const formatClaimHodl = (value: any): string => {
+    const num = safeNumber(value);
+    if (num < 0.001) {
+      return '0.000';
+    }
+    return safeCurrency(num, 6);
+  };
+
   // Memoized calculations for performance
   const memoizedStageProgress = useMemo(() => {
     if (!coin.atStageStarted) return 0;
@@ -735,7 +744,7 @@ export default function TradingPage() {
                   <div className="w-full justify-center items-center flex flex-col gap-2">             
                     <p className="text-sm px-5 text-muted-foreground">You are eligible to claim:</p>
                     <p className="text-xl font-semibold text-primary">{safeCurrency(claimInUSD)} USD</p>
-                    <p className="text-xl font-semibold text-primary">{safeCurrency(claimHodl, 6)} {coin.ticker}</p>
+                    <p className="text-xl font-semibold text-primary">{formatClaimHodl(claimHodl)} {coin.ticker}</p>
                     {airdropClaim > 0 && (
                       <p className="text-sm font-semibold text-primary">{safeCurrency(airdropClaim, 6)} {coin.ticker} ({coin.bondingCurve ? 'Airdrop' : 'Airdrop Locked'})</p>
                     )}
