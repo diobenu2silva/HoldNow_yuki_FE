@@ -74,7 +74,10 @@ export default function TradingPage() {
   // Only destructure the first 6 values, use claimData[6] for coinData
   // Ensure claimData is always an array to prevent destructuring errors
   const [claimInUSD, claimHodl, redistribution, solPrice, airdropClaim, tokenBalance] = Array.isArray(claimData) ? claimData : [0, 0, 0, 0, 0, 0];
+  
   const { publicKey } = wallet;
+  
+
 
   // Helper function to safely format numbers and prevent NaN
   const safeNumber = (value: any, defaultValue: number = 0): number => {
@@ -147,13 +150,14 @@ export default function TradingPage() {
     ['claimData', param, publicKey?.toBase58()],
     async () => {
       const coinData = await getCoinInfo(param);
+      
       if (coinData.token) {
         setCoin(coinData);
         const data = await getClaimData(coinData.token, publicKey?.toBase58() || '');
 
         // Transform the object response to array format expected by the component
         if (data && typeof data === 'object' && !Array.isArray(data)) {
-          return [
+          const transformedData = [
             data.claimInUSD ?? 0,
             data.claimHodl ?? 0,
             data.redistribution ?? 0,
@@ -161,6 +165,7 @@ export default function TradingPage() {
             data.airdropClaim ?? 0,  // Fixed: was data.rewardCap
             data.tokenBalance ?? 0,
           ];
+          return transformedData;
         }
         return data;
       } else {
@@ -185,17 +190,20 @@ export default function TradingPage() {
    // Update claim data when query data changes
   useEffect(() => {
     if (claimDataQuery && Array.isArray(claimDataQuery)) {
-
-      setClaimData(claimDataQuery as [number, number, number, number, number, number]);
+      const claimDataArray = claimDataQuery as [number, number, number, number, number, number];
+      setClaimData(claimDataArray);
     }
   }, [claimDataQuery, publicKey?.toBase58()]);
 
   // Handle wallet disconnection
   useEffect(() => {
-    if (!publicKey && coin.token) {
+    // Only reset claim data if wallet is actually disconnected AND we have a valid coin token
+    // Don't reset during initial loading when coin.token might be temporarily undefined
+    // Also check if we have a valid param to ensure we're not in initial loading
+    if (!publicKey && coin.token && coin.token !== '' && param) {
       setClaimData([0, 0, 0, 0, 0, 0]);
     }
-  }, [publicKey, coin.token]);
+  }, [publicKey, coin.token, param]);
 
   // Update UserContext solPrice when claimData changes
   useEffect(() => {
@@ -273,30 +281,38 @@ export default function TradingPage() {
   const handleClaimDataUpdate = useCallback((payload: any) => {
     
     console.log('__yuki__ handleClaimDataUpdate payload: ', payload);
+    console.log('__yuki__ handleClaimDataUpdate - Current user publicKey:', publicKey?.toBase58());
+    console.log('__yuki__ handleClaimDataUpdate - Expected token:', coin.token);
+    console.log('__yuki__ handleClaimDataUpdate - Payload token:', payload.token);
+    console.log('__yuki__ handleClaimDataUpdate - Payload user:', payload.user);
+    console.log('__yuki__ handleClaimDataUpdate - Current claimData state:', claimData);
+    
     // Update React Query cache directly for better performance
-    queryClient.setQueryData(['claimData', param, publicKey?.toBase58()], [
+    const newClaimData = [
       payload.claimData.claimInUSD ?? 0,
       payload.claimData.claimHodl ?? 0,
       payload.claimData.redistribution ?? 0, // Updated field name
       payload.claimData.solPrice ?? 0,
       payload.claimData.airdropClaim ?? 0,
       payload.claimData.tokenBalance ?? 0,
-    ]);
+    ];
+    
+    console.log('__yuki__ handleClaimDataUpdate - New claim data array:', newClaimData);
+    console.log('__yuki__ handleClaimDataUpdate - Query key:', ['claimData', param, publicKey?.toBase58()]);
+    
+    queryClient.setQueryData(['claimData', param, publicKey?.toBase58()], newClaimData);
     
     // Also update local state for immediate UI updates
-    setClaimData([
-      payload.claimData.claimInUSD ?? 0,
-      payload.claimData.claimHodl ?? 0,
-      payload.claimData.redistribution ?? 0, // Updated field name
-      payload.claimData.solPrice ?? 0,
-      payload.claimData.airdropClaim ?? 0,
-      payload.claimData.tokenBalance ?? 0,
-    ]);
+    setClaimData(newClaimData as [number, number, number, number, number, number]);
+    
+    console.log('__yuki__ handleClaimDataUpdate - Updated claim data state:', newClaimData);
   }, [publicKey, param, queryClient, claimData]);
 
   // Handle real-time stage changes with optimized updates
   const handleStageChange = useCallback((payload: any) => {
-    
+    console.log('__yuki__ handleStageChange payload:', payload);
+    console.log('__yuki__ handleStageChange - Current token:', coin.token);
+    console.log('__yuki__ handleStageChange - Payload token:', payload.token);
     
     // Update React Query cache directly for better performance
     queryClient.setQueryData(['coin', param], (oldData: any) => {
@@ -311,7 +327,7 @@ export default function TradingPage() {
         stageEnded: payload.stageEnded
       };
       
-
+      console.log('__yuki__ handleStageChange - Updated coin data:', updatedCoin);
       return updatedCoin;
     });
     
@@ -329,6 +345,10 @@ export default function TradingPage() {
 
   // Handle real-time coin info updates with optimized caching
   const handleCoinInfoUpdate = useCallback((payload: any) => {
+    console.log('__yuki__ handleCoinInfoUpdate payload:', payload);
+    console.log('__yuki__ handleCoinInfoUpdate - Current token:', coin.token);
+    console.log('__yuki__ handleCoinInfoUpdate - Payload token:', payload.coinInfo?.token);
+    
     // Update React Query cache directly for better performance
     queryClient.setQueryData(['coin', param], payload.coinInfo);
     
@@ -348,17 +368,30 @@ export default function TradingPage() {
     if (param !== parameter) {
       setParam(parameter);
       setCoinId(parameter);
-      setCoin({} as coinInfo);
+      // Don't reset coin immediately to prevent wallet disconnection effect from triggering
+      // setCoin({} as coinInfo);
       
       // Parallel data fetching for initial load
       const fetchInitialData = async () => {
         try {
           const coindata = await getCoinInfo(parameter);
+          
           if (coindata.token) {
             setCoin(coindata);
             updateDerivedData(coindata);
             const claimData = await getClaimData(coindata.token, publicKey?.toBase58() || '');
-            if (claimData) setClaimData(claimData);
+            if (claimData && typeof claimData === 'object' && !Array.isArray(claimData)) {
+              // Transform the object response to array format expected by the component
+              const transformedClaimData = [
+                claimData.claimInUSD ?? 0,
+                claimData.claimHodl ?? 0,
+                claimData.redistribution ?? 0,
+                claimData.solPrice ?? 0,
+                claimData.airdropClaim ?? 0,
+                claimData.tokenBalance ?? 0,
+              ];
+              setClaimData(transformedClaimData as [number, number, number, number, number, number]);
+            }
           }
           
         } catch (error) {
@@ -369,13 +402,14 @@ export default function TradingPage() {
       fetchInitialData();
     }
     
-    // Register socket callbacks with optimized validation
+    // Register socket callbacks immediately to avoid timing issues
     if (coin.token && publicKey?.toBase58()) {
       const validationParams = {
         expectedToken: coin.token,
         expectedUser: publicKey?.toBase58()
       };
       
+      // Register callbacks immediately to avoid timing issues with socket events
       if (onClaimDataUpdate) {
         onClaimDataUpdate(handleClaimDataUpdate, validationParams);
       }
@@ -389,9 +423,9 @@ export default function TradingPage() {
     
     // Cleanup function to remove stale data when component unmounts or parameters change
     return () => {
-      if (param) {
-        queryClient.removeQueries(['claimData', param]);
-      }
+      // if (param) {
+      //   queryClient.removeQueries(['claimData', param]);
+      // }
     };
   }, [pathname, param, coin.token, publicKey?.toBase58(), onClaimDataUpdate, onStageChange, onCoinInfoUpdate, handleClaimDataUpdate, handleStageChange, handleCoinInfoUpdate, queryClient, updateDerivedData]);
 
@@ -399,11 +433,12 @@ export default function TradingPage() {
   useEffect(() => {
     // Only fetch if we have all required data
     if (coin.token && publicKey) {
+      
       // Check if we already have cached data for this wallet
       const cachedData = queryClient.getQueryData(['claimData', param, publicKey.toBase58()]);
       
-        if (!cachedData) {
-          const fetchClaimDataForWallet = async () => {
+      if (!cachedData) {
+        const fetchClaimDataForWallet = async () => {
           try {
             const response = await getClaimData(
               coin.token,
@@ -411,23 +446,17 @@ export default function TradingPage() {
             );
             
             // Update React Query cache to keep it in sync
-            queryClient.setQueryData(['claimData', param, publicKey.toBase58()], [
+            const newClaimData = [
               response.claimInUSD ?? 0,
               response.claimHodl ?? 0,
               response.redistribution ?? 0, // Updated field name
               response.solPrice ?? 0,
               response.airdropClaim ?? 0,
               response.tokenBalance ?? 0,
-            ]);
+            ];
             
-            setClaimData([
-              response.claimInUSD ?? 0,
-              response.claimHodl ?? 0,
-              response.redistribution ?? 0, // Updated field name
-              response.solPrice ?? 0,
-              response.airdropClaim ?? 0,
-              response.tokenBalance ?? 0,
-            ]);
+            queryClient.setQueryData(['claimData', param, publicKey.toBase58()], newClaimData);
+            setClaimData(newClaimData as [number, number, number, number, number, number]);
           } catch (error) {
             console.error('__yuki__ tradingPage error: fetching claim data for wallet:', error);
             setClaimData([0, 0, 0, 0, 0, 0]);

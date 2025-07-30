@@ -99,7 +99,7 @@ const context = createContext<Context>({});
 export const useSocket = () => useContext(context);
 
 const SocketProvider = (props: { children: any }) => {
-  const { coinId, setCoinId, newMsg, setNewMsg } = useContext(UserContext);
+  const { coinId, setCoinId, newMsg, setNewMsg, user, login } = useContext(UserContext);
   const [socket, setSocket] = useState<Socket>();
   const [counter, setCounter] = useState<number>(1);
   const [randValue, setRandValue] = useState<number>(0);
@@ -152,17 +152,17 @@ const SocketProvider = (props: { children: any }) => {
 
   // Validation helper function
   const validatePayload = (payload: any, validation?: ValidationParams): boolean => {
-    if (!validation) return true; // No validation required
+    if (!validation) {
+      return true; // No validation required
+    }
     
     // Check token validation
     if (validation.expectedToken && payload.token !== validation.expectedToken) {
-      
       return false;
     }
     
     // Check user validation (for payloads that have user field)
     if (validation.expectedUser && payload.user && payload.user !== validation.expectedUser) {
-      
       return false;
     }
     
@@ -171,7 +171,6 @@ const SocketProvider = (props: { children: any }) => {
 
   // Real-time update handlers with validation
   const onClaimDataUpdate = useCallback((callback: (payload: ClaimDataUpdatedPayload) => void, validation?: ValidationParams) => {
-    console.log('__yuki__ onClaimDataUpdate callback: ', callback);
     setClaimDataCallbacks(prev => [...prev, { callback, validation }]);
   }, []);
 
@@ -244,11 +243,30 @@ const SocketProvider = (props: { children: any }) => {
   };
 
   // Optimized real-time event handlers with debouncing and batch processing
-  const createDebouncedHandler = (callbacks: any[], eventName: string) => {
+  const createDebouncedHandler = (callbacks: any[], eventName: string, immediateForCriticalEvents = false) => {
     const timeoutMap = new Map();
     
     return (payload: any, ack?: (msg: string) => void) => {
-
+      // For critical events like claim data updates, process immediately
+      if (immediateForCriticalEvents) {
+        // Process all callbacks immediately
+        const validCallbacks = callbacks.filter(({ validation }) => 
+          !validation || validatePayload(payload, validation)
+        );
+        
+        if (validCallbacks.length > 0) {
+          validCallbacks.forEach(({ callback }) => {
+            try {
+              callback(payload);
+            } catch (error) {
+              console.error(`__yuki__ Socket: Error in ${eventName} callback:`, error);
+            }
+          });
+        }
+        
+        if (ack) ack('ok');
+        return;
+      }
       
       // Use a single timeout per event type to batch updates
       if (timeoutMap.has(eventName)) {
@@ -262,7 +280,6 @@ const SocketProvider = (props: { children: any }) => {
         );
         
         if (validCallbacks.length > 0) {
-  
           validCallbacks.forEach(({ callback }) => {
             try {
               callback(payload);
@@ -274,39 +291,40 @@ const SocketProvider = (props: { children: any }) => {
         
         timeoutMap.delete(eventName);
         if (ack) ack('ok');
-      }, 100); // 100ms debounce for all socket events
+      }, 50); // Reduced to 50ms debounce for faster response
       
       timeoutMap.set(eventName, timeoutId);
     };
   };
 
   const coinInfoUpdatedHandler = createDebouncedHandler(coinInfoCallbacks, 'coinInfoUpdated');
-  const claimDataUpdatedHandler = createDebouncedHandler(claimDataCallbacks, 'claimDataUpdated');
+  const claimDataUpdatedHandler = createDebouncedHandler(claimDataCallbacks, 'claimDataUpdated', true); // Process immediately for critical events
+  
+  // Add specific logging for claim data updates
+  const claimDataUpdatedHandlerWithLogging = (payload: any, ack?: (msg: string) => void) => {
+    claimDataUpdatedHandler(payload, ack);
+  };
   const stageChangedHandler = createDebouncedHandler(stageChangeCallbacks, 'stageChanged');
   const newTokenCreatedHandler = createDebouncedHandler(newTokenCreatedCallbacks, 'newTokenCreated');
   const transactionUpdateHandler = createDebouncedHandler(transactionUpdateCallbacks, 'transactionUpdate');
   const holdersUpdateHandler = createDebouncedHandler(holdersUpdateCallbacks, 'holdersUpdate');
   const trendingUpdateHandler = createDebouncedHandler(trendingUpdateCallbacks, 'trendingUpdate');
 
-  // init socket client object and handle wallet changes
+  // init socket client object and handle wallet, token, and user changes
   useEffect(() => {
     const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
       transports: ['websocket'],
     });
     socket.on('connect', async () => {
-
       setIsSocketReady(true);
     });
     socket.on('disconnect', () => {
-
       setIsSocketReady(false);
     });
     setSocket(socket);
 
-    // Reset socket connection when wallet changes
+    // Reset socket connection when wallet, token, or user changes
     const resetSocket = () => {
-      
-      
       // Clear all callbacks to prevent stale data
       setClaimDataCallbacks([]);
       setCoinInfoCallbacks([]);
@@ -322,11 +340,10 @@ const SocketProvider = (props: { children: any }) => {
       // Small delay to ensure clean disconnect
       setTimeout(() => {
         socket.connect();
-
       }, 100);
     };
 
-    // Reset socket when wallet changes
+    // Reset socket when wallet, token, or user changes
     resetSocket();
 
     return () => {
@@ -334,7 +351,7 @@ const SocketProvider = (props: { children: any }) => {
       socket.off('disconnect');
       socket.disconnect();
     };
-  }, [wallet.publicKey]); // Dependency on wallet.publicKey triggers reset on wallet change
+  }, [wallet.publicKey, coinId, user?.wallet, login]); // Dependencies on wallet.publicKey, coinId, user wallet, and login state trigger reset on changes
 
   useEffect(() => {
     if (!socket) return;
@@ -358,7 +375,7 @@ const SocketProvider = (props: { children: any }) => {
 
     // Add new real-time event listeners
     socket.on('coinInfoUpdated', coinInfoUpdatedHandler);
-    socket.on('claimDataUpdated', claimDataUpdatedHandler);
+    socket.on('claimDataUpdated', claimDataUpdatedHandlerWithLogging);
     socket.on('stageChanged', stageChangedHandler);
     socket.on('newTokenCreated', newTokenCreatedHandler);
     socket.on('transactionUpdate', transactionUpdateHandler);
@@ -374,7 +391,7 @@ const SocketProvider = (props: { children: any }) => {
       
       // Remove new real-time event listeners
       socket.off('coinInfoUpdated', coinInfoUpdatedHandler);
-      socket.off('claimDataUpdated', claimDataUpdatedHandler);
+      socket.off('claimDataUpdated', claimDataUpdatedHandlerWithLogging);
       socket.off('stageChanged', stageChangedHandler);
       socket.off('newTokenCreated', newTokenCreatedHandler);
       socket.off('transactionUpdate', transactionUpdateHandler);
